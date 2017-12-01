@@ -43,7 +43,7 @@ class LsqlJdbcConnection : Connection {
 
     val urls = jdbcUrl.replace("jdbc:lsql:kafka:", "").split(',')
     val restClient = LsqlRestClient(urls)
-    val token: String = restClient.login(LoginRequest(userName, password)).orElseThrow {
+    token = restClient.login(LoginRequest(userName, password)).orElseThrow {
       throw SQLException("Connection ")
     }
 
@@ -66,12 +66,12 @@ class LsqlJdbcConnection : Connection {
 
   @Throws(SQLException::class)
   override fun createStatement(): Statement {
-    return LsqlJdbcStatement(this)
+    return LsqlJdbcStatement(urls)
   }
 
   @Throws(SQLException::class)
   override fun prepareStatement(sql: String): PreparedStatement {
-    return LsqlJdbcStatement(this, sql)
+    return LsqlJdbcStatement(urls, sql)
   }
 
   @Throws(SQLException::class)

@@ -9,6 +9,7 @@ object Constants {
 
   val JdbcPrefix = "jdbc:lsql:kafka:"
   val DatabaseName = "default"
+  val HttpHeaderKey = "X-Kafka-Lenses-Token"
   var NetworkTimeoutException = 15000
   private val properties = Properties()
 

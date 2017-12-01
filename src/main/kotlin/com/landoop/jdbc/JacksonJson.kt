@@ -16,5 +16,11 @@ object JacksonJson {
     return mapper.readValue<T>(json, T::class.java)
   }
 
+  inline fun <reified T : Any> fromJson(stream: InputStream): T {
+    return mapper.readValue<T>(stream, T::class.java)
+  }
+
   fun asJson(input: InputStream): JsonNode = mapper.readTree(input)
+
+  fun asJson(input: String): JsonNode = mapper.readTree(input)
 }

@@ -1,53 +1,42 @@
 package com.landoop.jdbc
 
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.impl.client.HttpClientBuilder
+import com.landoop.jdbc.domain.JdbcData
+import com.landoop.jdbc.domain.LoginRequest
 import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.SQLFeatureNotSupportedException
 import java.sql.Statement
 
-class LsqlJdbcStatement : Statement, AutoCloseable {
-  private var currentResultSet: LsqlJdbcJdbcResultSet
-  private var httpClient: CloseableHttpClient
-
-  constructor(urls: List<String>) {
-    httpClient = HttpClientBuilder.create().build()
-  }
+class LsqlJdbcStatement(urls: List<String>,
+                        private var token: String,
+                        private val user: String,
+                        private val password: String) : Statement, AutoCloseable {
+  private var currentResultSet: LsqlJdbcResultSet?=null
+  private var client: LsqlRestClient
 
   override fun close() {
-    httpClient.close()
+    client.close()
   }
 
   @Throws(SQLException::class)
-  override fun executeQuery(lsql: String): ResultSet {
+  override fun executeQuery(lsql: String): ResultSet? {
     this.execute(lsql)
     return currentResultSet
   }
 
   @Throws(SQLException::class)
-  override fun executeUpdate(cypher: String): Int {
+  override fun executeUpdate(lsql: String): Int {
     throw SQLFeatureNotSupportedException()
   }
 
   @Throws(SQLException::class)
   override fun execute(lsql: String): Boolean {
-    //httpConnection.close()
+    val data: JdbcData = client.executeQuery(lsql, token , LoginRequest(user, password))
 
-    // execute the query
-    val response = httpConnection.executeQuery(lsq, null, java.lang.Boolean.TRUE)
+     // Parse response data
+    val hasResultSets = data.data.isNotEmpty()
 
-    if (response.hasErrors()) {
-      throw SQLException(response.displayErrors())
-    }
-
-    // Parse stats
-    this.currentUpdateCount = response.getFirstResult().getUpdateCount()
-
-    // Parse response data
-    val hasResultSets = response.hasResultSets()
-
-    this.currentResultSet = if (hasResultSets) HttpResultSet(this, response.getFirstResult()) else null
+    this.currentResultSet = LsqlJdbcResultSet()
 
     return hasResultSets
   }
@@ -80,5 +69,9 @@ class LsqlJdbcStatement : Statement, AutoCloseable {
   @Throws(SQLException::class)
   override fun executeBatch(): IntArray {
     throw SQLFeatureNotSupportedException()
+  }
+
+  init {
+    client = LsqlRestClient(urls, user, password)
   }
 }

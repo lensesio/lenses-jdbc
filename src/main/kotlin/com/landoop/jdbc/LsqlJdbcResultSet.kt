@@ -1,5 +1,7 @@
 package com.landoop.jdbc
 
+import com.landoop.jdbc.domain.JdbcData
+import org.apache.avro.Schema
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigDecimal
@@ -8,14 +10,15 @@ import java.sql.*
 import java.sql.Date
 import java.util.*
 
-class OrientJdbcResultSet @Throws(SQLException::class)
+class LsqlJdbcResultSet
+@Throws(SQLException::class)
 protected constructor(private val statement: LsqlJdbcStatement,
-                      oResultSet: LsqlResultSet,
+                      jdbcData: JdbcData,
+                      schema:Schema,
                       type: Int,
                       concurrency: Int,
                       holdability: Int) : ResultSet {
 
-  private val fieldNames: List<String> = emptyList()
   private var records: List<LsqlResult>
   private var result: LsqlResult? = null
 
@@ -25,13 +28,14 @@ protected constructor(private val statement: LsqlJdbcStatement,
   private var concurrency: Int = 0
   private var holdability: Int = 0
 
+  private var resultSetMetaData: LsqlJdbcResultSetMetaData
+
   init {
     try {
-      records = oResultSet.toList
+      records = resultSet.toList
     } catch (e: Exception) {
       throw SQLException("Error occourred while mapping results ", e)
     }
-
 
     rowCount = records.size
 
@@ -62,7 +66,7 @@ protected constructor(private val statement: LsqlJdbcStatement,
             following values: ${ResultSet.HOLD_CURSORS_OVER_COMMIT} or ${ResultSet.CLOSE_CURSORS_AT_COMMIT}
           """.trimIndent())
 
-    resultSetMetaData = LsqlJdbcResultSetMetaData(this, fieldNames)
+    resultSetMetaData = LsqlJdbcResultSetMetaData(this, schema)
   }
 
   @Throws(SQLException::class)
@@ -120,7 +124,7 @@ protected constructor(private val statement: LsqlJdbcStatement,
     }
 
     cursor = iRowNumber
-    result = records!![cursor]
+    result = records[cursor]
     return true
   }
 
@@ -136,7 +140,7 @@ protected constructor(private val statement: LsqlJdbcStatement,
 
   @Throws(SQLException::class)
   override fun isClosed(): Boolean {
-    return records == null
+    return false
   }
 
   @Throws(SQLException::class)
@@ -476,14 +480,12 @@ protected constructor(private val statement: LsqlJdbcStatement,
 
   @Throws(SQLException::class)
   override fun getNClob(columnIndex: Int): NClob? {
-
-    return null
+    throw SQLFeatureNotSupportedException()
   }
 
   @Throws(SQLException::class)
   override fun getNClob(columnLabel: String): NClob? {
-
-    return null
+    throw SQLFeatureNotSupportedException()
   }
 
   @Throws(SQLException::class)

@@ -720,47 +720,7 @@ class LsqlJdbcDatabaseMetaData : DatabaseMetaData {
 
   @Throws(SQLException::class)
   override fun getProcedureColumns(catalog: String, schemaPattern: String, procedureNamePattern: String, columnNamePattern: String): ResultSet {
-    database.activateOnCurrentThread()
-
-    val resultSet = OInternalResultSet()
-    val functionLibrary = database.getMetadata().getFunctionLibrary()
-
-    for (functionName in functionLibrary.getFunctionNames()) {
-
-      if (OrientJdbcUtils.like(functionName, procedureNamePattern)) {
-
-        val f = functionLibrary.getFunction(procedureNamePattern)
-
-        for (p in f.getParameters()) {
-          val doc = OResultInternal()
-          doc.setProperty("PROCEDURE_CAT", database.getName())
-          doc.setProperty("PROCEDURE_SCHEM", database.getName())
-          doc.setProperty("PROCEDURE_NAME", f.getName())
-          doc.setProperty("COLUMN_NAME", p)
-          doc.setProperty("COLUMN_TYPE", DatabaseMetaData.procedureColumnIn)
-          doc.setProperty("DATA_TYPE", java.sql.Types.OTHER)
-          doc.setProperty("SPECIFIC_NAME", f.getName())
-
-          resultSet.add(doc)
-
-        }
-
-        val doc = OResultInternal()
-
-        doc.setProperty("PROCEDURE_CAT", database.getName())
-        doc.setProperty("PROCEDURE_SCHEM", database.getName())
-        doc.setProperty("PROCEDURE_NAME", f.getName())
-        doc.setProperty("COLUMN_NAME", "return")
-        doc.setProperty("COLUMN_TYPE", DatabaseMetaData.procedureColumnReturn)
-        doc.setProperty("DATA_TYPE", java.sql.Types.OTHER)
-        doc.setProperty("SPECIFIC_NAME", f.getName())
-
-        resultSet.add(doc)
-      }
-    }
-
-    return OrientJdbcResultSet(OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT)
+    throw SQLFeatureNotSupportedException()
   }
 
   @Throws(SQLException::class)

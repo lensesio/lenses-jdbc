@@ -1,8 +1,10 @@
 package com.landoop.jdbc
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.landoop.jdbc.domain.JdbcData
 import com.landoop.jdbc.domain.LoginRequest
 import org.apache.http.HttpResponse
+import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.CloseableHttpClient
@@ -11,14 +13,15 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.protocol.HttpContext
 import org.slf4j.LoggerFactory
 import java.io.IOException
-import java.sql.SQLClientInfoException
+import java.io.InputStream
 import java.sql.SQLException
-import java.sql.SQLInvalidAuthorizationSpecException
-import java.sql.SQLPermission
+import java.sql.SQLSyntaxErrorException
 import java.util.*
 
 
-class LsqlRestClient(private val urls: List<String>) : AutoCloseable {
+class LsqlRestClient(private val urls: List<String>,
+                     private val user: String,
+                     private val password: String) : AutoCloseable {
 
   companion object {
     val Logger = LoggerFactory.getLogger(LsqlRestClient::class.java)
@@ -62,7 +65,7 @@ class LsqlRestClient(private val urls: List<String>) : AutoCloseable {
 
       val response = httpClient.execute(method)
       val statusCode = response.statusLine.statusCode
-      if (statusCode == 401) throw SQLInvalidAuthorizationSpecException()
+      if (statusCode == 401) throw SQLException("Invalid credentials for user '${loginRequest.user}'")
 
       if (statusCode != 200 && statusCode != 201) {
         throw SQLException("Received status code of $statusCode.${response.statusLine.reasonPhrase}")
@@ -95,6 +98,71 @@ class LsqlRestClient(private val urls: List<String>) : AutoCloseable {
         Logger.warn("Failed to connect to '$url'", t)
       }
     }
-    throw SQLException("Could not connect to ${urls.joinToString { "," }}")
+    throw SQLException("Could not connect to ${urls.joinToString { "," }}.")
+  }
+
+  /**
+   * loginRequest in case of an expired token
+   */
+  fun executeQuery(lsql: String, token: String, loginRequest: LoginRequest): JdbcData {
+    fun handleResponse(stream: InputStream): JdbcData {
+      try {
+        return JacksonJson.fromJson<JdbcData>(stream)
+      } catch (ex: Throwable) {
+        Logger.error("An error occurred while reading the response.$ex")
+        throw SQLException("An error occurred while reading the response.$ex")
+      } finally {
+        stream.close()
+      }
+    }
+
+    fun queryInternal(url: String): JdbcData {
+      val apiUrl = "$url/api/jdbc/data"
+      val method = HttpGet(apiUrl)
+      method.setHeader("Accept", "application/json");
+      method.setHeader(Constants.HttpHeaderKey, token)
+
+      var response = httpClient.execute(method)
+      var statusCode = response.statusLine.statusCode
+      if (statusCode == 401) {
+        val newToken = login(loginRequest)
+        if (newToken.isPresent) {
+          method.setHeader(Constants.HttpHeaderKey, newToken.get())
+        } else {
+          throw SQLException("Invalid credentials for user '${loginRequest.user}'")
+        }
+
+        //try again
+        response = httpClient.execute(method)
+      }
+
+      return when (statusCode) {
+        401 -> throw SQLException("Invalid credentials for user '${loginRequest.user}'")
+        400 -> throw SQLSyntaxErrorException(if (response.statusLine.reasonPhrase != null) response.statusLine.reasonPhrase else "Invalid syntax")
+        500 -> throw SQLException("An error occurred running the query.${response.statusLine.reasonPhrase}")
+        200 -> {
+          val responseEntity = response.entity
+          if (responseEntity == null) {
+            throw SQLException("Invalid response received. Expecting non-null content.")
+          }
+          return handleResponse(responseEntity.content)
+        }
+        else -> throw SQLException("An error occurred running the query. (Response code:${statusCode}; reason:${response.statusLine.reasonPhrase})")
+      }
+    }
+
+    var lastException: SQLException? = null
+    for (url in urls) {
+      try {
+        return queryInternal(url)
+      } catch (ex: SQLException) {
+        Logger.warn("There was an error retrieving data from '$url'", ex)
+        lastException = ex
+      } catch (t: Throwable) {
+        Logger.warn("There was an error retrieving data from '$url'", t)
+        lastException = SQLException("An error occurred retrieving data from '$url'.${t.message}.")
+      }
+    }
+    throw lastException ?: SQLException("An error occurred retrieving data from '${urls.joinToString { "," }}'.")
   }
 }
