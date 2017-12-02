@@ -4,7 +4,6 @@ package com.landoop.jdbc.avro
 import com.landoop.jdbc.domain.JdbcField
 import org.apache.avro.LogicalType
 import org.apache.avro.Schema
-import java.sql.SQLException
 import java.sql.Types
 import java.sql.Types.*
 
@@ -29,7 +28,7 @@ fun Schema.fromUnion(): Schema {
 /**
  * Should we convert complex types to string and let the user see the string
  */
-fun Schema.toJdbcFields(): List<JdbcField>{
+fun Schema.toJdbcFields(): List<JdbcField> {
   return when (this.type) {
     Schema.Type.RECORD ->
       this.fields.foldIndexed(emptyList<JdbcField>(), { index, list, it ->
@@ -53,7 +52,7 @@ fun Schema.toJdbcFields(): List<JdbcField>{
       }
       listOf(JdbcField("", 0, jdbcType))
     }
-        Schema . Type . FIXED ->listOf(JdbcField("", 0, BINARY))
+    Schema.Type.FIXED -> listOf(JdbcField("", 0, BINARY))
     Schema.Type.DOUBLE -> listOf(JdbcField("", 0, DOUBLE))
     Schema.Type.FLOAT -> listOf(JdbcField("", 0, FLOAT))
     Schema.Type.ENUM -> listOf(JdbcField("", 0, VARCHAR))

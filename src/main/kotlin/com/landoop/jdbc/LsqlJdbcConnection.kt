@@ -7,11 +7,11 @@ import java.sql.*
 import java.util.*
 import java.util.concurrent.Executor
 
-class LsqlJdbcConnection : Connection {
+class LsqlJdbcConnection(jdbcUrl: String, info: Properties?) : Connection {
 
   val urls: List<String>
 
-  var info: Properties? = null
+  var info: Properties? = info
     private set
 
   var userName: String
@@ -26,53 +26,13 @@ class LsqlJdbcConnection : Connection {
   private var readOnly: Boolean = false
   private var autoCommit: Boolean = false
 
-  constructor(jdbcUrl: String, info: Properties?) {
 
-    val user = info?.getProperty("user", null)
-    if (user == null) {
-      throw SQLException("Missing the user parameter")
-    }
-    userName = user
-
-    val pwd = info.getProperty("password", null)
-    if (pwd == null) {
-      throw SQLException("Missing the password parameter")
-    }
-    password = pwd
-
-
-    val urls = jdbcUrl.replace("jdbc:lsql:kafka:", "").split(',')
-    val restClient = LsqlRestClient(urls)
-    token = restClient.login(LoginRequest(userName, password)).orElseThrow {
-      throw SQLException("Connection ")
-    }
-
-    this.urls = urls
-    this.urls.forEach { url ->
-      try {
-        URL(url)
-      } catch (e: MalformedURLException) {
-        throw SQLException("${url} is not a valid URL.")
-      }
-    }
-
-    this.info = info
-    readOnly = false
-
-
-    //status = ODatabase.STATUS.OPEN
-  }
+  @Throws(SQLException::class)
+  override fun createStatement(): Statement = LsqlJdbcStatement(urls, token, userName, password)
 
 
   @Throws(SQLException::class)
-  override fun createStatement(): Statement {
-    return LsqlJdbcStatement(urls)
-  }
-
-  @Throws(SQLException::class)
-  override fun prepareStatement(sql: String): PreparedStatement {
-    return LsqlJdbcStatement(urls, sql)
-  }
+  override fun prepareStatement(sql: String): PreparedStatement = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
   override fun prepareCall(sql: String): CallableStatement {
@@ -119,9 +79,7 @@ class LsqlJdbcConnection : Connection {
   }
 
   @Throws(SQLException::class)
-  override fun isReadOnly(): Boolean {
-    return readOnly
-  }
+  override fun isReadOnly(): Boolean = readOnly
 
   @Throws(SQLException::class)
   override fun setReadOnly(iReadOnly: Boolean) {
@@ -129,54 +87,41 @@ class LsqlJdbcConnection : Connection {
   }
 
   @Throws(SQLException::class)
-  override fun isValid(timeout: Int): Boolean {
-    return true
-  }
+  override fun isValid(timeout: Int): Boolean = true
 
   @Throws(SQLException::class)
-  override fun createArrayOf(typeName: String, elements: Array<Any>): java.sql.Array? {
-    return null
-  }
+  override fun createArrayOf(typeName: String, elements: Array<Any>): java.sql.Array? = null
 
   @Throws(SQLException::class)
-  override fun createBlob(): Blob? {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun createBlob(): Blob? = throw SQLFeatureNotSupportedException()
+
 
   @Throws(SQLException::class)
-  override fun createClob(): Clob? {
-    return null
-  }
+  override fun createClob(): Clob? = null
 
   @Throws(SQLException::class)
-  override fun createNClob(): NClob? {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun createNClob(): NClob? = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun createSQLXML(): SQLXML? {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun createSQLXML(): SQLXML? = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
   override fun createStatement(resultSetType: Int, resultSetConcurrency: Int): Statement {
-    return LsqlJdbcStatement(this)
+    return LsqlJdbcStatement(urls, token, userName, password)
   }
 
   @Throws(SQLException::class)
-  override fun createStatement(resultSetType: Int, resultSetConcurrency: Int, resultSetHoldability: Int): Statement {
-    return LsqlJdbcStatement(this)
+  override fun createStatement(resultSetType: Int,
+                               resultSetConcurrency: Int,
+                               resultSetHoldability: Int): Statement {
+    return LsqlJdbcStatement(urls, token, userName, password)
   }
 
   @Throws(SQLException::class)
-  override fun createStruct(typeName: String, attributes: Array<Any>): Struct? {
-    return null
-  }
+  override fun createStruct(typeName: String, attributes: Array<Any>): Struct? = null
 
   @Throws(SQLException::class)
-  override fun getAutoCommit(): Boolean {
-    return autoCommit
-  }
+  override fun getAutoCommit(): Boolean = autoCommit
 
   @Throws(SQLException::class)
   override fun setAutoCommit(autoCommit: Boolean) {
@@ -184,18 +129,14 @@ class LsqlJdbcConnection : Connection {
   }
 
   @Throws(SQLException::class)
-  override fun getCatalog(): String {
-    return "default"
-  }
+  override fun getCatalog(): String = "default"
 
   @Throws(SQLException::class)
   override fun setCatalog(catalog: String) {
   }
 
   @Throws(SQLException::class)
-  override fun getClientInfo(): Properties? {
-    return null
-  }
+  override fun getClientInfo(): Properties? = null
 
   @Throws(SQLClientInfoException::class)
   override fun setClientInfo(properties: Properties) {
@@ -203,14 +144,10 @@ class LsqlJdbcConnection : Connection {
   }
 
   @Throws(SQLException::class)
-  override fun getClientInfo(name: String): String? {
-    return null
-  }
+  override fun getClientInfo(name: String): String? = null
 
   @Throws(SQLException::class)
-  override fun getHoldability(): Int {
-    return ResultSet.CLOSE_CURSORS_AT_COMMIT
-  }
+  override fun getHoldability(): Int = ResultSet.CLOSE_CURSORS_AT_COMMIT
 
   @Throws(SQLException::class)
   override fun setHoldability(holdability: Int) {
@@ -218,14 +155,11 @@ class LsqlJdbcConnection : Connection {
   }
 
   @Throws(SQLException::class)
-  override fun getMetaData(): DatabaseMetaData {
-    return LsqlJdbcDatabaseMetaData(this)
-  }
+  override fun getMetaData(): DatabaseMetaData = LsqlJdbcDatabaseMetaData(this)
 
   @Throws(SQLException::class)
-  override fun getTransactionIsolation(): Int {
-    return Connection.TRANSACTION_SERIALIZABLE
-  }
+  override fun getTransactionIsolation(): Int = Connection.TRANSACTION_SERIALIZABLE
+
 
   @Throws(SQLException::class)
   override fun setTransactionIsolation(level: Int) {
@@ -233,9 +167,7 @@ class LsqlJdbcConnection : Connection {
   }
 
   @Throws(SQLException::class)
-  override fun getTypeMap(): Map<String, Class<*>>? {
-    return null
-  }
+  override fun getTypeMap(): Map<String, Class<*>>? = null
 
   @Throws(SQLException::class)
   override fun setTypeMap(map: Map<String, Class<*>>) {
@@ -243,54 +175,48 @@ class LsqlJdbcConnection : Connection {
   }
 
   @Throws(SQLException::class)
-  override fun getWarnings(): SQLWarning? {
-    return null
-  }
+  override fun getWarnings(): SQLWarning? = null
 
   @Throws(SQLException::class)
-  override fun prepareCall(sql: String, resultSetType: Int, resultSetConcurrency: Int): CallableStatement {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun prepareCall(sql: String,
+                           resultSetType: Int,
+                           resultSetConcurrency: Int): CallableStatement = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun prepareCall(sql: String, resultSetType: Int, resultSetConcurrency: Int, resultSetHoldability: Int): CallableStatement {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun prepareCall(sql: String,
+                           resultSetType: Int,
+                           resultSetConcurrency: Int,
+                           resultSetHoldability: Int): CallableStatement = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun prepareStatement(sql: String, autoGeneratedKeys: Int): PreparedStatement {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun prepareStatement(sql: String,
+                                autoGeneratedKeys: Int): PreparedStatement = throw  SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun prepareStatement(sql: String, columnIndexes: IntArray): PreparedStatement {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun prepareStatement(sql: String, columnIndexes: IntArray): PreparedStatement = throw SQLFeatureNotSupportedException()
+
 
   @Throws(SQLException::class)
-  override fun prepareStatement(sql: String, columnNames: Array<String>): PreparedStatement {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun prepareStatement(sql: String,
+                                columnNames: Array<String>): PreparedStatement = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): PreparedStatement {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun prepareStatement(sql: String,
+                                resultSetType: Int,
+                                resultSetConcurrency: Int): PreparedStatement = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int, resultSetHoldability: Int): PreparedStatement {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun prepareStatement(sql: String,
+                                resultSetType: Int,
+                                resultSetConcurrency: Int,
+                                resultSetHoldability: Int): PreparedStatement = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun releaseSavepoint(savepoint: Savepoint) {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun releaseSavepoint(savepoint: Savepoint) = throw SQLFeatureNotSupportedException()
+
 
   @Throws(SQLException::class)
-  override fun rollback(savepoint: Savepoint) {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun rollback(savepoint: Savepoint) =    throw SQLFeatureNotSupportedException()
 
   @Throws(SQLClientInfoException::class)
   override fun setClientInfo(name: String, value: String) {
@@ -298,16 +224,10 @@ class LsqlJdbcConnection : Connection {
   }
 
   @Throws(SQLException::class)
-  override fun setSavepoint(): Savepoint? {
-
-    return null
-  }
+  override fun setSavepoint(): Savepoint? = null
 
   @Throws(SQLException::class)
-  override fun setSavepoint(name: String): Savepoint? {
-
-    return null
-  }
+  override fun setSavepoint(name: String): Savepoint? = null
 
   @Throws(SQLException::class)
   override fun abort(arg0: Executor) {
@@ -315,24 +235,48 @@ class LsqlJdbcConnection : Connection {
   }
 
   @Throws(SQLException::class)
-  override fun getNetworkTimeout(): Int {
-    return Constants.NetworkTimeoutException
-  }
+  override fun getNetworkTimeout(): Int = Constants.NetworkTimeoutException
 
   /**
    * No schema is supported.
    */
   @Throws(SQLException::class)
-  override fun getSchema(): String? {
-    return null
-  }
+  override fun getSchema(): String? = Constants.DatabaseName
 
   @Throws(SQLException::class)
   override fun setSchema(arg0: String) {
   }
 
   @Throws(SQLException::class)
-  override fun setNetworkTimeout(arg0: Executor, arg1: Int) {
+  override fun setNetworkTimeout(arg0: Executor,
+                                 arg1: Int) {
     Constants.NetworkTimeoutException = arg1
+  }
+
+  init {
+    val user = info?.getProperty("user", null)
+    if (user == null) {
+      throw SQLException("Missing the user parameter")
+    }
+    userName = user
+    val pwd = info.getProperty("password", null)
+    if (pwd == null) {
+      throw SQLException("Missing the password parameter")
+    }
+    password = pwd
+    val urls = jdbcUrl.replace("jdbc:lsql:kafka:", "").split(',')
+    val restClient = LsqlRestClient(urls)
+    token = restClient.login(LoginRequest(userName, password)).orElseThrow {
+      throw SQLException("An error occurred while connecting to ${urls.joinToString { "," }} for user ${userName} ")
+    }
+    this.urls = urls
+    this.urls.forEach { url ->
+      try {
+        URL(url)
+      } catch (e: MalformedURLException) {
+        throw SQLException("${url} is not a valid URL.")
+      }
+    }
+    readOnly = false
   }
 }

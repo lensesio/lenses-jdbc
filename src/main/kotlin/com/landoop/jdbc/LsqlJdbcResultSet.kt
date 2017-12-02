@@ -1,6 +1,8 @@
 package com.landoop.jdbc
 
 import com.landoop.jdbc.domain.JdbcData
+import com.landoop.jdbc.domain.JdbcRow
+import com.landoop.jdbc.domain.RecordRowId
 import org.apache.avro.Schema
 import java.io.InputStream
 import java.io.Reader
@@ -13,14 +15,14 @@ import java.util.*
 class LsqlJdbcResultSet
 @Throws(SQLException::class)
 protected constructor(private val statement: LsqlJdbcStatement,
-                      jdbcData: JdbcData,
-                      schema:Schema,
+                      val jdbcData: JdbcData,
+                      schema: Schema,
                       type: Int,
                       concurrency: Int,
                       holdability: Int) : ResultSet {
 
-  private var records: List<LsqlResult>
-  private var result: LsqlResult? = null
+  private var records: List<JdbcRow>
+  private var currentRow: JdbcRow? = null
 
   private var cursor = -1
   private var rowCount = 0
@@ -28,28 +30,26 @@ protected constructor(private val statement: LsqlJdbcStatement,
   private var concurrency: Int = 0
   private var holdability: Int = 0
 
-  private var resultSetMetaData: LsqlJdbcResultSetMetaData
+  private var metaData: LsqlJdbcResultSetMetaData
 
   init {
     try {
-      records = resultSet.toList
+      records = jdbcData.toList()
     } catch (e: Exception) {
       throw SQLException("Error occourred while mapping results ", e)
     }
-
     rowCount = records.size
 
     if (rowCount >= 1) {
-      result = records[0]
-    } else {
-      result = LsqlResult()
+      currentRow = records[0]
     }
 
-    if (type == ResultSet.TYPE_FORWARD_ONLY || type == ResultSet.TYPE_SCROLL_INSENSITIVE || type == ResultSet.TYPE_SCROLL_SENSITIVE)
+    if (type == ResultSet.TYPE_FORWARD_ONLY || type == ResultSet.TYPE_SCROLL_INSENSITIVE || type == ResultSet.TYPE_SCROLL_SENSITIVE) {
       this.type = type
-    else
-      throw SQLException("Bad ResultSet type: " + type + " instead of one of the following values: " + ResultSet.TYPE_FORWARD_ONLY + ", "
-          + ResultSet.TYPE_SCROLL_INSENSITIVE + " or" + ResultSet.TYPE_SCROLL_SENSITIVE)
+    } else {
+      throw SQLException("Bad ResultSet type: " + type + " instead of one of the following values: " +
+          listOf(ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.TYPE_SCROLL_SENSITIVE).joinToString { "," })
+    }
 
     if (concurrency == ResultSet.CONCUR_READ_ONLY || concurrency == ResultSet.CONCUR_UPDATABLE)
       this.concurrency = concurrency
@@ -57,17 +57,19 @@ protected constructor(private val statement: LsqlJdbcStatement,
       throw SQLException(
           "Bad ResultSet Concurrency type: $concurrency  instead of one of the following values: ${ResultSet.CONCUR_READ_ONLY} or ${ResultSet.CONCUR_UPDATABLE}")
 
-    if (holdability == ResultSet.HOLD_CURSORS_OVER_COMMIT || holdability == ResultSet.CLOSE_CURSORS_AT_COMMIT)
+    if (holdability == ResultSet.HOLD_CURSORS_OVER_COMMIT || holdability == ResultSet.CLOSE_CURSORS_AT_COMMIT) {
       this.holdability = holdability
-    else
+    } else {
       throw SQLException(
           """
             Bad ResultSet Holdability type: $holdability instead of one of the
             following values: ${ResultSet.HOLD_CURSORS_OVER_COMMIT} or ${ResultSet.CLOSE_CURSORS_AT_COMMIT}
           """.trimIndent())
+    }
 
-    resultSetMetaData = LsqlJdbcResultSetMetaData(this, schema)
+    metaData = LsqlJdbcResultSetMetaData(this, jdbcData.table, schema)
   }
+
 
   @Throws(SQLException::class)
   override fun close() {
@@ -82,99 +84,75 @@ protected constructor(private val statement: LsqlJdbcStatement,
   }
 
   @Throws(SQLException::class)
-  override fun last(): Boolean {
-    return absolute(rowCount - 1)
-  }
+  override fun last(): Boolean = absolute(rowCount - 1)
 
   @Throws(SQLException::class)
-  override fun next(): Boolean {
-    return absolute(++cursor)
-  }
+  override fun next(): Boolean = absolute(++cursor)
+
 
   @Throws(SQLException::class)
-  override fun previous(): Boolean {
-    return absolute(++cursor)
-  }
+  override fun previous(): Boolean = absolute(++cursor)
 
   @Throws(SQLException::class)
   override fun afterLast() {
-    // OUT OF LAST ITEM
     cursor = rowCount
   }
 
   @Throws(SQLException::class)
   override fun beforeFirst() {
-    // OUT OF FIRST ITEM
     cursor = -1
   }
 
   @Throws(SQLException::class)
-  override fun relative(iRows: Int): Boolean {
-    return absolute(cursor + iRows)
-  }
+  override fun relative(index: Int): Boolean = absolute(cursor + index)
 
   @Throws(SQLException::class)
-  override fun absolute(iRowNumber: Int): Boolean {
-    if (iRowNumber > rowCount - 1) {
+  override fun absolute(row: Int): Boolean {
+    if (row > rowCount - 1) {
       cursor = rowCount
       return false
-    } else if (iRowNumber < 0) {
+    }
+    if (row < 0) {
       cursor = -1
       return false
     }
 
-    cursor = iRowNumber
-    result = records[cursor]
+    cursor = row
+    currentRow = records[cursor]
     return true
   }
 
   @Throws(SQLException::class)
-  override fun isAfterLast(): Boolean {
-    return cursor >= rowCount - 1
-  }
+  override fun isAfterLast(): Boolean = cursor >= rowCount - 1
 
   @Throws(SQLException::class)
-  override fun isBeforeFirst(): Boolean {
-    return cursor < 0
-  }
+  override fun isBeforeFirst(): Boolean = cursor < 0
 
   @Throws(SQLException::class)
-  override fun isClosed(): Boolean {
-    return false
-  }
+  override fun isClosed(): Boolean = records.isEmpty()
 
   @Throws(SQLException::class)
-  override fun isFirst(): Boolean {
-    return cursor == 0
-  }
+  override fun isFirst(): Boolean = cursor == 0
 
   @Throws(SQLException::class)
-  override fun isLast(): Boolean {
-    return cursor == rowCount - 1
-  }
+  override fun isLast(): Boolean = cursor == rowCount - 1
 
   @Throws(SQLException::class)
-  override fun getStatement(): Statement {
-    return statement
-  }
+  override fun getStatement(): Statement = statement
 
   @Throws(SQLException::class)
-  override fun getMetaData(): ResultSetMetaData {
-    return resultSetMetaData
-  }
+  override fun getMetaData(): ResultSetMetaData = metaData
 
   @Throws(SQLException::class)
-  override fun deleteRow() {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun deleteRow() = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
   override fun findColumn(columnLabel: String): Int {
-    val index = fieldNames.indexOf(columnLabel)
+    val index = metaData.getColumnIndex(columnLabel)
     if (index < 0) {
-      throw SQLException("The column '$columnLabel' does not exists. Available column(-s):${fieldNames.joinToString(",")}")
+      throw SQLException("The column '$columnLabel' does not exists. Available column(-s):${metaData.getFieldsName().joinToString(",")}")
     }
-
+    //yeah +1 because of Jdbc standards having he index 1 based
     return index + 1
   }
 
@@ -186,201 +164,151 @@ protected constructor(private val statement: LsqlJdbcStatement,
   }
 
   @Throws(SQLException::class)
-  override fun getArray(columnIndex: Int): java.sql.Array {
-    return getArray(fieldNames[getFieldIndex(columnIndex)])
-
-  }
+  override fun getArray(columnIndex: Int): java.sql.Array = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun getArray(columnLabel: String): java.sql.Array {
-    return LsqlJdbcArray(emptyList())
-  }
+  override fun getArray(columnLabel: String): java.sql.Array = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun getAsciiStream(columnIndex: Int): InputStream? {
-    return null
-  }
+  override fun getAsciiStream(columnIndex: Int): InputStream? = null
 
   @Throws(SQLException::class)
-  override fun getAsciiStream(columnLabel: String): InputStream? {
-    return null
-  }
+  override fun getAsciiStream(columnLabel: String): InputStream? = null
 
   @Throws(SQLException::class)
-  override fun getBigDecimal(columnIndex: Int): BigDecimal {
-
-    return getBigDecimal(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getBigDecimal(columnIndex: Int): BigDecimal = getBigDecimal(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
   override fun getBigDecimal(columnLabel: String): BigDecimal {
     try {
-      return result!!.getProperty(columnLabel)
+      return currentRow!!.getProperty(columnLabel) as BigDecimal
     } catch (e: Exception) {
       throw SQLException("An error occurred during the retrieval of the double value at column '$columnLabel'", e)
     }
-
   }
 
   @Throws(SQLException::class)
-  override fun getBigDecimal(columnIndex: Int, scale: Int): BigDecimal {
-    return getBigDecimal(fieldNames[getFieldIndex(columnIndex)], scale)
-  }
+  override fun getBigDecimal(columnIndex: Int, scale: Int): BigDecimal = getBigDecimal(getColumnName(columnIndex), scale)
 
   @Throws(SQLException::class)
   override fun getBigDecimal(columnLabel: String, scale: Int): BigDecimal {
     try {
-      return (result!!.getProperty(columnLabel) as BigDecimal).setScale(scale)
+      return (currentRow!!.getProperty(columnLabel) as BigDecimal).setScale(scale)
     } catch (e: Exception) {
       throw SQLException("An error occurred during the retrieval of the double value at column '$columnLabel'", e)
     }
-
   }
 
   @Throws(SQLException::class)
-  override fun getBinaryStream(columnIndex: Int): InputStream? {
-    return getBinaryStream(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getBinaryStream(columnIndex: Int): InputStream? = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun getBinaryStream(columnLabel: String): InputStream? {
-    try {
-      val blob = getBlob(columnLabel)
-      return blob?.binaryStream
-    } catch (e: Exception) {
-      throw SQLException("An error occurred during the retrieval of the binary stream at column '$columnLabel'", e)
-    }
-
-  }
+  override fun getBinaryStream(columnLabel: String): InputStream? = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun getBlob(columnIndex: Int): Blob? {
-    return getBlob(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getBlob(columnIndex: Int): Blob? = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun getBlob(columnLabel: String): Blob? {
-    throw SQLFeatureNotSupportedException()
-  }
+  override fun getBlob(columnLabel: String): Blob? = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLException::class)
-  override fun getBoolean(columnIndex: Int): Boolean {
-    return getBoolean(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getBoolean(columnIndex: Int): Boolean = getBoolean(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
   override fun getBoolean(columnLabel: String): Boolean {
     try {
-      return result!!.getProperty(columnLabel)
+      return currentRow!!.getProperty(columnLabel) as Boolean
     } catch (e: Exception) {
-      throw SQLException(
-          "An error occurred during the retrieval of the boolean value at column '$columnLabel'. " + result!!.toElement().toJSON(), e)
+      throw SQLException("An error occurred during the retrieval of the boolean value at column '$columnLabel'.", e)
     }
-
   }
 
   @Throws(SQLException::class)
-  override fun getByte(columnIndex: Int): Byte {
-    return getByte(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getByte(columnIndex: Int): Byte = getByte(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
   override fun getByte(columnLabel: String): Byte {
     try {
-      return result!!.getProperty(columnLabel)
+      return currentRow!!.getProperty(columnLabel) as Byte
     } catch (e: Exception) {
       throw SQLException("An error occurred during the retrieval of the byte value at column '$columnLabel'", e)
     }
-
   }
 
   @Throws(SQLException::class)
-  override fun getBytes(columnIndex: Int): ByteArray? {
-    return getBytes(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getBytes(columnIndex: Int): ByteArray? = getBytes(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
   override fun getBytes(columnLabel: String): ByteArray? {
-    return result!!.getProperty(columnLabel)
+    try {
+      return currentRow!!.getProperty(columnLabel) as ByteArray
+    } catch (e: Exception) {
+      throw SQLException("An error occurred during the retrieval of the bytes value at column '$columnLabel'", e)
+    }
   }
 
   @Throws(SQLException::class)
-  override fun getCharacterStream(columnIndex: Int): Reader? {
-    return null
-  }
+  override fun getCharacterStream(columnIndex: Int): Reader? = null
 
   @Throws(SQLException::class)
-  override fun getCharacterStream(columnLabel: String): Reader? {
-    return null
-  }
+  override fun getCharacterStream(columnLabel: String): Reader? = null
 
   @Throws(SQLException::class)
-  override fun getClob(columnIndex: Int): Clob? {
-    return null
-  }
+  override fun getClob(columnIndex: Int): Clob? = null
 
   @Throws(SQLException::class)
-  override fun getClob(columnLabel: String): Clob? {
-    return null
-  }
+  override fun getClob(columnLabel: String): Clob? = null
 
   @Throws(SQLException::class)
-  override fun getConcurrency(): Int {
-    return concurrency
-  }
+  override fun getConcurrency(): Int = concurrency
 
   @Throws(SQLException::class)
-  override fun getCursorName(): String? {
-    return null
-  }
+  override fun getCursorName(): String? = null
 
   @Throws(SQLException::class)
-  override fun getDate(columnIndex: Int): Date? {
-    return getDate(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getDate(columnIndex: Int): Date? = getDate(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
   override fun getDate(columnLabel: String): Date? {
     try {
-      val date = result!!.getProperty(columnLabel)
-      return if (date != null) Date(date!!.getTime()) else null
+      return currentRow!!.getProperty(columnLabel) as Date?
     } catch (e: Exception) {
       throw SQLException("An error occurred during the retrieval of the date value at column '$columnLabel'", e)
     }
-
   }
 
   @Throws(SQLException::class)
-  override fun getDate(columnIndex: Int, cal: Calendar): Date? {
-    return getDate(fieldNames[getFieldIndex(columnIndex)], cal)
-  }
+  override fun getDate(columnIndex: Int, cal: Calendar): Date? = getDate(getColumnName(columnIndex), cal)
+
 
   @Throws(SQLException::class)
   override fun getDate(columnLabel: String, cal: Calendar?): Date? {
     if (cal == null)
-      throw SQLException()
+      throw SQLException("An error occurred during the retrieval of the data value at column $columnLabel. Invalid calendar value. Null values are not allowed.")
     try {
-      val date: java.util.Date = result!!.getProperty(columnLabel) ?: return null
+      val date = currentRow!!.getProperty(columnLabel) as java.util.Date?
+      if (date == null) {
+        return null
+      }
       cal.timeInMillis = date.getTime()
       return Date(cal.timeInMillis)
     } catch (e: Exception) {
       throw SQLException(
           "An error occurred during the retrieval of the date value (calendar) at column '$columnLabel'", e)
     }
-
   }
 
   @Throws(SQLException::class)
-  override fun getDouble(columnIndex: Int): Double {
-    val fieldIndex = getFieldIndex(columnIndex)
-    return getDouble(fieldNames[fieldIndex])
-  }
+  override fun getDouble(columnIndex: Int): Double = getDouble(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
   override fun getDouble(columnLabel: String): Double {
     try {
-      val r = result!!.getProperty(columnLabel)
-      return r ?: 0
+      val r = currentRow!!.getProperty(columnLabel) as Double?
+      if (r == null) {
+        return 0.0
+      }
+      return r
     } catch (e: Exception) {
       throw SQLException("An error occurred during the retrieval of the double value at column '$columnLabel'", e)
     }
@@ -388,36 +316,31 @@ protected constructor(private val statement: LsqlJdbcStatement,
   }
 
   @Throws(SQLException::class)
-  override fun getFetchDirection(): Int {
-    return 0
-  }
+  override fun getFetchDirection(): Int = 0
 
   @Throws(SQLException::class)
   override fun setFetchDirection(direction: Int) {
-
   }
 
   @Throws(SQLException::class)
-  override fun getFetchSize(): Int {
-    return rowCount
-  }
+  override fun getFetchSize(): Int = rowCount
+
 
   @Throws(SQLException::class)
   override fun setFetchSize(rows: Int) {
-
   }
 
   @Throws(SQLException::class)
-  override fun getFloat(columnIndex: Int): Float {
-
-    return getFloat(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getFloat(columnIndex: Int): Float = getFloat(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
   override fun getFloat(columnLabel: String): Float {
     try {
-      val r = result!!.getProperty(columnLabel)
-      return r ?: 0
+      val r = currentRow!!.getProperty(columnLabel) as Float?
+      if (r == null) {
+        return 0.0f
+      }
+      return r
     } catch (e: Exception) {
       throw SQLException("An error occurred during the retrieval of the float value at column '$columnLabel'", e)
     }
@@ -425,24 +348,20 @@ protected constructor(private val statement: LsqlJdbcStatement,
   }
 
   @Throws(SQLException::class)
-  override fun getHoldability(): Int {
-    return holdability
-  }
+  override fun getHoldability(): Int = holdability
 
   @Throws(SQLException::class)
-  override fun getInt(columnIndex: Int): Int {
-    return getInt(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getInt(columnIndex: Int): Int = getInt(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
   override fun getInt(columnLabel: String): Int {
-    if ("@version" == columnLabel)
-      return result!!.toElement().getVersion()
 
     try {
-      val r = result!!.getProperty(columnLabel)
-      return r ?: 0
-
+      val r = currentRow!!.getProperty(columnLabel) as Int?
+      if (r == null) {
+        return 0
+      }
+      return r
     } catch (e: Exception) {
       throw SQLException("An error occurred during the retrieval of the integer value at column '$columnLabel'", e)
     }
@@ -450,15 +369,13 @@ protected constructor(private val statement: LsqlJdbcStatement,
   }
 
   @Throws(SQLException::class)
-  override fun getLong(columnIndex: Int): Long {
-    return getLong(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getLong(columnIndex: Int): Long = getLong(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
   override fun getLong(columnLabel: String): Long {
 
     try {
-      val r = result!!.getProperty(columnLabel)
+      val r = currentRow!!.getProperty(columnLabel) as Long?
       return r ?: 0
     } catch (e: Exception) {
       throw SQLException("An error occurred during the retrieval of the long value at column '$columnLabel'", e)
@@ -489,14 +406,12 @@ protected constructor(private val statement: LsqlJdbcStatement,
   }
 
   @Throws(SQLException::class)
-  override fun getNString(columnIndex: Int): String {
-    return getNString(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getNString(columnIndex: Int): String? = getNString(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
-  override fun getNString(columnLabel: String): String {
+  override fun getNString(columnLabel: String): String? {
     try {
-      return result!!.getProperty(columnLabel)
+      return currentRow!!.getProperty(columnLabel) as String?
     } catch (e: Exception) {
       throw SQLException("An error occurred during the retrieval of the string value at column '$columnLabel'", e)
     }
@@ -504,80 +419,51 @@ protected constructor(private val statement: LsqlJdbcStatement,
   }
 
   @Throws(SQLException::class)
-  override fun getObject(columnIndex: Int): Any? {
-    return getObject(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getObject(columnIndex: Int): Any? = getObject(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
-  override fun getObject(columnLabel: String): Any? {
-    return result!!.getProperty(columnLabel)
-  }
+  override fun getObject(columnLabel: String): Any? = currentRow!!.getProperty(columnLabel)
 
   @Throws(SQLException::class)
   override fun getObject(columnIndex: Int, map: Map<String, Class<*>>): Any {
-    throw SQLFeatureNotSupportedException("This method has not been implemented.")
+    throw SQLFeatureNotSupportedException("This method is not supported.")
   }
 
   @Throws(SQLException::class)
   override fun getObject(columnLabel: String, map: Map<String, Class<*>>): Any {
-    throw SQLFeatureNotSupportedException("This method has not been implemented.")
+    throw SQLFeatureNotSupportedException("This method is not supported.")
   }
 
   @Throws(SQLException::class)
-  override fun getRef(columnIndex: Int): Ref? {
-
-    return null
-  }
+  override fun getRef(columnIndex: Int): Ref? = null
 
   @Throws(SQLException::class)
-  override fun getRef(columnLabel: String): Ref? {
-    return null
-  }
+  override fun getRef(columnLabel: String): Ref? = null
 
   @Throws(SQLException::class)
-  override fun getRow(): Int {
-    return cursor
-  }
+  override fun getRow(): Int = cursor
 
   @Throws(SQLException::class)
-  override fun getRowId(columnIndex: Int): RowId {
-    try {
-      return OrientRowId(result!!.toElement().getIdentity())
-    } catch (e: Exception) {
-      throw SQLException("An error occurred during the retrieval of the rowid for record '$result'", e)
-    }
-
-  }
+  override fun getRowId(columnIndex: Int): RowId = RecordRowId(cursor)
 
   @Throws(SQLException::class)
-  override fun getRowId(columnLabel: String): RowId {
-    return getRowId(0)
-  }
+  override fun getRowId(columnLabel: String): RowId = getRowId(0)
 
   @Throws(SQLException::class)
-  override fun getSQLXML(columnIndex: Int): SQLXML? {
+  override fun getSQLXML(columnIndex: Int): SQLXML? = null
 
-    return null
-  }
 
   @Throws(SQLException::class)
-  override fun getSQLXML(columnLabel: String): SQLXML? {
-
-    return null
-  }
+  override fun getSQLXML(columnLabel: String): SQLXML? = null
 
   @Throws(SQLException::class)
-  override fun getShort(columnIndex: Int): Short {
-
-    return getShort(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getShort(columnIndex: Int): Short = getShort(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
   override fun getShort(columnLabel: String): Short {
     try {
-      val r = result!!.getProperty(columnLabel)
+      val r = currentRow!!.getProperty(columnLabel) as Short?
       return r ?: 0
-
     } catch (e: Exception) {
       throw SQLException("An error occurred during the retrieval of the short value at column '$columnLabel'", e)
     }
@@ -585,30 +471,13 @@ protected constructor(private val statement: LsqlJdbcStatement,
   }
 
   @Throws(SQLException::class)
-  override fun getString(columnIndex: Int): String? {
-
-    return getString(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getString(columnIndex: Int): String? = getString(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
   override fun getString(columnLabel: String): String? {
-
-    if ("@rid" == columnLabel || "rid" == columnLabel) {
-      return result!!.toElement().getIdentity().toString()
-    }
-
-    if ("@class" == columnLabel || "class" == columnLabel) {
-
-      return result!!.toElement().getSchemaType()
-          .map({ c -> c.getName() })
-          .orElse("NOCLASS")
-    }
-
     try {
-      return Optional.ofNullable(result!!.getProperty(columnLabel))
-          .map({ v -> "" + v })
-          .orElse(null)
-
+      val any = currentRow!!.getProperty(columnLabel)
+      return any?.toString()
     } catch (e: Exception) {
       throw SQLException("An error occurred during the retrieval of the string value at column '$columnLabel'", e)
     }
@@ -616,14 +485,12 @@ protected constructor(private val statement: LsqlJdbcStatement,
   }
 
   @Throws(SQLException::class)
-  override fun getTime(columnIndex: Int): Time? {
-    return getTime(fieldNames[getFieldIndex(columnIndex)])
-  }
+  override fun getTime(columnIndex: Int): Time? = getTime(getColumnName(columnIndex))
 
   @Throws(SQLException::class)
   override fun getTime(columnLabel: String): Time? {
     try {
-      val date = result!!.getProperty(columnLabel)
+      val date = currentRow!!.getProperty(columnLabel) as Date?
       return getTime(date)
     } catch (e: Exception) {
       throw SQLException("An error occurred during the retrieval of the time value at column '$columnLabel'", e)
@@ -637,9 +504,7 @@ protected constructor(private val statement: LsqlJdbcStatement,
     return getTime(date)
   }
 
-  private fun getTime(date: java.util.Date?): Time? {
-    return if (date != null) Time(date.time) else null
-  }
+  private fun getTime(date: java.util.Date?): Time? = date?.let { Time(date.time) }
 
   @Throws(SQLException::class)
   override fun getTime(columnLabel: String, cal: Calendar): Time? {
@@ -1103,6 +968,7 @@ protected constructor(private val statement: LsqlJdbcStatement,
 
   }
 
+
   @Throws(SQLException::class)
   override fun updateRowId(columnIndex: Int, x: RowId) {
 
@@ -1164,20 +1030,16 @@ protected constructor(private val statement: LsqlJdbcStatement,
   }
 
   @Throws(SQLException::class)
-  override fun wasNull(): Boolean {
-
-    return false
-  }
+  override fun wasNull(): Boolean = false
 
   @Throws(SQLException::class)
-  override fun isWrapperFor(iface: Class<*>): Boolean {
-    return ODocument::class.java!!.isAssignableFrom(iface)
-  }
+  override fun isWrapperFor(iface: Class<*>): Boolean = currentRow!!.javaClass.isAssignableFrom(iface)
+
 
   @Throws(SQLException::class)
   override fun <T> unwrap(iface: Class<T>): T? {
     try {
-      return iface.cast(result)
+      return iface.cast(currentRow)
     } catch (e: ClassCastException) {
       throw SQLException(e)
     }
@@ -1200,5 +1062,12 @@ protected constructor(private val statement: LsqlJdbcStatement,
   @Throws(SQLException::class)
   override fun <T> getObject(arg0: String, arg1: Class<T>): T? {
     return null
+  }
+
+  private fun getColumnName(columnIndex: Int): String {
+    if (columnIndex < 1 || columnIndex > metaData.columnCount) {
+      throw SQLException("Invalid column index. The value $columnIndex is not between 1 and ${metaData.columnCount}")
+    }
+    return getColumnName(columnIndex)
   }
 }

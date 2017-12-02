@@ -1,6 +1,6 @@
 package com.landoop.jdbc
 
-import com.landoop.jdbc.domain.JdbcData
+import com.landoop.jdbc.domain.LsqlData
 import com.landoop.jdbc.domain.LoginRequest
 import java.sql.ResultSet
 import java.sql.SQLException
@@ -31,7 +31,7 @@ class LsqlJdbcStatement(urls: List<String>,
 
   @Throws(SQLException::class)
   override fun execute(lsql: String): Boolean {
-    val data: JdbcData = client.executeQuery(lsql, token , LoginRequest(user, password))
+    val data: LsqlData = client.executeQuery(lsql, token , LoginRequest(user, password))
 
      // Parse response data
     val hasResultSets = data.data.isNotEmpty()

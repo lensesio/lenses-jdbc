@@ -1,3 +1,9 @@
 package com.landoop.jdbc.domain
 
-data class JdbcData(val topic:String, val data: ArrayList<String>, private val schema: String?)
+import org.apache.avro.Schema
+
+interface JdbcData : Iterable<JdbcRow> {
+  val schema: Schema
+
+  val table: String?
+}

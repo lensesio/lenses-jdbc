@@ -14,14 +14,14 @@ class LsqlJdbcResultSetMetaData(private val resultSet: LsqlJdbcResultSet,
   private val fields: List<JdbcField>
   private val fieldsIndexMap: Map<String, Int>
 
-  protected val currentRecord: LsqlResult?
-    @Throws(SQLException::class)
-    get() = resultSet.unwrap(LsqlResult::class.java) ?: throw SQLException("No current record")
-
   init {
     fields = schema.toJdbcFields()
     fieldsIndexMap = fields.map { it -> it.name to it.index }.toMap()
   }
+
+  fun getFieldsName(): List<String> = fields.map { it -> it.name }
+
+  fun getColumnIndex(columnName: String): Int = fieldsIndexMap.getOrDefault(columnName, -1)
 
   @Throws(SQLException::class)
   override fun getColumnCount(): Int = fields.size

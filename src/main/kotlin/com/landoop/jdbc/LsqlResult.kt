@@ -1,5 +1,5 @@
 package com.landoop.jdbc
 
-class LsqlResult(json: String) {
+class JsonJdbcRow(json: String) {
   private var jsonNode = JacksonJson.asJson(json)
 }

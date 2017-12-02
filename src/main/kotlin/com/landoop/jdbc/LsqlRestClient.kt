@@ -1,7 +1,7 @@
 package com.landoop.jdbc
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.landoop.jdbc.domain.JdbcData
+import com.landoop.jdbc.domain.LsqlData
 import com.landoop.jdbc.domain.LoginRequest
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpGet
@@ -19,9 +19,7 @@ import java.sql.SQLSyntaxErrorException
 import java.util.*
 
 
-class LsqlRestClient(private val urls: List<String>,
-                     private val user: String,
-                     private val password: String) : AutoCloseable {
+class LsqlRestClient(private val urls: List<String>) : AutoCloseable {
 
   companion object {
     val Logger = LoggerFactory.getLogger(LsqlRestClient::class.java)
@@ -104,10 +102,10 @@ class LsqlRestClient(private val urls: List<String>,
   /**
    * loginRequest in case of an expired token
    */
-  fun executeQuery(lsql: String, token: String, loginRequest: LoginRequest): JdbcData {
-    fun handleResponse(stream: InputStream): JdbcData {
+  fun executeQuery(lsql: String, token: String, loginRequest: LoginRequest): LsqlData {
+    fun handleResponse(stream: InputStream): LsqlData {
       try {
-        return JacksonJson.fromJson<JdbcData>(stream)
+        return JacksonJson.fromJson(stream)
       } catch (ex: Throwable) {
         Logger.error("An error occurred while reading the response.$ex")
         throw SQLException("An error occurred while reading the response.$ex")
@@ -116,14 +114,14 @@ class LsqlRestClient(private val urls: List<String>,
       }
     }
 
-    fun queryInternal(url: String): JdbcData {
+    fun queryInternal(url: String): LsqlData {
       val apiUrl = "$url/api/jdbc/data"
       val method = HttpGet(apiUrl)
       method.setHeader("Accept", "application/json");
       method.setHeader(Constants.HttpHeaderKey, token)
 
       var response = httpClient.execute(method)
-      var statusCode = response.statusLine.statusCode
+      val statusCode = response.statusLine.statusCode
       if (statusCode == 401) {
         val newToken = login(loginRequest)
         if (newToken.isPresent) {
