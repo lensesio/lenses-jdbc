@@ -3,7 +3,6 @@ package com.landoop.jdbc
 import com.landoop.jdbc.domain.JdbcData
 import com.landoop.jdbc.domain.JdbcRow
 import com.landoop.jdbc.domain.RecordRowId
-import org.apache.avro.Schema
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigDecimal
@@ -14,21 +13,16 @@ import java.util.*
 
 class LsqlJdbcResultSet
 @Throws(SQLException::class)
-protected constructor(private val statement: LsqlJdbcStatement,
-                      val jdbcData: JdbcData,
-                      schema: Schema,
-                      type: Int,
-                      concurrency: Int,
-                      holdability: Int) : ResultSet {
+constructor(private val jdbcStatement: LsqlJdbcStatement?, jdbcData: JdbcData) : ResultSet {
 
   private var records: List<JdbcRow>
   private var currentRow: JdbcRow? = null
 
   private var cursor = -1
   private var rowCount = 0
-  private var type: Int = 0
-  private var concurrency: Int = 0
-  private var holdability: Int = 0
+  private var type: Int =  ResultSet.TYPE_FORWARD_ONLY
+  private var concurrency: Int = ResultSet.CONCUR_READ_ONLY
+  private var holdability: Int = ResultSet.HOLD_CURSORS_OVER_COMMIT
 
   private var metaData: LsqlJdbcResultSetMetaData
 
@@ -67,7 +61,7 @@ protected constructor(private val statement: LsqlJdbcStatement,
           """.trimIndent())
     }
 
-    metaData = LsqlJdbcResultSetMetaData(this, jdbcData.table, schema)
+    metaData = LsqlJdbcResultSetMetaData(this, jdbcData.table, jdbcData.schema)
   }
 
 
@@ -138,7 +132,7 @@ protected constructor(private val statement: LsqlJdbcStatement,
   override fun isLast(): Boolean = cursor == rowCount - 1
 
   @Throws(SQLException::class)
-  override fun getStatement(): Statement = statement
+  override fun getStatement(): Statement? = jdbcStatement
 
   @Throws(SQLException::class)
   override fun getMetaData(): ResultSetMetaData = metaData

@@ -1,8 +1,9 @@
 package com.landoop.jdbc
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.landoop.jdbc.domain.LsqlData
 import com.landoop.jdbc.domain.LoginRequest
+import com.landoop.jdbc.domain.LsqlData
+import com.landoop.jdbc.domain.LsqlTable
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream
 import java.sql.SQLException
+import java.sql.SQLInvalidAuthorizationSpecException
 import java.sql.SQLSyntaxErrorException
 import java.util.*
 
@@ -58,8 +60,8 @@ class LsqlRestClient(private val urls: List<String>) : AutoCloseable {
       val apiUrl = "$url/api/login"
       val method = HttpPost(apiUrl)
       method.entity = requestEntity
-      method.setHeader("Accept", "application/json");
-      method.setHeader("Content-type", "application/json");
+      method.setHeader("Accept", "application/json")
+      method.setHeader("Content-type", "application/json")
 
       val response = httpClient.execute(method)
       val statusCode = response.statusLine.statusCode
@@ -119,6 +121,7 @@ class LsqlRestClient(private val urls: List<String>) : AutoCloseable {
       val method = HttpGet(apiUrl)
       method.setHeader("Accept", "application/json");
       method.setHeader(Constants.HttpHeaderKey, token)
+      method.params.setParameter("sql", lsql)
 
       var response = httpClient.execute(method)
       val statusCode = response.statusLine.statusCode
@@ -134,8 +137,73 @@ class LsqlRestClient(private val urls: List<String>) : AutoCloseable {
         response = httpClient.execute(method)
       }
 
-      return when (statusCode) {
+      when (statusCode) {
         401 -> throw SQLException("Invalid credentials for user '${loginRequest.user}'")
+        400 -> throw SQLSyntaxErrorException(if (response.statusLine.reasonPhrase != null) response.statusLine.reasonPhrase else "Invalid syntax")
+        500 -> throw SQLException("An error occurred running the query.${response.statusLine.reasonPhrase}")
+        200 -> {
+          val responseEntity = response.entity
+          if (responseEntity == null) {
+            throw SQLException("Invalid response received. Expecting non-null content.")
+          }
+          return handleResponse(responseEntity.content)
+        }
+        else -> throw SQLException("An error occurred running the query. (Response code:${statusCode}; reason:${response.statusLine.reasonPhrase})")
+      }
+    }
+
+    var lastException: SQLException? = null
+    for (url in urls) {
+      try {
+        return queryInternal(url)
+      } catch (ex: SQLException) {
+        Logger.warn("There was an error retrieving data from '$url'", ex)
+        lastException = ex
+      } catch (t: Throwable) {
+        Logger.warn("There was an error retrieving data from '$url'", t)
+        lastException = SQLException("An error occurred retrieving data from '$url'.${t.message}.")
+      }
+    }
+    throw lastException ?: SQLException("An error occurred retrieving data from '${urls.joinToString { "," }}'.")
+  }
+
+  /**
+   * loginRequest in case of an expired token
+   */
+  fun listTables(token: String, loginRequest: LoginRequest): List<LsqlTable> {
+    fun handleResponse(stream: InputStream): List<LsqlTable> {
+      try {
+        return JacksonJson.fromJson(stream)
+      } catch (ex: Throwable) {
+        Logger.error("An error occurred while reading the tables response.$ex")
+        throw SQLException("An error occurred while reading the tables response.$ex")
+      } finally {
+        stream.close()
+      }
+    }
+
+    fun queryInternal(url: String): List<LsqlTable> {
+      val apiUrl = "$url/api/jdbc/metadata/table"
+      val method = HttpGet(apiUrl)
+      method.setHeader("Accept", "application/json");
+      method.setHeader(Constants.HttpHeaderKey, token)
+
+      var response = httpClient.execute(method)
+      val statusCode = response.statusLine.statusCode
+      if (statusCode == 401) {
+        val newToken = login(loginRequest)
+        if (newToken.isPresent) {
+          method.setHeader(Constants.HttpHeaderKey, newToken.get())
+        } else {
+          throw SQLException("Invalid credentials for user '${loginRequest.user}'")
+        }
+
+        //try again
+        response = httpClient.execute(method)
+      }
+
+      when (statusCode) {
+        401 -> throw SQLInvalidAuthorizationSpecException("Invalid credentials for user '${loginRequest.user}'")
         400 -> throw SQLSyntaxErrorException(if (response.statusLine.reasonPhrase != null) response.statusLine.reasonPhrase else "Invalid syntax")
         500 -> throw SQLException("An error occurred running the query.${response.statusLine.reasonPhrase}")
         200 -> {
