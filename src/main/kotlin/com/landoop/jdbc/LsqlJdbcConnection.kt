@@ -11,6 +11,8 @@ class LsqlJdbcConnection(jdbcUrl: String, info: Properties?) : Connection {
 
   val urls: List<String>
 
+  val restClient :LsqlRestClient
+
   var info: Properties? = info
     private set
 
@@ -28,7 +30,7 @@ class LsqlJdbcConnection(jdbcUrl: String, info: Properties?) : Connection {
 
 
   @Throws(SQLException::class)
-  override fun createStatement(): Statement = LsqlJdbcStatement(urls, token, userName, password)
+  override fun createStatement(): Statement = LsqlJdbcStatement(urls, this, token, userName, password)
 
 
   @Throws(SQLException::class)
@@ -107,14 +109,14 @@ class LsqlJdbcConnection(jdbcUrl: String, info: Properties?) : Connection {
 
   @Throws(SQLException::class)
   override fun createStatement(resultSetType: Int, resultSetConcurrency: Int): Statement {
-    return LsqlJdbcStatement(urls, token, userName, password)
+    return LsqlJdbcStatement(urls, this, token, userName, password)
   }
 
   @Throws(SQLException::class)
   override fun createStatement(resultSetType: Int,
                                resultSetConcurrency: Int,
                                resultSetHoldability: Int): Statement {
-    return LsqlJdbcStatement(urls, token, userName, password)
+    return LsqlJdbcStatement(urls, this, token, userName, password)
   }
 
   @Throws(SQLException::class)
@@ -216,7 +218,7 @@ class LsqlJdbcConnection(jdbcUrl: String, info: Properties?) : Connection {
 
 
   @Throws(SQLException::class)
-  override fun rollback(savepoint: Savepoint) =    throw SQLFeatureNotSupportedException()
+  override fun rollback(savepoint: Savepoint) = throw SQLFeatureNotSupportedException()
 
   @Throws(SQLClientInfoException::class)
   override fun setClientInfo(name: String, value: String) {
@@ -265,7 +267,7 @@ class LsqlJdbcConnection(jdbcUrl: String, info: Properties?) : Connection {
     }
     password = pwd
     val urls = jdbcUrl.replace("jdbc:lsql:kafka:", "").split(',')
-    val restClient = LsqlRestClient(urls)
+    restClient = LsqlRestClient(urls)
     token = restClient.login(LoginRequest(userName, password)).orElseThrow {
       throw SQLException("An error occurred while connecting to ${urls.joinToString { "," }} for user ${userName} ")
     }

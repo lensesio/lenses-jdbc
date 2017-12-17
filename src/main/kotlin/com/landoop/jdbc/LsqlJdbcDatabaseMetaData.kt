@@ -1,12 +1,18 @@
 package com.landoop.jdbc
 
+import com.landoop.Utils
+import com.landoop.jdbc.avro.fromUnion
+import com.landoop.jdbc.avro.isNullable
 import com.landoop.jdbc.domain.GenericJdbcData
+import com.landoop.jdbc.domain.LoginRequest
+import org.apache.avro.LogicalType
+import org.apache.avro.Schema
 import org.apache.avro.SchemaBuilder
 import java.sql.*
-import java.util.*
 
 class LsqlJdbcDatabaseMetaData : DatabaseMetaData {
   protected val TABLE_TYPES = arrayListOf<String>("TABLE", "SYSTEM TABLE")
+
   private var connection: LsqlJdbcConnection
 
   constructor(connection: LsqlJdbcConnection) {
@@ -408,40 +414,42 @@ class LsqlJdbcDatabaseMetaData : DatabaseMetaData {
                                    columnNamePattern: String): ResultSet = getEmptyResultSet()
 
   @Throws(SQLException::class)
-  override fun getTables(catalog: String, schemaPattern: String, tableNamePattern: String?, types: Array<String>?): ResultSet {
-    database.activateOnCurrentThread()
-    val classes = database.getMetadata().getSchema().getClasses()
+  override fun getTables(catalog: String,
+                         schemaPattern: String,
+                         tableNamePattern: String?,
+                         types: Array<String>?): ResultSet {
+    val schema = SchemaBuilder.builder().record("procedures")
+        .fields()
+        .requiredString("TABLE_CAT")
+        .requiredString("TABLE_SCHEM")
+        .requiredString("TABLE_NAME")
+        .requiredString("TABLE_TYPE")
+        .nullableString("REMARKS", null)
+        .nullableString("TYPE_NAME", null)
+        .nullableString("REF_GENERATION", null)
+        .endRecord()
 
-    val resultSet = OInternalResultSet()
+    val tables = connection.restClient.listTables(connection.token, LoginRequest(connection.userName, connection.password))
 
-    val tableTypes = if (types != null) Arrays.asList(*types) else TABLE_TYPES
-    for (cls in classes) {
-      val className = cls.getName()
-      val type: String
+    val tablesArray = tables
+        .filter { it ->
+          types?.contains("TABLE") ?: true && (tableNamePattern == null || tableNamePattern == "%" || it.name.contains(tableNamePattern, true))
+        }
+        .map { it ->
+          arrayOf<Any?>(
+              Constants.DatabaseName,
+              Constants.DatabaseName,
+              it.name,
+              "TABLE",
+              null,
+              null,
+              null
+          )
+        }.toTypedArray()
 
-      if (OMetadataInternal.SYSTEM_CLUSTER.contains(cls.getName().toLowerCase(Locale.ENGLISH)))
-        type = "SYSTEM TABLE"
-      else
-        type = "TABLE"
+    val data = GenericJdbcData(tablesArray, schema, "")
 
-      if (tableTypes.contains(type) && (tableNamePattern == null || tableNamePattern == "%" || tableNamePattern
-          .equals(className, ignoreCase = true))) {
-
-        val doc = OResultInternal()
-
-        doc.setProperty("TABLE_CAT", database.getName())
-        doc.setProperty("TABLE_SCHEM", database.getName())
-        doc.setProperty("TABLE_NAME", className)
-        doc.setProperty("TABLE_TYPE", type)
-        doc.setProperty("REMARKS", null as Any?)
-        doc.setProperty("TYPE_NAME", null as Any?)
-        doc.setProperty("REF_GENERATION", null as Any?)
-        resultSet.add(doc)
-      }
-    }
-
-    return OrientJdbcResultSet(OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT)
+    return LsqlJdbcResultSet(null, data)
   }
 
   @Throws(SQLException::class)
@@ -452,7 +460,7 @@ class LsqlJdbcDatabaseMetaData : DatabaseMetaData {
         .nullableString("TABLE_CATALOG", null)
         .endRecord()
 
-    val data = GenericJdbcData(arrayOf(arrayOf<Any>(Constants.DatabaseName, Constants.DatabaseName)), schema, "")
+    val data = GenericJdbcData(arrayOf(arrayOf<Any?>(Constants.DatabaseName, Constants.DatabaseName)), schema, "")
 
     return LsqlJdbcResultSet(null, data)
   }
@@ -464,7 +472,7 @@ class LsqlJdbcDatabaseMetaData : DatabaseMetaData {
         .nullableString("TABLE_CAT", null)
         .endRecord()
 
-    val data = GenericJdbcData(arrayOf(arrayOf<Any>(Constants.DatabaseName)), schema, "")
+    val data = GenericJdbcData(arrayOf(arrayOf<Any?>(Constants.DatabaseName)), schema, "")
 
     return LsqlJdbcResultSet(null, data)
   }
@@ -477,7 +485,7 @@ class LsqlJdbcDatabaseMetaData : DatabaseMetaData {
         .nullableString("TABLE_TYPE", null)
         .endRecord()
 
-    val data = GenericJdbcData(TABLE_TYPES.map { it -> arrayOf<Any>(it) }.toTypedArray(), schema, "")
+    val data = GenericJdbcData(TABLE_TYPES.map { it -> arrayOf<Any?>(it) }.toTypedArray(), schema, "")
 
     return LsqlJdbcResultSet(null, data)
   }
@@ -487,28 +495,123 @@ class LsqlJdbcDatabaseMetaData : DatabaseMetaData {
                           schemaPattern: String,
                           tableNamePattern: String,
                           columnNamePattern: String?): ResultSet {
-    database.activateOnCurrentThread()
+    val schema = SchemaBuilder.builder().record("tabletypes")
+        .fields()
+        .requiredString("TABLE_CAT")
+        .requiredString("TABLE_SCHEM")
+        .requiredString("TABLE_NAME")
+        .requiredString("COLUMN_NAME")
+        .requiredString("DATA_TYPE")
+        .requiredString("TYPE_NAME")
+        .requiredInt("COLUMN_SIZE")
+        .nullableInt("BUFFER_LENGTH", 0)
+        .nullableInt("DECIMAL_DIGITS", 0)
+        .nullableInt("NUM_PREC_RADIX", 10)
+        .requiredInt("NULLABLE")
+        .nullableString("REMARKS", null)
+        .nullableString("COLUMN_DEF", null)
+        .nullableString("SQL_DATA_TYPE", null)
+        .nullableString("SQL_DATETIME_SUB", null)
+        .nullableString("CHAR_OCTET_LENGTH", null)
+        .requiredInt("ORDINAL_POSITION")
+        .requiredString("IS_NULLABLE")
+        .endRecord()
 
-    val resultSet = OInternalResultSet()
 
-    val schema = database.getMetadata().getSchema()
+    val tables = connection.restClient.listTables(connection.token, LoginRequest(connection.userName, connection.password))
+    val list: MutableList<Array<Any?>> = mutableListOf()
 
-    for (clazz in schema.getClasses()) {
-      if (OrientJdbcUtils.like(clazz.getName(), tableNamePattern)) {
-        for (prop in clazz.properties()) {
-          if (columnNamePattern == null) {
-            resultSet.add(getPropertyAsDocument(clazz, prop))
-          } else {
-            if (OrientJdbcUtils.like(prop.getName(), columnNamePattern)) {
-              resultSet.add(getPropertyAsDocument(clazz, prop))
-            }
+    tables.filter { it ->
+      Utils.like(it.name, tableNamePattern)
+    }.forEach { it ->
+      try {
+        val tableSchema = Schema.Parser().parse(it.valueSchema)
+        when (tableSchema.type) {
+          Schema.Type.RECORD -> {
+            tableSchema.fields
+                .filter { column ->
+                  columnNamePattern == null || Utils.like(column.name(), columnNamePattern)
+                }
+                .forEach { column ->
+                  val row = buildColumnTypeInfo(it.name, column.name(), column.pos(), column.schema())
+                  list += row
+                }
+          }
+          else -> {
+            val row = buildColumnTypeInfo(it.name, "value", 0, tableSchema)
+            list += row
           }
         }
+      } catch (ex: Exception) {
 
       }
     }
-    return OrientJdbcResultSet(OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT)
+
+    val data = GenericJdbcData(TABLE_TYPES.map { it -> arrayOf<Any?>(it) }.toTypedArray(), schema, "")
+
+    return LsqlJdbcResultSet(null, data)
+  }
+
+  private fun buildColumnTypeInfo(tableName: String, columnName: String, position: Int, schema: Schema): Array<Any?> {
+
+    fun getTypeInfo(s: Schema): Pair<Int, String> {
+      return when (s.type) {
+        Schema.Type.RECORD -> Types.VARCHAR to "VARCHAR"
+        Schema.Type.ARRAY -> Types.VARCHAR to "VARCHAR"
+        Schema.Type.NULL -> Types.VARCHAR to "VARCHAR"
+        Schema.Type.BOOLEAN -> Types.BOOLEAN to "BOOLEAN"
+        Schema.Type.BYTES -> {
+          val typeName = schema.getProp(LogicalType.LOGICAL_TYPE_PROP)
+          val jdbcType = when (typeName) {
+            "decimal" -> Types.DECIMAL to "DECIMAL"
+            "uuid" -> Types.VARCHAR to "VARCHAR"
+            "date" -> Types.DATE to "DATE"
+            "time-millis" -> Types.DATE to "DATE"
+            "time-micros" -> Types.DATE to "DATE"
+            "timestamp-millis" -> Types.DATE to "DATE"
+            "timestamp-micros" -> Types.DATE to "DATE"
+            else -> Types.BINARY to "BINARY"
+          }
+          jdbcType
+        }
+        Schema.Type.FIXED -> Types.BINARY to "BINARY"
+        Schema.Type.DOUBLE -> Types.DOUBLE to "DOUBLE"
+        Schema.Type.FLOAT -> Types.FLOAT to "FLOAT"
+        Schema.Type.ENUM -> Types.VARCHAR to "VARCHAR"
+        Schema.Type.INT -> Types.INTEGER to "INTEGER"
+        Schema.Type.LONG -> Types.BIGINT to "BIGIN"
+        Schema.Type.MAP -> Types.VARCHAR to "VARCHAR"
+        Schema.Type.STRING -> Types.VARCHAR to "VARCHAR"
+        Schema.Type.UNION ->
+          if (!schema.isNullable()) {
+            //throw SQLException("Invalid type metadata received. Union of types is not allowed.")
+            Types.VARCHAR to "VARCHAR"
+          } else {
+            getTypeInfo(schema.fromUnion())
+          }
+      }
+    }
+
+    val (type, typeName) = getTypeInfo(schema)
+    return arrayOf(
+        Constants.DatabaseName,
+        Constants.DatabaseName,
+        tableName,
+        columnName,
+        type,
+        typeName,
+        1,
+        null,
+        null,
+        10,
+        if (schema.isNullable()) 1 else 0,
+        null,
+        null,
+        null,
+        null,
+        null,
+        position,
+        if (schema.isNullable()) "YES" else "NO")
   }
 
   @Throws(SQLException::class)

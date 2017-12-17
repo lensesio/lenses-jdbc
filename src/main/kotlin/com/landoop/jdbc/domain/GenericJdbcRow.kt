@@ -1,6 +1,6 @@
 package com.landoop.jdbc.domain
 
-data class GenericJdbcRow(private val array: Array<Any>,
+data class GenericJdbcRow(private val array: Array<Any?>,
                           private val columnMap: Map<String, Int>) : JdbcRow {
   override fun getProperty(column: Int): Any? {
     require(column >= 0 && column < array.size)

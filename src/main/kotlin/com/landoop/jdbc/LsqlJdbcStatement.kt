@@ -2,6 +2,7 @@ package com.landoop.jdbc
 
 import com.landoop.jdbc.domain.LoginRequest
 import com.landoop.jdbc.domain.LsqlData
+import com.landoop.jdbc.domain.LsqlJdbcData
 import java.sql.*
 
 class LsqlJdbcStatement(urls: List<String>,
@@ -58,7 +59,7 @@ class LsqlJdbcStatement(urls: List<String>,
     // Parse response data
     val hasResultSets = data.data.isNotEmpty()
 
-    this.currentResultSet = LsqlJdbcResultSet(this, )
+    this.currentResultSet = LsqlJdbcResultSet(this, LsqlJdbcData.from(data))
 
     return hasResultSets
   }
