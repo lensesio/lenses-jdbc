@@ -54,13 +54,13 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile "org.apache.logging.log4j:log4j-core:$log4j_version"
     compile "org.apache.logging.log4j:log4j-api:$log4j_version"
-    compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j_version"
     compile "joda-time:joda-time:$joda_version"
     compile "org.apache.httpcomponents:httpclient:$httpclient_version"
     //compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
     compile "org.apache.avro:avro:$avro_version"
 
+    testCompile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j_version"
     testCompile "io.kotlintest:kotlintest:$kotlin_test"
 
     //compile 'org.jetbrains.spek:spek-api:1.1.2'
