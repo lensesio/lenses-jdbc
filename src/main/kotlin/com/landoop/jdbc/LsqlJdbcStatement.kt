@@ -1,28 +1,20 @@
 package com.landoop.jdbc
 
-import com.landoop.jdbc.domain.LoginRequest
+import com.landoop.rest.domain.Credentials
 import com.landoop.jdbc.domain.LsqlData
 import com.landoop.jdbc.domain.LsqlJdbcData
+import com.landoop.rest.RestClient
 import java.sql.*
 
-class LsqlJdbcStatement(urls: List<String>,
-                        private var connection: Connection,
+class LsqlJdbcStatement(private val client: RestClient,
                         private var token: String,
                         private val user: String,
                         private val password: String) : Statement, AutoCloseable {
 
   private var currentResultSet: LsqlJdbcResultSet? = null
-  private var client: LsqlRestClient
-
-  init {
-    client = LsqlRestClient(urls)//, user, password)
-  }
-
-  private var closed: Boolean = false
 
   override fun close() {
-    client.close()
-    closed = true
+    // statements have no resources associated with them
   }
 
   @Throws(SQLException::class)
@@ -54,7 +46,7 @@ class LsqlJdbcStatement(urls: List<String>,
 
   @Throws(SQLException::class)
   override fun execute(lsql: String): Boolean {
-    val data: LsqlData = client.executeQuery(lsql, token, LoginRequest(user, password))
+    val data: LsqlData = client.executeQuery(lsql, token, Credentials(user, password))
 
     // Parse response data
     val hasResultSets = data.data.isNotEmpty()

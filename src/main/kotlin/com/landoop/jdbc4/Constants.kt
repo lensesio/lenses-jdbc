@@ -1,4 +1,4 @@
-package com.landoop.jdbc
+package com.landoop.jdbc4
 
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -7,6 +7,7 @@ import java.util.*
 object Constants {
   private val Logger = LoggerFactory.getLogger(Constants.javaClass)
 
+  val ProductName = "LSQL for Apache Kafka"
   val JdbcPrefix = "jdbc:lsql:kafka:"
   val DatabaseName = "default"
   val HttpHeaderKey = "X-Kafka-Lenses-Token"

@@ -1,6 +1,8 @@
 package com.landoop.jdbc
 
-import com.landoop.jdbc.domain.LoginRequest
+import com.landoop.jdbc4.Constants
+import com.landoop.rest.domain.Credentials
+import com.landoop.rest.RestClient
 import java.net.MalformedURLException
 import java.net.URL
 import java.sql.*
@@ -11,7 +13,7 @@ class LsqlJdbcConnection(jdbcUrl: String, info: Properties?) : Connection {
 
   val urls: List<String>
 
-  val restClient :LsqlRestClient
+  val restClient : RestClient
 
   var info: Properties? = info
     private set
@@ -267,8 +269,8 @@ class LsqlJdbcConnection(jdbcUrl: String, info: Properties?) : Connection {
     }
     password = pwd
     val urls = jdbcUrl.replace("jdbc:lsql:kafka:", "").split(',')
-    restClient = LsqlRestClient(urls)
-    token = restClient.login(LoginRequest(userName, password)).orElseThrow {
+    restClient = RestClient(urls)
+    token = restClient.authenticate(Credentials(userName, password)).orElseThrow {
       throw SQLException("An error occurred while connecting to ${urls.joinToString { "," }} for user ${userName} ")
     }
     this.urls = urls

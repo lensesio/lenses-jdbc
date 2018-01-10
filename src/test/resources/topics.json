@@ -1,0 +1,331 @@
+[
+  {
+    "keyType": "STRING",
+    "messagesPerSecond": 0,
+    "timestamp": 1515448870437,
+    "valueType": "AVRO",
+    "config": null,
+    "totalMessages": 20,
+    "replication": 1,
+    "topicName": "cc_data",
+    "isMarkedForDeletion": false,
+    "consumers": [],
+    "partitions": 1,
+    "isControlTopic": false,
+    "messagesPerPartition": [
+      {
+        "partition": 0,
+        "messages": 20,
+        "begin": 0,
+        "end": 20
+      }
+    ]
+  },
+  {
+    "keyType": "AVRO",
+    "messagesPerSecond": 0,
+    "timestamp": 1515448870438,
+    "valueType": "AVRO",
+    "config": [
+      {
+        "configuration": "segment.bytes",
+        "value": "8388608",
+        "defaultValue": "1073741824",
+        "documentation": "This configuration controls the segment file size for the log. Retention and cleaning is always done a file at a time so a larger segment size means fewer files but less granular control over retention."
+      },
+      {
+        "configuration": "cleanup.policy",
+        "value": "compact",
+        "defaultValue": "delete",
+        "documentation": "A string that is either \"delete\" or \"compact\". This string designates the retention policy to use on old log segments. The default policy (\"delete\") will discard old segments when their retention time or size limit has been reached. The \"compact\" setting will enable log compaction on the topic."
+      },
+      {
+        "configuration": "compression.type",
+        "value": "uncompressed",
+        "defaultValue": "producer",
+        "documentation": "Specify the final compression type for a given topic. This configuration accepts the standard compression codecs ('gzip', 'snappy', lz4). It additionally accepts 'uncompressed' which is equivalent to no compression; and 'producer' which means retain the original compression codec set by the producer."
+      },
+      {
+        "configuration": "retention.bytes",
+        "value": "26214400",
+        "defaultValue": "-1",
+        "documentation": "This configuration controls the maximum size a log can grow to before we will discard old log segments to free up space if we are using the \"delete\" retention policy. By default there is no size limit only a time limit."
+      }
+    ],
+    "totalMessages": 10000,
+    "replication": 1,
+    "topicName": "telecom_italia_grid",
+    "isMarkedForDeletion": false,
+    "consumers": [],
+    "partitions": 1,
+    "isControlTopic": false,
+    "messagesPerPartition": [
+      {
+        "partition": 0,
+        "messages": 10000,
+        "begin": 0,
+        "end": 10000
+      }
+    ]
+  },
+  {
+    "keyType": "STRING",
+    "messagesPerSecond": 5,
+    "timestamp": 1515448870429,
+    "valueType": "AVRO",
+    "config": null,
+    "totalMessages": 49510,
+    "replication": 1,
+    "topicName": "cc_payments",
+    "isMarkedForDeletion": false,
+    "consumers": [],
+    "partitions": 1,
+    "isControlTopic": false,
+    "messagesPerPartition": [
+      {
+        "partition": 0,
+        "messages": 49510,
+        "begin": 0,
+        "end": 49510
+      }
+    ]
+  },
+  {
+    "keyType": "BINARY",
+    "messagesPerSecond": 0,
+    "timestamp": 1515448870434,
+    "valueType": "JSON",
+    "config": [
+      {
+        "configuration": "cleanup.policy",
+        "value": "compact",
+        "defaultValue": "delete",
+        "documentation": "A string that is either \"delete\" or \"compact\". This string designates the retention policy to use on old log segments. The default policy (\"delete\") will discard old segments when their retention time or size limit has been reached. The \"compact\" setting will enable log compaction on the topic."
+      }
+    ],
+    "totalMessages": 9,
+    "replication": 1,
+    "topicName": "connect-configs",
+    "isMarkedForDeletion": false,
+    "consumers": [],
+    "partitions": 1,
+    "isControlTopic": true,
+    "messagesPerPartition": [
+      {
+        "partition": 0,
+        "messages": 9,
+        "begin": 0,
+        "end": 9
+      }
+    ]
+  },
+  {
+    "keyType": "AVRO",
+    "messagesPerSecond": 9,
+    "timestamp": 1515448870434,
+    "valueType": "AVRO",
+    "config": [
+      {
+        "configuration": "segment.bytes",
+        "value": "8388608",
+        "defaultValue": "1073741824",
+        "documentation": "This configuration controls the segment file size for the log. Retention and cleaning is always done a file at a time so a larger segment size means fewer files but less granular control over retention."
+      },
+      {
+        "configuration": "compression.type",
+        "value": "lz4",
+        "defaultValue": "producer",
+        "documentation": "Specify the final compression type for a given topic. This configuration accepts the standard compression codecs ('gzip', 'snappy', lz4). It additionally accepts 'uncompressed' which is equivalent to no compression; and 'producer' which means retain the original compression codec set by the producer."
+      },
+      {
+        "configuration": "retention.bytes",
+        "value": "26214400",
+        "defaultValue": "-1",
+        "documentation": "This configuration controls the maximum size a log can grow to before we will discard old log segments to free up space if we are using the \"delete\" retention policy. By default there is no size limit only a time limit."
+      }
+    ],
+    "totalMessages": 147405,
+    "replication": 1,
+    "topicName": "reddit_posts",
+    "isMarkedForDeletion": false,
+    "consumers": [
+      {
+        "coordinator": {
+          "id": 0,
+          "host": "127.0.0.1",
+          "port": 9092,
+          "rack": ""
+        },
+        "state": "Stable",
+        "id": "connect-nullsink",
+        "consumers": [
+          {
+            "clientId": "consumer-12",
+            "host": "/127.0.0.1",
+            "lag": 456,
+            "partition": 0,
+            "logEndOffset": 199218,
+            "currentOffset": 198762,
+            "consumerId": "consumer-12-8f728e05-37fa-4dad-bf7e-831b42097829",
+            "topic": "nyc_yellow_taxi_trip_data"
+          },
+          {
+            "clientId": "consumer-12",
+            "host": "/127.0.0.1",
+            "lag": 38,
+            "partition": 0,
+            "logEndOffset": 14870,
+            "currentOffset": 14832,
+            "consumerId": "consumer-12-8f728e05-37fa-4dad-bf7e-831b42097829",
+            "topic": "telecom_italia_data"
+          },
+          {
+            "clientId": "consumer-12",
+            "host": "/127.0.0.1",
+            "lag": 67,
+            "partition": 0,
+            "logEndOffset": 32628,
+            "currentOffset": 32561,
+            "consumerId": "consumer-12-8f728e05-37fa-4dad-bf7e-831b42097829",
+            "topic": "reddit_posts"
+          },
+          {
+            "clientId": "consumer-12",
+            "host": "/127.0.0.1",
+            "lag": 80,
+            "partition": 0,
+            "logEndOffset": 28850,
+            "currentOffset": 28770,
+            "consumerId": "consumer-12-8f728e05-37fa-4dad-bf7e-831b42097829",
+            "topic": "sea_vessel_position_reports"
+          },
+          {
+            "clientId": "consumer-12",
+            "host": "/127.0.0.1",
+            "lag": 45,
+            "partition": 1,
+            "logEndOffset": 24986,
+            "currentOffset": 24941,
+            "consumerId": "consumer-12-8f728e05-37fa-4dad-bf7e-831b42097829",
+            "topic": "reddit_posts"
+          },
+          {
+            "clientId": "consumer-14",
+            "host": "/127.0.0.1",
+            "lag": 40,
+            "partition": 2,
+            "logEndOffset": 14850,
+            "currentOffset": 14810,
+            "consumerId": "consumer-14-a589b130-5fe7-4c31-b5f3-38cb7490432e",
+            "topic": "telecom_italia_data"
+          },
+          {
+            "clientId": "consumer-14",
+            "host": "/127.0.0.1",
+            "lag": 76,
+            "partition": 2,
+            "logEndOffset": 30893,
+            "currentOffset": 30817,
+            "consumerId": "consumer-14-a589b130-5fe7-4c31-b5f3-38cb7490432e",
+            "topic": "sea_vessel_position_reports"
+          },
+          {
+            "clientId": "consumer-14",
+            "host": "/127.0.0.1",
+            "lag": 34,
+            "partition": 3,
+            "logEndOffset": 20459,
+            "currentOffset": 20425,
+            "consumerId": "consumer-14-a589b130-5fe7-4c31-b5f3-38cb7490432e",
+            "topic": "reddit_posts"
+          },
+          {
+            "clientId": "consumer-13",
+            "host": "/127.0.0.1",
+            "lag": 32,
+            "partition": 1,
+            "logEndOffset": 14890,
+            "currentOffset": 14858,
+            "consumerId": "consumer-13-08c33994-d3d0-417a-b7c8-803cf27ba243",
+            "topic": "telecom_italia_data"
+          },
+          {
+            "clientId": "consumer-13",
+            "host": "/127.0.0.1",
+            "lag": 98,
+            "partition": 1,
+            "logEndOffset": 39065,
+            "currentOffset": 38967,
+            "consumerId": "consumer-13-08c33994-d3d0-417a-b7c8-803cf27ba243",
+            "topic": "sea_vessel_position_reports"
+          },
+          {
+            "clientId": "consumer-13",
+            "host": "/127.0.0.1",
+            "lag": 66,
+            "partition": 2,
+            "logEndOffset": 43258,
+            "currentOffset": 43192,
+            "consumerId": "consumer-13-08c33994-d3d0-417a-b7c8-803cf27ba243",
+            "topic": "reddit_posts"
+          },
+          {
+            "clientId": "consumer-15",
+            "host": "/127.0.0.1",
+            "lag": 32,
+            "partition": 3,
+            "logEndOffset": 14773,
+            "currentOffset": 14741,
+            "consumerId": "consumer-15-56a03304-992f-4410-b958-a2ff41916e22",
+            "topic": "telecom_italia_data"
+          },
+          {
+            "clientId": "consumer-15",
+            "host": "/127.0.0.1",
+            "lag": 48,
+            "partition": 4,
+            "logEndOffset": 26074,
+            "currentOffset": 26026,
+            "consumerId": "consumer-15-56a03304-992f-4410-b958-a2ff41916e22",
+            "topic": "reddit_posts"
+          }
+        ],
+        "active": true
+      }
+    ],
+    "partitions": 5,
+    "isControlTopic": false,
+    "messagesPerPartition": [
+      {
+        "partition": 2,
+        "messages": 43258,
+        "begin": 0,
+        "end": 43258
+      },
+      {
+        "partition": 4,
+        "messages": 26074,
+        "begin": 0,
+        "end": 26074
+      },
+      {
+        "partition": 1,
+        "messages": 24986,
+        "begin": 0,
+        "end": 24986
+      },
+      {
+        "partition": 3,
+        "messages": 20459,
+        "begin": 0,
+        "end": 20459
+      },
+      {
+        "partition": 0,
+        "messages": 32628,
+        "begin": 0,
+        "end": 32628
+      }
+    ]
+  }
+]

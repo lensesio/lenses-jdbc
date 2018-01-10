@@ -2,6 +2,7 @@ package com.landoop.jdbc
 
 import com.landoop.jdbc.avro.toJdbcFields
 import com.landoop.jdbc.domain.JdbcField
+import com.landoop.jdbc4.Constants
 import org.apache.avro.Schema
 import java.sql.ResultSetMetaData
 import java.sql.SQLException

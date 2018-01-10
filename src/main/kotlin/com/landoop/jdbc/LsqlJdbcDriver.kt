@@ -1,5 +1,6 @@
 package com.landoop.jdbc
 
+import com.landoop.jdbc4.Constants
 import org.slf4j.LoggerFactory
 import java.sql.*
 import java.util.*

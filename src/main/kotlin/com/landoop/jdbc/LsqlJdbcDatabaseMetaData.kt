@@ -4,7 +4,8 @@ import com.landoop.Utils
 import com.landoop.jdbc.avro.fromUnion
 import com.landoop.jdbc.avro.isNullable
 import com.landoop.jdbc.domain.GenericJdbcData
-import com.landoop.jdbc.domain.LoginRequest
+import com.landoop.jdbc4.Constants
+import com.landoop.rest.domain.Credentials
 import org.apache.avro.LogicalType
 import org.apache.avro.Schema
 import org.apache.avro.SchemaBuilder
@@ -429,7 +430,7 @@ class LsqlJdbcDatabaseMetaData : DatabaseMetaData {
         .nullableString("REF_GENERATION", null)
         .endRecord()
 
-    val tables = connection.restClient.listTables(connection.token, LoginRequest(connection.userName, connection.password))
+    val tables = connection.restClient.listTables(connection.token, Credentials(connection.userName, connection.password))
 
     val tablesArray = tables
         .filter { it ->
@@ -518,7 +519,7 @@ class LsqlJdbcDatabaseMetaData : DatabaseMetaData {
         .endRecord()
 
 
-    val tables = connection.restClient.listTables(connection.token, LoginRequest(connection.userName, connection.password))
+    val tables = connection.restClient.listTables(connection.token, Credentials(connection.userName, connection.password))
     val list: MutableList<Array<Any?>> = mutableListOf()
 
     tables.filter { it ->
