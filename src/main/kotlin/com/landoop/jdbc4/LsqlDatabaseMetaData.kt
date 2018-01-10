@@ -1,6 +1,7 @@
 package com.landoop.jdbc4
 
 import com.landoop.rest.RestClient
+import org.apache.avro.generic.GenericRecordBuilder
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.ResultSet
@@ -11,6 +12,10 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                            private val client: RestClient,
                            private val uri: String,
                            private val user: String) : DatabaseMetaData, Logging {
+
+  companion object {
+    val TABLE_TYPES = listOf("TABLE", "SYSTEM TABLE")
+  }
 
   override fun supportsSubqueriesInQuantifieds(): Boolean = false
 
@@ -30,8 +35,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun getAttributes(catalog: String?,
                              schemaPattern: String?,
                              typeNamePattern: String?,
-                             attributeNamePattern: String?): ResultSet {
-  }
+                             attributeNamePattern: String?): ResultSet = LsqlResultSet.emptyOf(Schemas.Attributes)
 
   override fun getDatabaseProductVersion(): String = "0" // todo
 
@@ -59,8 +63,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getMaxColumnsInSelect(): Int = 0
 
-  override fun getCatalogs(): ResultSet {
-  }
+  override fun getCatalogs(): ResultSet = LsqlResultSet.emptyOf(Schemas.Catalogs)
 
   override fun storesLowerCaseQuotedIdentifiers(): Boolean = false
 
@@ -93,11 +96,11 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getMaxConnections(): Int = 0
 
+  // todo implement
   override fun getTables(catalog: String?,
                          schemaPattern: String?,
                          tableNamePattern: String?,
-                         types: Array<out String>?): ResultSet {
-  }
+                         types: Array<out String>?): ResultSet = LsqlResultSet.emptyOf(Schemas.Tables)
 
   override fun supportsMultipleResultSets(): Boolean = true
 
@@ -106,6 +109,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun getFunctions(catalog: String?,
                             schemaPattern: String?,
                             functionNamePattern: String?): ResultSet {
+    return LsqlResultSet.emptyOf(Schemas.Functions)
   }
 
   override fun getSearchStringEscape(): String = "`"
@@ -122,7 +126,11 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun isCatalogAtStart(): Boolean = false
 
-  override fun getFunctionColumns(catalog: String?, schemaPattern: String?, functionNamePattern: String?, columnNamePattern: String?): ResultSet {
+  override fun getFunctionColumns(catalog: String?,
+                                  schemaPattern: String?,
+                                  functionNamePattern: String?,
+                                  columnNamePattern: String?): ResultSet {
+    return LsqlResultSet.emptyOf(Schemas.FunctionColumns)
   }
 
   override fun supportsTransactionIsolationLevel(level: Int): Boolean = false
@@ -132,7 +140,10 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun nullsAreSortedHigh(): Boolean = false
   override fun nullsAreSortedLow(): Boolean = false
 
-  override fun getPrimaryKeys(catalog: String?, schema: String?, table: String?): ResultSet {
+  override fun getPrimaryKeys(catalog: String?,
+                              schema: String?,
+                              table: String?): ResultSet {
+    return LsqlResultSet.emptyOf(Schemas.PrimaryKeys)
   }
 
   override fun getProcedureTerm(): String = "Function"
@@ -165,6 +176,12 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun supportsOpenCursorsAcrossRollback(): Boolean = false
 
   override fun getTableTypes(): ResultSet {
+    val records = TABLE_TYPES.map {
+      GenericRecordBuilder(Schemas.TableTypes)
+          .set("TABLE_TYPE", it)
+          .build()
+    }
+    return LsqlResultSet.fromRecords(Schemas.TableTypes, records)
   }
 
   override fun getMaxTablesInSelect(): Int = 0
@@ -178,8 +195,11 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getMaxStatements(): Int = 0
 
-  override fun getProcedureColumns(catalog: String?, schemaPattern: String?, procedureNamePattern: String?, columnNamePattern: String?): ResultSet {
-  }
+  // todo add proper schema
+  override fun getProcedureColumns(catalog: String?,
+                                   schemaPattern: String?,
+                                   procedureNamePattern: String?,
+                                   columnNamePattern: String?): ResultSet = LsqlResultSet.empty()
 
   override fun allTablesAreSelectable(): Boolean = true
 
@@ -187,16 +207,19 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getCatalogSeparator(): String = "."
 
-  override fun getSuperTypes(catalog: String?, schemaPattern: String?, typeNamePattern: String?): ResultSet {
-  }
+  // todo add proper schema
+  override fun getSuperTypes(catalog: String?,
+                             schemaPattern: String?,
+                             typeNamePattern: String?): ResultSet = LsqlResultSet.empty()
 
   override fun getMaxBinaryLiteralLength(): Int = 0
 
-  override fun getTypeInfo(): ResultSet {
-  }
+  // todo implement
+  override fun getTypeInfo(): ResultSet = LsqlResultSet.emptyOf(Schemas.TypeInfo)
 
-  override fun getVersionColumns(catalog: String?, schema: String?, table: String?): ResultSet {
-  }
+  override fun getVersionColumns(catalog: String?,
+                                 schema: String?,
+                                 table: String?): ResultSet = LsqlResultSet.emptyOf(Schemas.VersionColumns)
 
   override fun supportsMultipleOpenResults(): Boolean = false
 
@@ -204,27 +227,20 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsMinimumSQLGrammar(): Boolean = false
 
-  override fun getMaxColumnsInGroupBy(): Int {
-  }
+  override fun getMaxColumnsInGroupBy(): Int = 0
 
-  override fun getNumericFunctions(): String {
-  }
+  override fun getNumericFunctions(): String = ""
 
-  override fun getExtraNameCharacters(): String {
-  }
+  override fun getExtraNameCharacters(): String = ""
 
-  override fun getMaxCursorNameLength(): Int {
-  }
+  override fun getMaxCursorNameLength(): Int = 0
 
+  override fun supportsSchemasInDataManipulation(): Boolean = false
 
-  override fun supportsSchemasInDataManipulation(): Boolean {
-  }
+  override fun getSchemas(): ResultSet = LsqlResultSet.emptyOf(Schemas.Schemas)
 
-  override fun getSchemas(): ResultSet {
-  }
-
-  override fun getSchemas(catalog: String?, schemaPattern: String?): ResultSet {
-  }
+  override fun getSchemas(catalog: String?,
+                          schemaPattern: String?): ResultSet = LsqlResultSet.emptyOf(Schemas.Schemas)
 
   override fun supportsCorrelatedSubqueries(): Boolean = false
 
@@ -232,11 +248,18 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun locatorsUpdateCopy(): Boolean = false
 
-  override fun getColumns(catalog: String?, schemaPattern: String?, tableNamePattern: String?, columnNamePattern: String?): ResultSet {
-  }
+  // todo this should be implemented
+  override fun getColumns(catalog: String?,
+                          schemaPattern: String?,
+                          tableNamePattern: String?,
+                          columnNamePattern: String?): ResultSet = LsqlResultSet.emptyOf(Schemas.Columns)
 
-  override fun getCrossReference(parentCatalog: String?, parentSchema: String?, parentTable: String?, foreignCatalog: String?, foreignSchema: String?, foreignTable: String?): ResultSet {
-  }
+  override fun getCrossReference(parentCatalog: String?,
+                                 parentSchema: String?,
+                                 parentTable: String?,
+                                 foreignCatalog: String?,
+                                 foreignSchema: String?,
+                                 foreignTable: String?): ResultSet = LsqlResultSet.emptyOf(Schemas.CrossReference)
 
   override fun ownDeletesAreVisible(type: Int): Boolean = false
   override fun othersUpdatesAreVisible(type: Int): Boolean = false
@@ -246,8 +269,11 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsCatalogsInIndexDefinitions(): Boolean = false
 
-  override fun getUDTs(catalog: String?, schemaPattern: String?, typeNamePattern: String?, types: IntArray?): ResultSet {
-  }
+  // todo add schema
+  override fun getUDTs(catalog: String?,
+                       schemaPattern: String?,
+                       typeNamePattern: String?,
+                       types: IntArray?): ResultSet = LsqlResultSet.empty()
 
   override fun getStringFunctions(): String = ""
 
@@ -292,13 +318,13 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun getPseudoColumns(catalog: String?,
                                 schemaPattern: String?,
                                 tableNamePattern: String?,
-                                columnNamePattern: String?): ResultSet {
-  }
+                                columnNamePattern: String?): ResultSet = LsqlResultSet.emptyOf(Schemas.PseudoColumns)
 
   override fun supportsMixedCaseQuotedIdentifiers(): Boolean = false
 
-  override fun getProcedures(catalog: String?, schemaPattern: String?, procedureNamePattern: String?): ResultSet {
-  }
+  override fun getProcedures(catalog: String?,
+                             schemaPattern: String?,
+                             procedureNamePattern: String?): ResultSet = LsqlResultSet.emptyOf(Schemas.Procedures)
 
   override fun getDriverMajorVersion(): Int = 0// todo
 
@@ -311,12 +337,10 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun getColumnPrivileges(catalog: String?,
                                    schema: String?,
                                    table: String?,
-                                   columnNamePattern: String?): ResultSet {
-  }
+                                   columnNamePattern: String?): ResultSet = LsqlResultSet.emptyOf(Schemas.ColumnPrivileges)
 
   override fun getImportedKeys(catalog: String?,
-                               schema: String?, table: String?): ResultSet {
-  }
+                               schema: String?, table: String?): ResultSet = LsqlResultSet.emptyOf(Schemas.ImportedKeys)
 
   override fun getRowIdLifetime(): RowIdLifetime = RowIdLifetime.ROWID_VALID_OTHER
 
@@ -331,8 +355,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                             schema: String?,
                             table: String?,
                             unique: Boolean,
-                            approximate: Boolean): ResultSet {
-  }
+                            approximate: Boolean): ResultSet = LsqlResultSet.emptyOf(Schemas.IndexInfo)
 
   override fun supportsSubqueriesInIns(): Boolean = true
 
@@ -376,8 +399,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getSuperTables(catalog: String?,
                               schemaPattern: String?,
-                              tableNamePattern: String?): ResultSet {
-  }
+                              tableNamePattern: String?): ResultSet = LsqlResultSet.emptyOf(Schemas.Supertables)
 
   override fun generatedKeyAlwaysReturned(): Boolean = false
 

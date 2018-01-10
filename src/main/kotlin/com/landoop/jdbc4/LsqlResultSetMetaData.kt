@@ -1,6 +1,5 @@
 package com.landoop.jdbc4
 
-import com.landoop.jdbc.avro.isNullable
 import org.apache.avro.LogicalTypes
 import org.apache.avro.Schema
 import java.sql.ResultSet

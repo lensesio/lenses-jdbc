@@ -2,6 +2,7 @@ package com.landoop.jdbc4
 
 import org.apache.avro.Schema
 import org.apache.avro.SchemaBuilder
+import org.apache.avro.generic.GenericData
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigDecimal
@@ -31,11 +32,24 @@ class LsqlResultSet(
     // the schema for this resultset
     schema: Schema,
     // all rows for the resultset are wrapped in a Row abstraction to support extra methods
-    private val records: Array<Row>) : ResultSet {
+    private val records: List<Row>) : ResultSet {
 
   internal companion object {
+
     val emptySchema: Schema = SchemaBuilder.fixed("empty").size(1)
-    fun empty() = LsqlResultSet(null, "", ResultSet.TYPE_FORWARD_ONLY, emptySchema, emptyArray())
+
+    fun empty() = LsqlResultSet(null, "", ResultSet.TYPE_FORWARD_ONLY, emptySchema, emptyList())
+
+    fun emptyOf(schema: Schema) = LsqlResultSet(null, schema.namespace, ResultSet.TYPE_SCROLL_INSENSITIVE, schema, emptyList())
+
+    fun fromRecords(schema: Schema, records: Collection<GenericData.Record>) =
+        LsqlResultSet(
+            null,
+            schema.namespace,
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            schema,
+            records.withIndex().map { (a, record) -> RecordRow(a, record) }
+        )
   }
 
   // this is a pointer to the current row, starts off pointing to "before the data"
@@ -206,8 +220,8 @@ class LsqlResultSet(
   override fun getBytes(label: String): ByteArray = currentRow().getBytes(meta.indexForLabel(label))
   override fun getDouble(index: Int): Double = currentRow().getDouble(index)
   override fun getDouble(label: String): Double = currentRow().getDouble(meta.indexForLabel(label))
-  override fun getRowId(index: Int): RowId = KafkaRowId(cursor.toString())
-  override fun getRowId(label: String?): RowId = KafkaRowId(cursor.toString())
+  override fun getRowId(index: Int): RowId = OffsetRowId(cursor.toString())
+  override fun getRowId(label: String?): RowId = OffsetRowId(cursor.toString())
   override fun getNString(index: Int): String = currentRow().getString(index)
   override fun getNString(label: String): String = currentRow().getString(meta.indexForLabel(label))
 
