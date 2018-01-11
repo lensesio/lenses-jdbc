@@ -17,6 +17,9 @@ class LsqlDriverTest : WordSpec() {
       "return null for connection when the url is invalid" {
 
       }
+      "require each url to be http or https" {
+
+      }
     }
   }
 }

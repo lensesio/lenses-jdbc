@@ -2,7 +2,7 @@ package com.landoop.jdbc4
 
 import io.kotlintest.specs.WordSpec
 
-class LsqlResultSetTest : WordSpec() {
+class RecordResultSetTest : WordSpec() {
   init {
     "LsqlResultSet" should {
       "support absolute positive position" {

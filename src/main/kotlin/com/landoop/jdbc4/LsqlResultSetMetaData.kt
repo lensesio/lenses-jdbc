@@ -8,11 +8,10 @@ import java.sql.SQLException
 import java.sql.SQLFeatureNotSupportedException
 import java.sql.Types
 
-class LsqlResultSetMetaData(private val tableName: String,
-                            private val schema: Schema,
+class LsqlResultSetMetaData(private val schema: Schema,
                             private val rs: ResultSet) : ResultSetMetaData {
 
-  override fun getTableName(column: Int): String = tableName
+  override fun getTableName(column: Int): String = TODO()
 
   override fun isNullable(column: Int): Int {
     return when (fieldForIndex(column).schema().isNullable()) {

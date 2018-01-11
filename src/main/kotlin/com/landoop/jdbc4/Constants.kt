@@ -15,7 +15,7 @@ object Constants {
   private val properties = Properties()
 
   init {
-    val inputStream = Constants::class.java.getResourceAsStream("lsql.properties")
+    val inputStream = Constants::class.java.getResourceAsStream("/lsql.properties")
     try {
       properties.load(inputStream)
     } catch (e: IOException) {

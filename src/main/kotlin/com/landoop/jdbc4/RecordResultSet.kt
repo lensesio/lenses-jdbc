@@ -24,11 +24,14 @@ import java.sql.Time
 import java.sql.Timestamp
 import java.util.*
 
-class LsqlResultSet(
+/**
+ * An implementation of ResultSet that uses Avro as an underlying data format.
+ * The resultset will generate the metadata from the Avro schema, and each row
+ * will be generated from Avro Records.
+ */
+class RecordResultSet(
     // the statement that created this resultset
     private val stmt: Statement?,
-    tableName: String,
-    private val fetchType: Int,
     // the schema for this resultset
     schema: Schema,
     // all rows for the resultset are wrapped in a Row abstraction to support extra methods
@@ -38,15 +41,13 @@ class LsqlResultSet(
 
     val emptySchema: Schema = SchemaBuilder.fixed("empty").size(1)
 
-    fun empty() = LsqlResultSet(null, "", ResultSet.TYPE_FORWARD_ONLY, emptySchema, emptyList())
+    fun empty() = RecordResultSet(null, emptySchema, emptyList())
 
-    fun emptyOf(schema: Schema) = LsqlResultSet(null, schema.namespace, ResultSet.TYPE_SCROLL_INSENSITIVE, schema, emptyList())
+    fun emptyOf(schema: Schema) = RecordResultSet(null, schema, emptyList())
 
     fun fromRecords(schema: Schema, records: Collection<GenericData.Record>) =
-        LsqlResultSet(
+        RecordResultSet(
             null,
-            schema.namespace,
-            ResultSet.TYPE_SCROLL_INSENSITIVE,
             schema,
             records.withIndex().map { (a, record) -> RecordRow(a, record) }
         )
@@ -59,7 +60,7 @@ class LsqlResultSet(
   var cursor = -1
   var direction = ResultSet.FETCH_FORWARD
 
-  private val meta = LsqlResultSetMetaData(tableName, schema, this)
+  private val meta = LsqlResultSetMetaData(schema, this)
   override fun getMetaData(): ResultSetMetaData = meta
 
   override fun findColumn(label: String): Int = meta.indexForLabel(label)
@@ -84,21 +85,13 @@ class LsqlResultSet(
 
   // == methods which mutate or query the resultset fetch parameters ==
 
-  override fun getType(): Int = fetchType
+  // our resultsets are always offline so can be scroll insensitive
+  override fun getType(): Int = ResultSet.TYPE_SCROLL_INSENSITIVE
 
-  override fun setFetchDirection(direction: Int) {
-    when (direction) {
-      ResultSet.FETCH_FORWARD -> this.direction = ResultSet.FETCH_FORWARD
-      ResultSet.FETCH_REVERSE -> {
-        if (type == ResultSet.TYPE_FORWARD_ONLY)
-          throw SQLException("Cannot set fetch direction to reverse on ResultSet.TYPE_FORWARD_ONLY")
-        this.direction = ResultSet.FETCH_REVERSE
-      }
-      else -> throw SQLException("Unsupported fetch direction $direction")
-    }
+  override fun setFetchDirection(direction: Int) { // no op since this resultset is offline
   }
 
-  override fun getFetchDirection(): Int = direction
+  override fun getFetchDirection(): Int = ResultSet.FETCH_FORWARD
 
   override fun getFetchSize(): Int = -1
 
@@ -119,20 +112,18 @@ class LsqlResultSet(
   override fun isAfterLast(): Boolean = cursor > last
 
   override fun next(): Boolean {
-    when (direction) {
-      ResultSet.FETCH_FORWARD -> cursor += 1
-      ResultSet.FETCH_REVERSE -> cursor -= 1
-    }
+    cursor += 1
+    if (cursor > last + 1)
+      cursor = last + 1
     return cursor in 0..last
   }
 
   override fun previous(): Boolean {
     if (type == ResultSet.TYPE_FORWARD_ONLY)
       throw SQLException("Cannot invoke previous() on ResultSet.TYPE_FORWARD_ONLY")
-    when (direction) {
-      ResultSet.FETCH_FORWARD -> cursor -= 1
-      ResultSet.FETCH_REVERSE -> cursor += 1
-    }
+    cursor -= 1
+    if (cursor < -1)
+      cursor = -1
     return cursor in 0..last
   }
 

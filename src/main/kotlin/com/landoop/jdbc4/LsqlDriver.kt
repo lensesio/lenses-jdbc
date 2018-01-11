@@ -2,12 +2,20 @@ package com.landoop.jdbc4
 
 import java.sql.Connection
 import java.sql.Driver
+import java.sql.DriverManager
 import java.sql.DriverPropertyInfo
 import java.sql.SQLFeatureNotSupportedException
 import java.util.*
 import java.util.logging.Logger
 
-class LsqlDriver : Driver {
+class LsqlDriver : Driver, Logging {
+
+  companion object : Logging {
+    init {
+      logger.debug("Registering LSQL JDBC Driver with DriverManager")
+      DriverManager.registerDriver(LsqlDriver())
+    }
+  }
 
   override fun getParentLogger(): Logger = throw SQLFeatureNotSupportedException()
 
