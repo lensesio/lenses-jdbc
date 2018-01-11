@@ -1,6 +1,6 @@
 package com.landoop.rest.domain
 
-data class Messages(
+data class Message(
     val timestamp: Long,
     val partition: Int,
     val key: String,

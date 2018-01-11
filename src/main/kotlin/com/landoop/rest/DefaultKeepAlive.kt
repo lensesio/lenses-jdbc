@@ -4,7 +4,7 @@ import org.apache.http.HttpResponse
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy
 import org.apache.http.protocol.HttpContext
 
-object LsqlKeepAlive : DefaultConnectionKeepAliveStrategy() {
+object DefaultKeepAlive : DefaultConnectionKeepAliveStrategy() {
   override fun getKeepAliveDuration(response: HttpResponse?, context: HttpContext?): Long {
     var keepAlive = super.getKeepAliveDuration(response, context)
     if (keepAlive == -1L) {
