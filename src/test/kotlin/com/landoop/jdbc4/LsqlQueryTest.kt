@@ -12,9 +12,12 @@ class LsqlQueryTest : WordSpec() {
 
     "JDBC Driver" should {
       "support wildcard selection" {
-        val q = "SELECT * FROM `cc_payments`"
+        val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
         val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
         val rs = conn.createStatement().execute(q)
+      }
+      "support projections" {
+
       }
       "support where clauses" should {
         val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'  and currency= 'USD' LIMIT 1000"
@@ -24,11 +27,11 @@ class LsqlQueryTest : WordSpec() {
       }
       "return true for results" {
         val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
-        conn.createStatement().execute("select * from `cc_payments` WHERE currency='USD'") shouldBe true
+        conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='USD'") shouldBe true
       }
       "return false if no results" {
         val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
-        conn.createStatement().execute("select * from `cc_payments` WHERE currency='wibble'") shouldBe false
+        conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='wibble'") shouldBe false
       }
     }
   }

@@ -57,8 +57,8 @@ class RecordResultSet(
   // which is the way jdbc works - the user is expected to move the offset before accessing any data
   // jdbc manages row id starting at 1, but we use 0 like it should be, so public api methods
   // must remember to convert
-  var cursor = -1
-  var direction = ResultSet.FETCH_FORWARD
+  private var cursor = -1
+  private var lastValue: Any? = null
 
   private val meta = LsqlResultSetMetaData(schema, this)
   override fun getMetaData(): ResultSetMetaData = meta
@@ -67,12 +67,13 @@ class RecordResultSet(
 
   override fun getStatement(): Statement? = stmt
 
+  override fun clearWarnings() {}
   override fun getWarnings(): SQLWarning? = null
 
-  override fun close() {
-    // these resultsets are entirely offline
-  }
+  // these resultsets are entirely offline
+  override fun close() {}
 
+  override fun isWrapperFor(iface: Class<*>): Boolean = iface.isInstance(this)
   override fun <T : Any?> unwrap(iface: Class<T>): T {
     try {
       return iface.cast(this)
@@ -81,22 +82,22 @@ class RecordResultSet(
     }
   }
 
-  override fun wasNull(): Boolean = false
+  override fun wasNull(): Boolean = lastValue == null
 
   // == methods which mutate or query the resultset fetch parameters ==
 
   // our resultsets are always offline so can be scroll insensitive
   override fun getType(): Int = ResultSet.TYPE_SCROLL_INSENSITIVE
 
-  override fun setFetchDirection(direction: Int) { // no op since this resultset is offline
-  }
+  // we do not support updates, so this method is irrelevant
+  // CLOSE is the nearest match
+  override fun getHoldability(): Int = ResultSet.CLOSE_CURSORS_AT_COMMIT
 
   override fun getFetchDirection(): Int = ResultSet.FETCH_FORWARD
+  override fun setFetchDirection(direction: Int) {} // no op since this resultset is offline
 
   override fun getFetchSize(): Int = -1
-
-  override fun setFetchSize(rows: Int) { // no op since this resultset is offline
-  }
+  override fun setFetchSize(rows: Int) {} // no op since this resultset is offline
 
   // == methods that mutate or query the cursor ==
 
@@ -109,6 +110,7 @@ class RecordResultSet(
 
   override fun isLast(): Boolean = cursor == last
   override fun isFirst(): Boolean = cursor == 0
+  override fun isBeforeFirst(): Boolean = cursor < 0
   override fun isAfterLast(): Boolean = cursor > last
 
   override fun next(): Boolean {
@@ -161,8 +163,9 @@ class RecordResultSet(
   }
 
   override fun absolute(row: Int): Boolean {
-    checkCursorBounds(row)
-    cursor = row
+    // minus 1 because the public API is 1 indexed
+    checkCursorBounds(row - 1)
+    cursor = row - 1
     return true
   }
 
@@ -171,64 +174,60 @@ class RecordResultSet(
       throw IndexOutOfBoundsException("Attempted to move cursor out of bounds: $p")
   }
 
-  override fun getHoldability(): Int = ResultSet.CLOSE_CURSORS_AT_COMMIT
+  private fun <T> trackObject(t: T): T {
+    this.lastValue = t
+    return t
+  }
 
   // == methods that return data types -> just delegation to the row interface
 
-  override fun getDate(index: Int): Date = currentRow().getDate(index)
-  override fun getDate(label: String): Date = getDate(meta.indexForLabel(label))
-  override fun getDate(index: Int, cal: Calendar?): Date = currentRow().getDate(index, cal)
-  override fun getDate(label: String, cal: Calendar?): Date = currentRow().getDate(meta.indexForLabel(label), cal)
-  override fun getBoolean(index: Int): Boolean = currentRow().getBoolean(index)
-  override fun getBoolean(label: String): Boolean = currentRow().getBoolean(meta.indexForLabel(label))
-  override fun getBigDecimal(index: Int, scale: Int): BigDecimal = currentRow().getBigDecimal(index, scale)
-  override fun getBigDecimal(label: String, scale: Int): BigDecimal = currentRow().getBigDecimal(meta.indexForLabel(label), scale)
-  override fun getBigDecimal(index: Int): BigDecimal = currentRow().getBigDecimal(index)
-  override fun getBigDecimal(label: String): BigDecimal = currentRow().getBigDecimal(meta.indexForLabel(label))
-  override fun getTime(index: Int): Time = currentRow().getTime(index)
-  override fun getTime(label: String): Time = currentRow().getTime(meta.indexForLabel(label))
-  override fun getTime(index: Int, cal: Calendar): Time = currentRow().getTime(index, cal)
-  override fun getTime(label: String, cal: Calendar): Time = currentRow().getTime(meta.indexForLabel(label), cal)
-  override fun getByte(index: Int): Byte = currentRow().getByte(index)
-  override fun getByte(label: String): Byte = currentRow().getByte(meta.indexForLabel(label))
-  override fun getString(index: Int): String = currentRow().getString(index)
-  override fun getString(label: String): String = currentRow().getString(meta.indexForLabel(label))
-  override fun getObject(index: Int): Any = currentRow().getObject(index)
-  override fun getObject(label: String): Any = currentRow().getObject(meta.indexForLabel(label))
-  override fun getLong(index: Int): Long = currentRow().getLong(index)
-  override fun getLong(label: String): Long = currentRow().getLong(meta.indexForLabel(label))
-  override fun getFloat(index: Int): Float = currentRow().getFloat(index)
-  override fun getFloat(label: String): Float = currentRow().getFloat(meta.indexForLabel(label))
-  override fun getInt(index: Int): Int = currentRow().getInt(index)
-  override fun getInt(label: String): Int = currentRow().getInt(meta.indexForLabel(label))
-  override fun getShort(index: Int): Short = currentRow().getShort(index)
-  override fun getShort(label: String): Short = currentRow().getShort(meta.indexForLabel(label))
-  override fun getTimestamp(index: Int): Timestamp = currentRow().getTimestamp(index)
-  override fun getTimestamp(label: String): Timestamp = currentRow().getTimestamp(meta.indexForLabel(label))
-  override fun getTimestamp(index: Int, cal: Calendar): Timestamp = currentRow().getTimestamp(index, cal)
-  override fun getTimestamp(label: String, cal: Calendar): Timestamp = currentRow().getTimestamp(meta.indexForLabel(label), cal)
-  override fun getBytes(index: Int): ByteArray = currentRow().getBytes(index)
-  override fun getBytes(label: String): ByteArray = currentRow().getBytes(meta.indexForLabel(label))
-  override fun getDouble(index: Int): Double = currentRow().getDouble(index)
-  override fun getDouble(label: String): Double = currentRow().getDouble(meta.indexForLabel(label))
-  override fun getRowId(index: Int): RowId = OffsetRowId(cursor.toString())
-  override fun getRowId(label: String?): RowId = OffsetRowId(cursor.toString())
-  override fun getNString(index: Int): String = currentRow().getString(index)
-  override fun getNString(label: String): String = currentRow().getString(meta.indexForLabel(label))
+  override fun getDate(index: Int): Date? = trackObject(currentRow().getDate(index))
+  override fun getDate(label: String): Date? = trackObject(getDate(meta.indexForLabel(label)))
+  override fun getDate(index: Int, cal: Calendar?): Date? = trackObject(currentRow().getDate(index, cal))
+  override fun getDate(label: String, cal: Calendar?): Date? = trackObject(currentRow().getDate(meta.indexForLabel(label), cal))
+  override fun getBoolean(index: Int): Boolean = trackObject(currentRow().getBoolean(index))
+  override fun getBoolean(label: String): Boolean = trackObject(currentRow().getBoolean(meta.indexForLabel(label)))
+  override fun getBigDecimal(index: Int, scale: Int): BigDecimal? = trackObject(currentRow().getBigDecimal(index, scale))
+  override fun getBigDecimal(label: String, scale: Int): BigDecimal? = trackObject(currentRow().getBigDecimal(meta.indexForLabel(label), scale))
+  override fun getBigDecimal(index: Int): BigDecimal? = trackObject(currentRow().getBigDecimal(index))
+  override fun getBigDecimal(label: String): BigDecimal? = trackObject(currentRow().getBigDecimal(meta.indexForLabel(label)))
+  override fun getTime(index: Int): Time? = trackObject(currentRow().getTime(index))
+  override fun getTime(label: String): Time? = trackObject(currentRow().getTime(meta.indexForLabel(label)))
+  override fun getTime(index: Int, cal: Calendar): Time? = trackObject(currentRow().getTime(index, cal))
+  override fun getTime(label: String, cal: Calendar): Time? = trackObject(currentRow().getTime(meta.indexForLabel(label), cal))
+  override fun getByte(index: Int): Byte = trackObject(currentRow().getByte(index))
+  override fun getByte(label: String): Byte = trackObject(currentRow().getByte(meta.indexForLabel(label)))
+  override fun getString(index: Int): String? = trackObject(currentRow().getString(index))
+  override fun getString(label: String): String? = trackObject(currentRow().getString(meta.indexForLabel(label)))
+  override fun getObject(index: Int): Any? = trackObject(currentRow().getObject(index))
+  override fun getObject(label: String): Any? = trackObject(currentRow().getObject(meta.indexForLabel(label)))
+  override fun getLong(index: Int): Long = trackObject(currentRow().getLong(index))
+  override fun getLong(label: String): Long = trackObject(currentRow().getLong(meta.indexForLabel(label)))
+  override fun getFloat(index: Int): Float = trackObject(currentRow().getFloat(index))
+  override fun getFloat(label: String): Float = trackObject(currentRow().getFloat(meta.indexForLabel(label)))
+  override fun getInt(index: Int): Int = trackObject(currentRow().getInt(index))
+  override fun getInt(label: String): Int = trackObject(currentRow().getInt(meta.indexForLabel(label)))
+  override fun getShort(index: Int): Short = trackObject(currentRow().getShort(index))
+  override fun getShort(label: String): Short = trackObject(currentRow().getShort(meta.indexForLabel(label)))
+  override fun getTimestamp(index: Int): Timestamp? = trackObject(currentRow().getTimestamp(index))
+  override fun getTimestamp(label: String): Timestamp? = trackObject(currentRow().getTimestamp(meta.indexForLabel(label)))
+  override fun getTimestamp(index: Int, cal: Calendar): Timestamp? = trackObject(currentRow().getTimestamp(index, cal))
+  override fun getTimestamp(label: String, cal: Calendar): Timestamp? = trackObject(currentRow().getTimestamp(meta.indexForLabel(label), cal))
+  override fun getBytes(index: Int): ByteArray? = trackObject(currentRow().getBytes(index))
+  override fun getBytes(label: String): ByteArray? = trackObject(currentRow().getBytes(meta.indexForLabel(label)))
+  override fun getDouble(index: Int): Double = trackObject(currentRow().getDouble(index))
+  override fun getDouble(label: String): Double = trackObject(currentRow().getDouble(meta.indexForLabel(label)))
+  override fun getRowId(index: Int): RowId = trackObject(LongRowId(cursor.toLong()))
+  override fun getRowId(label: String?): RowId = trackObject(LongRowId(cursor.toLong()))
+  override fun getNString(index: Int): String? = trackObject(currentRow().getString(index))
+  override fun getNString(label: String): String? = trackObject(currentRow().getString(meta.indexForLabel(label)))
 
   override fun getCursorName(): String = throw SQLFeatureNotSupportedException()
 
   override fun isClosed(): Boolean = true
 
-  override fun getCharacterStream(index: Int): Reader = currentRow().charStream(index)
-  override fun getCharacterStream(label: String): Reader = currentRow().charStream(meta.indexForLabel(label))
-
-  override fun isBeforeFirst(): Boolean = cursor < 0
-
-  override fun isWrapperFor(iface: Class<*>): Boolean = iface.isInstance(this)
-
-  override fun clearWarnings() {}
-
+  override fun getCharacterStream(index: Int): Reader? = currentRow().charStream(index)
+  override fun getCharacterStream(label: String): Reader? = currentRow().charStream(meta.indexForLabel(label))
 
   override fun getConcurrency(): Int = ResultSet.CONCUR_READ_ONLY
 

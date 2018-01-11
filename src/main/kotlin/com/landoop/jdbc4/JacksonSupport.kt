@@ -3,7 +3,6 @@ package com.landoop.jdbc4
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import java.io.InputStream
@@ -29,8 +28,4 @@ object JacksonSupport {
   inline fun <reified T : Any> fromJson(stream: InputStream): T {
     return mapper.readValue<T>(stream, T::class.java)
   }
-
-  fun asJson(input: InputStream): JsonNode = mapper.readTree(input)
-
-  fun asJson(input: String): JsonNode = mapper.readTree(input)
 }

@@ -36,7 +36,7 @@ class RecordRow(val pos: Int,
     }
   }
 
-  override fun getObject(index: Int): Any = record.get(index)
+  override fun getObject(index: Int): Any? = record.get(index)
 
   override fun getFloat(index: Int): Float {
     val value = getObject(index)
@@ -138,7 +138,10 @@ class RecordRow(val pos: Int,
     }
   }
 
-  override fun getString(index: Int): String = getObject(index).toString()
+  override fun getString(index: Int): String? {
+    val value = getObject(index)
+    return if (value == null) null else value.toString()
+  }
 
   override fun getLong(index: Int): Long {
     val value = getObject(index)
@@ -170,5 +173,5 @@ class RecordRow(val pos: Int,
     }
   }
 
-  override fun getRowId(index: Int): RowId = OffsetRowId(index.toString())
+  override fun getRowId(index: Int): RowId = LongRowId(index.toLong())
 }

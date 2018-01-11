@@ -3,6 +3,7 @@ package com.landoop.rest
 import com.landoop.jdbc4.Constants
 import com.landoop.jdbc4.JacksonSupport
 import com.landoop.rest.domain.Credentials
+import com.landoop.rest.domain.JdbcData
 import com.landoop.rest.domain.LoginResponse
 import com.landoop.rest.domain.Message
 import com.landoop.rest.domain.Topic
@@ -16,6 +17,8 @@ import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClientBuilder
 import org.slf4j.LoggerFactory
 import java.io.IOException
+import java.net.URI
+import java.net.URL
 import java.sql.SQLException
 import javax.security.sasl.AuthenticationException
 
@@ -66,7 +69,10 @@ class RestClient(private val urls: List<String>,
         when (resp.statusLine.statusCode) {
           200, 201, 202 -> return respFn(resp)
           401, 403 -> throw AuthenticationException("Invalid credentials for user '${credentials.user}'")
-          else -> SQLException("Invalid status code ${resp.statusLine.reasonPhrase}")
+          else -> {
+            val body = resp.entity.content.bufferedReader().use { it.readText() }
+            SQLException(" ${resp.statusLine.reasonPhrase} Invalid request: $body")
+          }
         }
       } catch (e: IOException) {
         e
@@ -128,11 +134,41 @@ class RestClient(private val urls: List<String>,
     return attemptAuthenticated(requestFn, responseFn)
   }
 
+  internal fun escape(url: String): String {
+    val u = URL(url)
+    val uri = URI(
+        u.protocol,
+        u.authority,
+        u.path,
+        u.query,
+        u.ref
+    )
+    return uri.toURL().toString().replace("%20", "+")
+  }
+
+  fun query(sql: String): List<JdbcData> {
+
+    val requestFn: (String) -> HttpUriRequest = {
+      val endpoint = "$it/api/jdbc/data?sql=$sql"
+      val escaped = escape(endpoint)
+      logger.debug("Executing query $escaped")
+      RestClient.jsonGet(escaped)
+    }
+
+    val responseFn: (HttpResponse) -> List<JdbcData> = {
+      JacksonSupport.fromJson(it.entity.content)
+    }
+
+    return attemptAuthenticated(requestFn, responseFn)
+  }
+
   fun messages(sql: String): List<Message> {
 
     val requestFn: (String) -> HttpUriRequest = {
       val endpoint = "$it/api/sql/data?sql=$sql"
-      RestClient.jsonGet(endpoint)
+      val escaped = escape(endpoint)
+      logger.debug("Executing query $escaped")
+      RestClient.jsonGet(escaped)
     }
 
     val responseFn: (HttpResponse) -> List<Message> = {
