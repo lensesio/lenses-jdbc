@@ -2,13 +2,40 @@ package com.landoop.jdbc4
 
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
+import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.ProducerRecord
 import java.sql.DriverManager
+import java.util.*
 
-class LsqlQueryIntTest : WordSpec() {
+data class Starship(val name: String, val designation: String)
+
+class QueryIntegrationTest : WordSpec() {
 
   init {
 
-    LsqlDriver()
+    // populate kafka with some data so we can test it
+    val props = Properties()
+    props.put("bootstrap.servers", "localhost:9092")
+    props.put("acks", "all")
+    props.put("retries", 0)
+    props.put("batch.size", 16384)
+    props.put("linger.ms", 1)
+    props.put("buffer.memory", 33554432)
+    props.put("key.serializer", io.confluent.kafka.serializers.KafkaAvroSerializer::class.java.simpleName)
+    props.put("value.serializer", io.confluent.kafka.serializers.KafkaAvroSerializer::class.java.simpleName)
+    props.put("schema.registry.url", "http://127.0.0.1:8081")
+
+    val starships = listOf(
+        Starship("USS Enterprise", "1701D"),
+        Starship("USS Discovery", "1031")
+    )
+
+    val producer = KafkaProducer<String, String>(props)
+    for (starship in starships) {
+      producer.send(ProducerRecord<String, String>("starfleet", "enterprise", JacksonSupport.toJson(starship)))
+    }
+
+    producer.close()
 
     "JDBC Driver" should {
       "support wildcard selection" {
