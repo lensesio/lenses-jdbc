@@ -1,0 +1,6 @@
+services:
+- landoop/kafka-lenses-dev:latest
+
+job1:
+  script:
+    - "sbt test"
