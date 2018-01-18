@@ -31,16 +31,22 @@ class LsqlStatement(private val conn: Connection,
   override fun execute(sql: String): Boolean {
     val data = client.query(sql)
 
-    val schema = Schema.Parser().parse(data.schema)!!
-
-    val rows = data.data.map {
-      val node = JacksonSupport.mapper.readTree(it)
-      JsonNodeRow(node)
+    // if the reply had no results, then the schema will be null
+    when (data.schema) {
+      null -> {
+        rs = RowResultSet.empty()
+        return false
+      }
+      else -> {
+        val schema = Schema.Parser().parse(data.schema)!!
+        val rows = data.data.map {
+          val node = JacksonSupport.mapper.readTree(it)
+          JsonNodeRow(node)
+        }
+        rs = RowResultSet(this, schema, rows)
+        return true
+      }
     }
-
-    rs = RowResultSet(this, schema, rows)
-
-    return rows.isNotEmpty()
   }
 
   override fun executeQuery(sql: String): ResultSet {

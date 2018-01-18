@@ -9,7 +9,7 @@ data class Message(
     val value: String)
 
 data class JdbcData(
-    val topic: String,
+    val topic: String?,
     val data: List<String>,
-    val schema: String
+    val schema: String?
 )
