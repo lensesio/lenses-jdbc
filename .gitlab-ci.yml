@@ -1,6 +1,9 @@
 services:
 - landoop/kafka-lenses-dev:latest
 
+before_script:
+  - apt-get update -qq && apt-get install -y -qq sbt
+
 job1:
   script:
     - "sbt test"
