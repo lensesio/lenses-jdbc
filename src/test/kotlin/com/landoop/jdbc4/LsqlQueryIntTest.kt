@@ -4,7 +4,7 @@ import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
 import java.sql.DriverManager
 
-class LsqlQueryTest : WordSpec() {
+class LsqlQueryIntTest : WordSpec() {
 
   init {
 

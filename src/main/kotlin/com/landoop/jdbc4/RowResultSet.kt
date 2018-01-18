@@ -29,27 +29,27 @@ import java.util.*
  * The resultset will generate the metadata from the Avro schema, and each row
  * will be generated from Avro Records.
  */
-class RecordResultSet(
+class RowResultSet(
     // the statement that created this resultset
     private val stmt: Statement?,
     // the schema for this resultset
     schema: Schema,
     // all rows for the resultset are wrapped in a Row abstraction to support extra methods
-    private val records: List<Row>) : ResultSet {
+    private val rows: List<Row>) : ResultSet {
 
   internal companion object {
 
     val emptySchema: Schema = SchemaBuilder.fixed("empty").size(1)
 
-    fun empty() = RecordResultSet(null, emptySchema, emptyList())
+    fun empty() = RowResultSet(null, emptySchema, emptyList())
 
-    fun emptyOf(schema: Schema) = RecordResultSet(null, schema, emptyList())
+    fun emptyOf(schema: Schema) = RowResultSet(null, schema, emptyList())
 
     fun fromRecords(schema: Schema, records: Collection<GenericData.Record>) =
-        RecordResultSet(
+        RowResultSet(
             null,
             schema,
-            records.withIndex().map { (a, record) -> RecordRow(a, record) }
+            records.map { RecordRow(it) }
         )
   }
 
@@ -101,12 +101,12 @@ class RecordResultSet(
 
   // == methods that mutate or query the cursor ==
 
-  private val last = records.size - 1
+  private val last = rows.size - 1
 
   override fun getRow(): Int = cursor
 
   // returns the row at the current cursor position
-  private fun currentRow(): Row = records[cursor]
+  private fun currentRow(): Row = rows[cursor]
 
   override fun isLast(): Boolean = cursor == last
   override fun isFirst(): Boolean = cursor == 0
@@ -151,7 +151,7 @@ class RecordResultSet(
   override fun last(): Boolean {
     if (type == ResultSet.TYPE_FORWARD_ONLY)
       throw SQLException("Cannot invoke last() on ResultSet.TYPE_FORWARD_ONLY")
-    cursor = records.size - 1
+    cursor = rows.size - 1
     return true
   }
 

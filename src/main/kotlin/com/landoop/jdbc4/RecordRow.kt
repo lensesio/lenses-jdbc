@@ -15,8 +15,7 @@ import java.util.*
 /**
  * An implementation of Row that uses an Avro GenericRecord.
  */
-class RecordRow(val pos: Int,
-                val record: GenericRecord) : Row {
+class RecordRow(val record: GenericRecord) : Row {
 
   override fun getByte(index: Int): Byte {
     val value = getObject(index)

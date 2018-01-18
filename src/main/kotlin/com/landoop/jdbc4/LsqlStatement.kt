@@ -1,6 +1,10 @@
 package com.landoop.jdbc4
 
 import com.landoop.rest.RestClient
+import org.apache.avro.Schema
+import org.apache.avro.generic.GenericDatumReader
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.io.DecoderFactory
 import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.SQLException
@@ -12,7 +16,7 @@ class LsqlStatement(private val conn: Connection,
                     private val client: RestClient) : Statement, AutoCloseable {
 
   // the last resultset retrieved by this statement
-  private var rs: ResultSet = RecordResultSet.empty()
+  private var rs: ResultSet = RowResultSet.empty()
 
   override fun getResultSetType(): Int = ResultSet.TYPE_FORWARD_ONLY
 
@@ -29,8 +33,19 @@ class LsqlStatement(private val conn: Connection,
 
   override fun execute(sql: String): Boolean {
     val data = client.query(sql)
-    // rs = RecordResultSet(this, schema, records)
-    return true
+
+    val schema = Schema.Parser().parse(data.schema)!!
+
+    val rows = data.data.map {
+      val decoder = DecoderFactory.get().jsonDecoder(schema, it)
+      val reader = GenericDatumReader<GenericRecord>(schema)
+      val record = reader.read(null, decoder)!!
+      RecordRow(record)
+    }
+
+    rs = RowResultSet(this, schema, rows)
+
+    return rows.isNotEmpty()
   }
 
   override fun getConnection(): Connection = conn

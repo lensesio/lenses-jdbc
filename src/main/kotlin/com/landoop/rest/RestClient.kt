@@ -146,7 +146,7 @@ class RestClient(private val urls: List<String>,
     return uri.toURL().toString().replace("%20", "+")
   }
 
-  fun query(sql: String): List<JdbcData> {
+  fun query(sql: String): JdbcData {
 
     val requestFn: (String) -> HttpUriRequest = {
       val endpoint = "$it/api/jdbc/data?sql=$sql"
@@ -155,11 +155,11 @@ class RestClient(private val urls: List<String>,
       RestClient.jsonGet(escaped)
     }
 
-    val responseFn: (HttpResponse) -> List<JdbcData> = {
+    val responseFn: (HttpResponse) -> JdbcData = {
       JacksonSupport.fromJson(it.entity.content)
     }
 
-    return attemptAuthenticated(requestFn, responseFn)
+    return attemptAuthenticatedWithRetry(requestFn, responseFn)
   }
 
   fun messages(sql: String): List<Message> {

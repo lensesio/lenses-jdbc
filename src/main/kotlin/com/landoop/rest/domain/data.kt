@@ -10,5 +10,6 @@ data class Message(
 
 data class JdbcData(
     val topic: String,
-    val messages: List<String>,
-    val schema: String)
+    val data: List<String>,
+    val schema: String
+)

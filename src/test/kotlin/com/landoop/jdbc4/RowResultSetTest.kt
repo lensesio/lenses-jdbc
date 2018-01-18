@@ -5,7 +5,7 @@ import io.kotlintest.specs.WordSpec
 import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericRecordBuilder
 
-class RecordResultSetTest : WordSpec() {
+class RowResultSetTest : WordSpec() {
   init {
     "LsqlResultSet" should {
       "use next to iterate records" {
@@ -21,9 +21,9 @@ class RecordResultSetTest : WordSpec() {
             .optionalString("foo")
             .endRecord()
 
-        val records = listOf(RecordRow(1, GenericRecordBuilder(schema).set("foo", null).build()))
+        val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", null).build()))
 
-        val rs = RecordResultSet(null, schema, records)
+        val rs = RowResultSet(null, schema, records)
         rs.next()
         rs.getString("foo") shouldBe null
       }
@@ -60,10 +60,10 @@ class RecordResultSetTest : WordSpec() {
             .optionalString("foo")
             .endRecord()
         val records = listOf(
-            RecordRow(0, GenericRecordBuilder(schema).set("foo", "woo").build()),
-            RecordRow(1, GenericRecordBuilder(schema).set("foo", null).build())
+            RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()),
+            RecordRow(GenericRecordBuilder(schema).set("foo", null).build())
         )
-        val rs = RecordResultSet(null, schema, records)
+        val rs = RowResultSet(null, schema, records)
         rs.next()
         rs.getString("foo") shouldBe "woo"
         rs.wasNull() shouldBe false
