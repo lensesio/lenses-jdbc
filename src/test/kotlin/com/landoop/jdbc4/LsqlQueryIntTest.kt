@@ -14,17 +14,25 @@ class LsqlQueryIntTest : WordSpec() {
       "support wildcard selection" {
         val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
         val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
-        val rs = conn.createStatement().execute(q)
+        val stmt = conn.createStatement()
+        val rs = stmt.executeQuery(q)
+        rs.metaData.columnCount shouldBe 6
+        rs.metaData.getColumnLabel(1) shouldBe "id"
+        rs.metaData.getColumnLabel(2) shouldBe "time"
+        rs.metaData.getColumnLabel(3) shouldBe "amount"
+        rs.metaData.getColumnLabel(4) shouldBe "currency"
+        rs.metaData.getColumnLabel(5) shouldBe "creditCardId"
+        rs.metaData.getColumnLabel(6) shouldBe "merchantId"
       }
-      "support projections" {
-
-      }
-      "support where clauses" should {
-        val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'  and currency= 'USD' LIMIT 1000"
-      }
-      "support limits" should {
-        val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'  and currency= 'USD' LIMIT 1000"
-      }
+//      "support projections" {
+//
+//      }
+//      "support where clauses"  {
+//        val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'  and currency= 'USD' LIMIT 1000"
+//      }
+//      "support limits"  {nn
+//        val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'  and currency= 'USD' LIMIT 1000"
+//      }
       "return true for results" {
         val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
         conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='USD'") shouldBe true

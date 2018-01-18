@@ -143,9 +143,9 @@ class LsqlResultSetMetaData(private val schema: Schema,
   override fun getColumnTypeName(column: Int): String = fieldForIndex(column).schema().type.name
 
   private fun fieldForIndex(index: Int): Schema.Field {
-    if (index < 0 || index > schema.fields.size - 1)
-      throw IndexOutOfBoundsException("Index $index is out of bounds")
-    return schema.fields[index + 1]
+    if (index < 1 || index > schema.fields.size)
+      throw IndexOutOfBoundsException("Index $index is out of bounds; note: JDBC drivers are 1-indexed")
+    return schema.fields[index - 1]
   }
 
   override fun getColumnName(column: Int): String = fieldForIndex(column).name()

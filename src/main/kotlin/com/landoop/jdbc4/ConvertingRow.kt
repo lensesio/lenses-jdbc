@@ -1,6 +1,5 @@
 package com.landoop.jdbc4
 
-import org.apache.avro.generic.GenericRecord
 import java.io.Reader
 import java.io.StringReader
 import java.math.BigDecimal
@@ -13,9 +12,9 @@ import java.time.ZoneId
 import java.util.*
 
 /**
- * An implementation of Row that uses an Avro GenericRecord.
+ * An implementation of Row that will attempt to convert its values to the required data type.
  */
-class RecordRow(val record: GenericRecord) : Row {
+abstract class ConvertingRow : Row {
 
   override fun getByte(index: Int): Byte {
     val value = getObject(index)
@@ -34,8 +33,6 @@ class RecordRow(val record: GenericRecord) : Row {
       else -> throw SQLException("Unable to convert $value to Reader")
     }
   }
-
-  override fun getObject(index: Int): Any? = record.get(index)
 
   override fun getFloat(index: Int): Float {
     val value = getObject(index)
