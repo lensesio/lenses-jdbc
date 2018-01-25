@@ -1,3 +1,8 @@
+image: java:8
+
+stages:
+  - test
+
 services:
 - landoop/kafka-lenses-dev:latest
 
