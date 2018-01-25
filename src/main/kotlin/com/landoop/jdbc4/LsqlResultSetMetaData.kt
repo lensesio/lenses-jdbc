@@ -112,7 +112,7 @@ class LsqlResultSetMetaData(private val schema: Schema,
   override fun getColumnName(column: Int): String = getColumnLabel(column)
   override fun getColumnLabel(column: Int): String {
     return when (schema.type) {
-      Schema.Type.RECORD -> schema.fields[column].name()
+      Schema.Type.RECORD -> schema.fields[column - 1].name()
       else -> "unnamed"
     }
   }

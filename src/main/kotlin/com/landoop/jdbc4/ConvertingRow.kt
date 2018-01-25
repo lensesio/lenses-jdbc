@@ -136,7 +136,7 @@ abstract class ConvertingRow : Row {
 
   override fun getString(index: Int): String? {
     val value = getObject(index)
-    return if (value == null) null else value.toString()
+    return value?.toString()
   }
 
   override fun getLong(index: Int): Long {
