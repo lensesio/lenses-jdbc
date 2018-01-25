@@ -14,7 +14,7 @@ class LsqlResultSetMetaData(private val schema: Schema,
   override fun getTableName(column: Int): String = TODO()
 
   override fun isNullable(column: Int): Int {
-    return when (fieldForIndex(column).schema().isNullable()) {
+    return when (schemaForIndex(column).isNullable()) {
       true -> ResultSetMetaData.columnNullable
       false -> ResultSetMetaData.columnNullableUnknown
     }
@@ -33,14 +33,14 @@ class LsqlResultSetMetaData(private val schema: Schema,
   override fun isSearchable(column: Int): Boolean = true
 
   override fun getPrecision(column: Int): Int {
-    val field = fieldForIndex(column)
-    return when (field.schema().type) {
+    val schema = schemaForIndex(column)
+    return when (typeForIndex(column)) {
       Schema.Type.BYTES ->
-        when (field.schema().logicalType) {
-          is LogicalTypes.Decimal -> (field.schema().logicalType as LogicalTypes.Decimal).precision
+        when (schema.logicalType) {
+          is LogicalTypes.Decimal -> (schema.logicalType as LogicalTypes.Decimal).precision
           else -> 0
         }
-      Schema.Type.FIXED -> field.schema().fixedSize
+      Schema.Type.FIXED -> schema.fixedSize
       else -> 0
     }
   }
@@ -48,13 +48,14 @@ class LsqlResultSetMetaData(private val schema: Schema,
   override fun isCaseSensitive(column: Int): Boolean = true
 
   override fun getScale(column: Int): Int {
-    val field = fieldForIndex(column)
-    return when (field.schema().type) {
-      Schema.Type.BYTES ->
-        when (field.schema().logicalType) {
-          is LogicalTypes.Decimal -> (field.schema().logicalType as LogicalTypes.Decimal).scale
+    return when (typeForIndex(column)) {
+      Schema.Type.BYTES -> {
+        val logicalType = schemaForIndex(column).logicalType
+        when (logicalType) {
+          is LogicalTypes.Decimal -> logicalType.scale
           else -> 0
         }
+      }
       else -> 0
     }
   }
@@ -70,12 +71,13 @@ class LsqlResultSetMetaData(private val schema: Schema,
   override fun isWrapperFor(iface: Class<*>): Boolean = iface.isInstance(iface)
 
   override fun getColumnType(column: Int): Int {
-    val field = fieldForIndex(column)
-    return when (field.schema().type) {
+    val type = typeForIndex(column)
+    val schema = schemaForIndex(column)
+    return when (type) {
       Schema.Type.ARRAY -> Types.ARRAY
       Schema.Type.BOOLEAN -> Types.BOOLEAN
       Schema.Type.BYTES ->
-        when (field.schema().logicalType) {
+        when (schema.logicalType) {
           is LogicalTypes.Decimal -> Types.DECIMAL
           else -> Types.BINARY
         }
@@ -84,13 +86,13 @@ class LsqlResultSetMetaData(private val schema: Schema,
       Schema.Type.FIXED -> Types.BINARY
       Schema.Type.FLOAT -> Types.FLOAT
       Schema.Type.INT ->
-        when (field.schema().logicalType) {
+        when (schema.logicalType) {
           is LogicalTypes.TimeMillis -> Types.TIMESTAMP
           is LogicalTypes.Date -> Types.DATE
           else -> Types.INTEGER
         }
       Schema.Type.LONG ->
-        when (field.schema().logicalType) {
+        when (schema.logicalType) {
           is LogicalTypes.TimestampMillis -> Types.TIMESTAMP
           is LogicalTypes.TimestampMicros -> Types.TIMESTAMP
           is LogicalTypes.TimeMicros -> Types.TIMESTAMP
@@ -107,30 +109,37 @@ class LsqlResultSetMetaData(private val schema: Schema,
 
   override fun isCurrency(column: Int): Boolean = false
 
-  override fun getColumnLabel(column: Int): String = fieldForIndex(column).name()
+  override fun getColumnName(column: Int): String = getColumnLabel(column)
+  override fun getColumnLabel(column: Int): String {
+    return when (schema.type) {
+      Schema.Type.RECORD -> schema.fields[column].name()
+      else -> "unnamed"
+    }
+  }
 
   override fun isWritable(column: Int): Boolean = false
 
   override fun isReadOnly(column: Int): Boolean = true
 
   override fun isSigned(column: Int): Boolean {
-    val field = fieldForIndex(column)
-    return when (field.schema().type) {
+    val type = typeForIndex(column)
+    val schema = schemaForIndex(column)
+    return when (type) {
       Schema.Type.BYTES ->
-        when (field.schema().logicalType) {
+        when (schema.logicalType) {
           is LogicalTypes.Decimal -> true
           else -> false
         }
       Schema.Type.DOUBLE -> true
       Schema.Type.FLOAT -> true
       Schema.Type.INT ->
-        when (field.schema().logicalType) {
+        when (schema.logicalType) {
           is LogicalTypes.TimeMillis -> false
           is LogicalTypes.Date -> false
           else -> true
         }
       Schema.Type.LONG ->
-        when (field.schema().logicalType) {
+        when (schema.logicalType) {
           is LogicalTypes.TimestampMillis -> false
           is LogicalTypes.TimestampMicros -> false
           is LogicalTypes.TimeMicros -> false
@@ -140,21 +149,49 @@ class LsqlResultSetMetaData(private val schema: Schema,
     }
   }
 
-  override fun getColumnTypeName(column: Int): String = fieldForIndex(column).schema().type.name
+  override fun getColumnTypeName(column: Int): String = typeForIndex(column).name
 
-  private fun fieldForIndex(index: Int): Schema.Field {
-    if (index < 1 || index > schema.fields.size)
-      throw IndexOutOfBoundsException("Index $index is out of bounds; note: JDBC drivers are 1-indexed")
-    return schema.fields[index - 1]
+  private fun schemaForIndex(index: Int): Schema {
+    return when (schema.type) {
+      Schema.Type.RECORD -> {
+        if (index < 1 || index > schema.fields.size)
+          throw IndexOutOfBoundsException("Index $index is out of bounds; note: JDBC drivers are 1-indexed")
+        schema.fields[index - 1].schema()
+      }
+      else -> {
+        if (index != 1)
+          throw IndexOutOfBoundsException("Index $index is out of bounds; note: JDBC drivers are 1-indexed")
+        schema
+      }
+    }
   }
 
-  override fun getColumnName(column: Int): String = fieldForIndex(column).name()
+  private fun typeForIndex(index: Int): Schema.Type {
+    return when (schema.type) {
+      Schema.Type.RECORD -> {
+        if (index < 1 || index > schema.fields.size)
+          throw IndexOutOfBoundsException("Index $index is out of bounds; note: JDBC drivers are 1-indexed")
+        schema.fields[index - 1].schema().type
+      }
+      else -> {
+        if (index != 1)
+          throw IndexOutOfBoundsException("Index $index is out of bounds; note: JDBC drivers are 1-indexed")
+        schema.type
+      }
+    }
+  }
 
   override fun isAutoIncrement(column: Int): Boolean = false
 
   override fun getColumnDisplaySize(column: Int): Int = 0
 
-  override fun getColumnCount(): Int = schema.fields.size
+  override fun getColumnCount(): Int {
+    // can be a record or a single field
+    return when (schema.type) {
+      Schema.Type.RECORD -> schema.fields.size
+      else -> 1
+    }
+  }
 
   // returns the index for a given column label
   internal fun indexForLabel(label: String): Int {

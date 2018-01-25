@@ -32,10 +32,10 @@ class LsqlStatement(private val conn: Connection,
     val data = client.query(sql)
 
     // if the reply had no results, then the schema will be null
-    when (data.schema) {
+    return when (data.schema) {
       null -> {
         rs = RowResultSet.empty()
-        return false
+        false
       }
       else -> {
         val schema = Schema.Parser().parse(data.schema)!!
@@ -44,7 +44,7 @@ class LsqlStatement(private val conn: Connection,
           JsonNodeRow(node)
         }
         rs = RowResultSet(this, schema, rows)
-        return true
+        true
       }
     }
   }

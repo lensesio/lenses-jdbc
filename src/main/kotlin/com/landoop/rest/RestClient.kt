@@ -20,8 +20,6 @@ import java.io.IOException
 import java.net.URI
 import java.net.URL
 import java.sql.SQLException
-import javax.security.sasl.AuthenticationException
-
 
 class RestClient(private val urls: List<String>,
                  private val credentials: Credentials) : AutoCloseable {
@@ -71,7 +69,7 @@ class RestClient(private val urls: List<String>,
           401, 403 -> throw AuthenticationException("Invalid credentials for user '${credentials.user}'")
           else -> {
             val body = resp.entity.content.bufferedReader().use { it.readText() }
-            SQLException(" ${resp.statusLine.reasonPhrase} Invalid request: $body")
+            SQLException("${resp.statusLine.statusCode} ${resp.statusLine.reasonPhrase}: $body")
           }
         }
       } catch (e: IOException) {
@@ -110,11 +108,14 @@ class RestClient(private val urls: List<String>,
     val requestFn: (String) -> HttpUriRequest = {
       val entity = RestClient.jsonEntity(credentials)
       val endpoint = "$it/api/login"
+      logger.debug("Authenticating at $endpoint")
       RestClient.jsonPost(endpoint, entity)
     }
 
     val responseFn: (HttpResponse) -> String = {
-      JacksonSupport.fromJson<LoginResponse>(it.entity.content).token
+      val token = JacksonSupport.fromJson<LoginResponse>(it.entity.content).token
+      logger.debug("Authentication token: $token")
+      token
     }
 
     return attempt(requestFn, responseFn)
