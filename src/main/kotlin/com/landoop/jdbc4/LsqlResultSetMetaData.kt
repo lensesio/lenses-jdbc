@@ -41,6 +41,7 @@ class LsqlResultSetMetaData(private val schema: Schema,
           else -> 0
         }
       Schema.Type.FIXED -> schema.fixedSize
+      Schema.Type.STRING -> Int.MAX_VALUE
       else -> 0
     }
   }

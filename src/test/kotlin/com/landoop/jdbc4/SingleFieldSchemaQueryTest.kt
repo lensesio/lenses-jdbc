@@ -9,7 +9,6 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import java.sql.DriverManager
 import java.util.*
 
-
 data class Country(val name: String)
 
 class SingleFieldSchemaQueryTest : WordSpec(), QuerySetup {
@@ -27,7 +26,6 @@ class SingleFieldSchemaQueryTest : WordSpec(), QuerySetup {
 
     val producer = KafkaProducer<String, GenericData.Record>(props())
     for (country in countries) {
-
       val record = GenericData.Record(schema)
       record.put("name", country.name)
       producer.send(ProducerRecord<String, GenericData.Record>(topic, country.name, record))
