@@ -67,45 +67,66 @@ class LsqlResultSetMetaData(private val schema: Schema,
   // required "" when not supported
   override fun getCatalogName(column: Int): String = ""
 
-  override fun getColumnClassName(column: Int): String = rs.getObject(column).javaClass.canonicalName
+  override fun getColumnClassName(column: Int): String {
+    val type = typeForIndex(column)
+    return when (type) {
+      Schema.Type.BOOLEAN -> java.lang.Boolean::class.java.canonicalName
+      Schema.Type.BYTES -> byteArrayOf(1)::class.java.canonicalName
+      Schema.Type.ENUM -> java.lang.String::class.java.canonicalName
+      Schema.Type.DOUBLE -> java.lang.Double::class.java.canonicalName
+      Schema.Type.FLOAT -> java.lang.Float::class.java.canonicalName
+      Schema.Type.INT -> java.lang.Integer::class.java.canonicalName
+      Schema.Type.LONG -> java.lang.Long::class.java.canonicalName
+      Schema.Type.STRING -> java.lang.String::class.java.canonicalName
+      else -> throw SQLException("Unknown class name for $type")
+    }
+  }
 
   override fun isWrapperFor(iface: Class<*>): Boolean = iface.isInstance(iface)
 
   override fun getColumnType(column: Int): Int {
-    val type = typeForIndex(column)
-    val schema = schemaForIndex(column)
-    return when (type) {
-      Schema.Type.ARRAY -> Types.ARRAY
-      Schema.Type.BOOLEAN -> Types.BOOLEAN
-      Schema.Type.BYTES ->
-        when (schema.logicalType) {
-          is LogicalTypes.Decimal -> Types.DECIMAL
-          else -> Types.BINARY
-        }
-      Schema.Type.DOUBLE -> Types.DOUBLE
-      Schema.Type.ENUM -> Types.VARCHAR
-      Schema.Type.FIXED -> Types.BINARY
-      Schema.Type.FLOAT -> Types.FLOAT
-      Schema.Type.INT ->
-        when (schema.logicalType) {
-          is LogicalTypes.TimeMillis -> Types.TIMESTAMP
-          is LogicalTypes.Date -> Types.DATE
-          else -> Types.INTEGER
-        }
-      Schema.Type.LONG ->
-        when (schema.logicalType) {
-          is LogicalTypes.TimestampMillis -> Types.TIMESTAMP
-          is LogicalTypes.TimestampMicros -> Types.TIMESTAMP
-          is LogicalTypes.TimeMicros -> Types.TIMESTAMP
-          else -> Types.INTEGER
-        }
-      Schema.Type.MAP -> Types.STRUCT
-      Schema.Type.NULL -> Types.NULL
-      Schema.Type.RECORD -> Types.STRUCT
-      Schema.Type.STRING -> Types.VARCHAR
-      Schema.Type.UNION -> Types.STRUCT
-      else -> throw SQLFeatureNotSupportedException()
+
+    fun getColumnType(schema: Schema): Int {
+      return when (schema.type) {
+        Schema.Type.ARRAY -> Types.ARRAY
+        Schema.Type.BOOLEAN -> Types.BOOLEAN
+        Schema.Type.BYTES ->
+          when (schema.logicalType) {
+            null -> Types.BINARY
+            is LogicalTypes.Decimal -> Types.DECIMAL
+            else -> {
+              if (schema.logicalType.name == "uuid") Types.VARCHAR
+              else Types.BINARY
+            }
+          }
+        Schema.Type.DOUBLE -> Types.DOUBLE
+        Schema.Type.ENUM -> Types.VARCHAR
+        Schema.Type.FIXED -> Types.BINARY
+        Schema.Type.FLOAT -> Types.FLOAT
+        Schema.Type.INT ->
+          when (schema.logicalType) {
+            is LogicalTypes.TimeMillis -> Types.TIME
+            is LogicalTypes.Date -> Types.DATE
+            else -> Types.INTEGER
+          }
+        Schema.Type.LONG ->
+          when (schema.logicalType) {
+            is LogicalTypes.TimestampMillis -> Types.TIMESTAMP
+            is LogicalTypes.TimestampMicros -> Types.TIMESTAMP
+            is LogicalTypes.TimeMicros -> Types.TIMESTAMP
+            else -> Types.BIGINT
+          }
+        Schema.Type.MAP -> Types.STRUCT
+        Schema.Type.NULL -> Types.NULL
+        Schema.Type.RECORD -> Types.STRUCT
+        Schema.Type.STRING -> Types.VARCHAR
+        Schema.Type.UNION -> getColumnType(schema.fromUnion())
+        else -> throw SQLFeatureNotSupportedException()
+      }
     }
+
+    val schema = schemaForIndex(column)
+    return getColumnType(schema)
   }
 
   override fun isCurrency(column: Int): Boolean = false
@@ -196,8 +217,8 @@ class LsqlResultSetMetaData(private val schema: Schema,
 
   // returns the index for a given column label
   internal fun indexForLabel(label: String): Int {
-    val index = schema.fields.indexOfFirst { it.name() == label }
-    if (index < 0 || index > schema.fields.size - 1)
+    val index = schema.fields.indexOfFirst { it.name() == label } + 1
+    if (index < 1 || index > schema.fields.size)
       throw SQLException("Unknown column $label")
     return index
   }
