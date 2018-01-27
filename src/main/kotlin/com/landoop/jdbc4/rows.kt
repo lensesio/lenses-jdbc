@@ -5,6 +5,10 @@ import org.apache.avro.generic.GenericData
 import java.math.BigDecimal
 import java.sql.SQLException
 
+class ArrayRow(val array: Array<Any?>) : ConvertingRow() {
+  override fun getObject(index: Int): Any? = array[index - 1]
+}
+
 class JsonNodeRow(val node: JsonNode) : ConvertingRow() {
   override fun getObject(index: Int): Any? {
     // remember jdbc is 1-indexed

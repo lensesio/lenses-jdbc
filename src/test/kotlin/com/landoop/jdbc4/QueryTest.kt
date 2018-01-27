@@ -10,7 +10,7 @@ import java.sql.SQLException
 
 data class Starship(val name: String, val designation: String)
 
-class QueryTest : WordSpec(), QuerySetup {
+class QueryTest : WordSpec(), ProducerSetup {
 
   fun populateStarships() {
     val starships = listOf(
@@ -37,11 +37,11 @@ class QueryTest : WordSpec(), QuerySetup {
   init {
 
     LsqlDriver()
+    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 
     "JDBC Driver" should {
       "support wildcard selection" {
         val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
-        val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 6
@@ -54,7 +54,6 @@ class QueryTest : WordSpec(), QuerySetup {
       }
       "support projections" {
         val q = "SELECT merchantId, currency FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
-        val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 2
@@ -63,7 +62,6 @@ class QueryTest : WordSpec(), QuerySetup {
       }
       "return all results without a limit"  {
         val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
-        val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         var counter = 0
@@ -74,7 +72,6 @@ class QueryTest : WordSpec(), QuerySetup {
       }
       "throw SQL exception if the topic does not exist" {
         val q = "SELECT * FROM wobble"
-        val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
         val stmt = conn.createStatement()
         shouldThrow<SQLException> {
           stmt.executeQuery(q)
@@ -82,7 +79,6 @@ class QueryTest : WordSpec(), QuerySetup {
       }
       "support schemas with two fields" {
         val q = "SELECT * FROM starfleet"
-        val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 6
@@ -90,7 +86,6 @@ class QueryTest : WordSpec(), QuerySetup {
       }
       "support schemas with two fields" {
         val q = "SELECT * FROM starfleet"
-        val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 6
@@ -109,11 +104,9 @@ class QueryTest : WordSpec(), QuerySetup {
 //        counter shouldBe 10
 //      }
       "return true for results" {
-        val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
         conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='USD'") shouldBe true
       }
       "return false if no results" {
-        val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
         conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='wibble'") shouldBe false
       }
     }

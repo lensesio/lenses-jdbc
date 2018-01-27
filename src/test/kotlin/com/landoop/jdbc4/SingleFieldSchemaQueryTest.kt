@@ -11,7 +11,7 @@ import java.util.*
 
 data class Country(val name: String)
 
-class SingleFieldSchemaQueryTest : WordSpec(), QuerySetup {
+class SingleFieldSchemaQueryTest : WordSpec(), ProducerSetup {
 
   val topic = "topic_" + UUID.randomUUID().toString().replace('-', '_')
 

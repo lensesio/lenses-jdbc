@@ -14,7 +14,7 @@ import java.util.*
 
 data class Equity(val ticker: String, val amount: BigDecimal)
 
-class PrecisionQueryTest : WordSpec(), QuerySetup {
+class PrecisionQueryTest : WordSpec(), ProducerSetup {
 
   val topic = "topic_" + UUID.randomUUID().toString().replace('-', '_')
 

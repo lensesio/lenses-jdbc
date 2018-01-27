@@ -19,6 +19,9 @@ class LsqlStatementTest : WordSpec() {
           conn.createStatement().execute("select * from table", arrayOf("a"))
         }
       }
+      "support multiple resultsets" {
+
+      }
     }
   }
 }

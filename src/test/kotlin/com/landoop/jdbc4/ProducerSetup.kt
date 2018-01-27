@@ -2,7 +2,7 @@ package com.landoop.jdbc4
 
 import java.util.*
 
-interface QuerySetup {
+interface ProducerSetup {
 
   fun props() = Properties().apply {
     this.put("bootstrap.servers", "localhost:9092")

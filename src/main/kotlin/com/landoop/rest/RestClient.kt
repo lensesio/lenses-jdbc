@@ -137,15 +137,15 @@ class RestClient(private val urls: List<String>,
     return attempt(requestFn, responseFn)
   }
 
-  fun topics(): List<Topic> {
+  fun topics(): Array<Topic> {
 
     val requestFn: (String) -> HttpUriRequest = {
       val endpoint = "$it/api/topics"
       RestClient.jsonGet(endpoint)
     }
 
-    val responseFn: (HttpResponse) -> List<Topic> = {
-      JacksonSupport.fromJson(it.entity.content)
+    val responseFn: (HttpResponse) -> Array<Topic> = {
+      JacksonSupport.fromJson<Array<Topic>>(it.entity.content)
     }
 
     return attemptAuthenticated(requestFn, responseFn)

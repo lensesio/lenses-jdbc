@@ -1,6 +1,7 @@
 package com.landoop.jdbc4
 
 import com.landoop.rest.RestClient
+import com.landoop.rest.domain.Topic
 import org.apache.avro.generic.GenericRecordBuilder
 import java.sql.Connection
 import java.sql.DatabaseMetaData
@@ -100,7 +101,30 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun getTables(catalog: String?,
                          schemaPattern: String?,
                          tableNamePattern: String?,
-                         types: Array<out String>?): ResultSet = RowResultSet.emptyOf(Schemas.Tables)
+                         types: Array<out String>?): ResultSet {
+
+    val topics = client.topics()
+    val filteredTopics: Array<Topic> = when (tableNamePattern) {
+      null -> topics
+      else -> topics.filter { it.topicName.matches(tableNamePattern.replace("%", ".*").toRegex()) }.toTypedArray()
+    }
+
+    val rows = filteredTopics.map {
+      val array = arrayOf<Any?>(
+          null,
+          null,
+          it.topicName,
+          "TABLE",
+          null,
+          null,
+          null,
+          null
+      )
+      ArrayRow(array)
+    }
+
+    return RowResultSet(null, Schemas.Tables, rows)
+  }
 
   override fun supportsMultipleResultSets(): Boolean = true
 

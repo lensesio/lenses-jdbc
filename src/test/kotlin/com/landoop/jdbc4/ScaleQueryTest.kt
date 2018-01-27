@@ -12,7 +12,7 @@ import java.nio.ByteBuffer
 import java.sql.DriverManager
 import java.util.*
 
-class ScaleQueryTest : WordSpec(), QuerySetup {
+class ScaleQueryTest : WordSpec(), ProducerSetup {
 
   val topic = "topic_" + UUID.randomUUID().toString().replace('-', '_')
 

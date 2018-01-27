@@ -5,14 +5,14 @@ data class Topic(
     val messagesPerSecond: Int,
     val timestamp: Long,
     val valueType: String,
-    val config: List<ConfigEntry>,
+    val config: List<ConfigEntry>?,
     val totalMessages: Long,
     val replication: Int,
     val topicName: String,
     val isMarkedForDeletion: Boolean,
     val partitions: Int,
     val isControlTopic: Boolean,
-    val messagesPerPartition: List<MessagesPerPartition>
+    val messagesPerPartition: List<MessagesPerPartition>?
 )
 
 data class ConfigEntry(val configuration: String, val value: String, val defaultValue: String, val documentation: String)
