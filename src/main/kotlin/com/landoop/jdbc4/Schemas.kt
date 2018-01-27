@@ -136,7 +136,7 @@ object Schemas {
       .optionalString("PROCEDURE_NAME")
       .optionalString("REMARKS")
       .nullableInt("PROCEDURE_TYPE", DatabaseMetaData.procedureResultUnknown)
-      .optionalString("REMARKS")
+      .optionalString("SPECIFIC_NAME")
       .endRecord()
 
   val PseudoColumns = SchemaBuilder.builder()
@@ -182,7 +182,7 @@ object Schemas {
       .requiredString("FKCOLUMN_NAME")
       .requiredInt("KEY_SEQ")
       .requiredInt("UPDATE_RULE")
-      .requiredInt("UPDATE_RULE")
+      .requiredInt("DELETE_RULE")
       .nullableString("FK_NAME", null)
       .nullableString("PK_NAME", null)
       .requiredInt("DEFERRABILITY")
