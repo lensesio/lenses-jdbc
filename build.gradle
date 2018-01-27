@@ -64,6 +64,7 @@ dependencies {
     testCompile "io.kotlintest:kotlintest:$kotlin_test"
     testCompile 'org.apache.kafka:kafka-clients:0.11.0.2'
     testCompile 'io.confluent:kafka-avro-serializer:3.2.1'
+    testCompile 'org.nanohttpd:nanohttpd:2.3.1'
 }
 
 jar {

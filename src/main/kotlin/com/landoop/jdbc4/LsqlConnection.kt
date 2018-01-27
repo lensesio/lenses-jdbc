@@ -25,6 +25,7 @@ class LsqlConnection(private val uri: String,
 
   private val user = props.getProperty("user") ?: throw SQLException("URI must specify username")
   private val password = props.getProperty("password", null) ?: throw SQLException("URI must specify password")
+  private val weakSSL = props.getProperty("weakssl", "false").toBoolean()
 
   private val urls = uri.replace(Constants.JdbcPrefix, "").split(',').apply {
     if (this.isEmpty())
@@ -32,7 +33,7 @@ class LsqlConnection(private val uri: String,
     logger.debug("Connection will use urls $this")
   }
 
-  private val client = RestClient(urls, Credentials(user, password))
+  private val client = RestClient(urls, Credentials(user, password), weakSSL)
 
   override fun rollback() = throw SQLFeatureNotSupportedException()
   override fun rollback(savepoint: Savepoint?) = throw SQLFeatureNotSupportedException()

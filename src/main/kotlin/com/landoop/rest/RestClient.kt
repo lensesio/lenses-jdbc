@@ -13,8 +13,12 @@ import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.methods.HttpUriRequest
+import org.apache.http.conn.ssl.NoopHostnameVerifier
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.ssl.SSLContextBuilder
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.URI
@@ -22,7 +26,9 @@ import java.net.URL
 import java.sql.SQLException
 
 class RestClient(private val urls: List<String>,
-                 private val credentials: Credentials) : AutoCloseable {
+                 private val credentials: Credentials,
+                 private val weakSSL: Boolean // if set to true then will allow self signed certificates
+) : AutoCloseable {
 
   private val logger = LoggerFactory.getLogger(RestClient::class.java)
   private val timeout = 60_000
@@ -33,14 +39,24 @@ class RestClient(private val urls: List<String>,
       .setSocketTimeout(timeout)
       .build()
 
+  private val sslContext = SSLContextBuilder.create()
+      .loadTrustMaterial(TrustSelfSignedStrategy())
+      .build()
+
+  private val allowAllHosts = NoopHostnameVerifier()
+
+  private val connectionFactory = SSLConnectionSocketFactory(sslContext, allowAllHosts)
+
   private val httpClient = HttpClientBuilder.create().let {
     it.setKeepAliveStrategy(DefaultKeepAlive)
     it.setDefaultRequestConfig(defaultRequestConfig)
+    if (weakSSL)
+      it.setSSLSocketFactory(connectionFactory)
     it.build()
   }
 
   // the token received the last time we attempted to authenticate
-  private var token: String = authenticate()
+  internal var token: String = authenticate()
 
   var isClosed: Boolean = true
     private set
