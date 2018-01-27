@@ -30,6 +30,8 @@ class LsqlConnection(private val uri: String,
   private val urls = uri.replace(Constants.JdbcPrefix, "").split(',').apply {
     if (this.isEmpty())
       throw SQLException("URI must specify at least one REST endpoint")
+    if (!this.all { it.startsWith("http") || it.startsWith("https") })
+      throw SQLException("Endpoints must use http or https")
     logger.debug("Connection will use urls $this")
   }
 

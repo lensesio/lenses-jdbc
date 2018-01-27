@@ -4,6 +4,7 @@ import java.sql.Connection
 import java.sql.Driver
 import java.sql.DriverManager
 import java.sql.DriverPropertyInfo
+import java.sql.SQLException
 import java.sql.SQLFeatureNotSupportedException
 import java.util.*
 import java.util.logging.Logger
@@ -19,7 +20,22 @@ class LsqlDriver : Driver, Logging {
 
   override fun getParentLogger(): Logger = throw SQLFeatureNotSupportedException()
 
-  override fun getPropertyInfo(url: String?, info: Properties?): Array<DriverPropertyInfo> = emptyArray()
+  override fun getPropertyInfo(url: String?, info: Properties?): Array<DriverPropertyInfo> {
+    return arrayOf(
+        DriverPropertyInfo("user", null).apply {
+          this.required = true
+          this.description = "Username for credentials"
+        },
+        DriverPropertyInfo("password", null).apply {
+          this.required = true
+          this.description = "Password for credentials"
+        },
+        DriverPropertyInfo("weakssl", null).apply {
+          this.required = false
+          this.description = "Set to true if the driver should accept self signed SSL certificates"
+        }
+    )
+  }
 
   override fun jdbcCompliant(): Boolean = false
 
@@ -29,7 +45,7 @@ class LsqlDriver : Driver, Logging {
 
   override fun connect(url: String?, props: Properties?): Connection? {
     if (url == null) {
-      throw NullPointerException("url cannot be null")
+      throw SQLException("url cannot be null")
     } else {
       return if (!acceptsURL(url)) {
         null

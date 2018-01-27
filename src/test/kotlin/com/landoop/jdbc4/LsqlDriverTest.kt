@@ -1,24 +1,48 @@
 package com.landoop.jdbc4
 
+import io.kotlintest.matchers.shouldBe
+import io.kotlintest.matchers.shouldThrow
 import io.kotlintest.specs.WordSpec
+import java.sql.SQLException
+import java.util.*
 
 class LsqlDriverTest : WordSpec() {
   init {
     "LsqlDriver" should {
-      "return empty property info" {
-
+      "return required and optional properties for connections" {
+        val props = LsqlDriver().getPropertyInfo("any", Properties())
+        props.map { it.name }.toSet() shouldBe setOf("user", "password", "weakssl")
       }
-      "accept valid url" {
-
+      "set user and password to required" {
+        val props = LsqlDriver().getPropertyInfo("any", Properties())
+        props.first { it.name == "user" }.required shouldBe true
+        props.first { it.name == "password" }.required shouldBe true
+      }
+      "set weakssl as optional" {
+        val props = LsqlDriver().getPropertyInfo("any", Properties())
+        props.first { it.name == "weakssl" }.required shouldBe false
+      }
+      "accept valid single host url" {
+        LsqlDriver().acceptsURL("jdbc:lsql:kafka:http://localhost:3030") shouldBe true
+      }
+      "accept valid multiple host url" {
+        LsqlDriver().acceptsURL("jdbc:lsql:kafka:http://localhost:3030,http://localhost:3031") shouldBe true
       }
       "reject invalid url" {
-
+        LsqlDriver().acceptsURL("jdbc:qqqqq") shouldBe false
       }
-      "return null for connection when the url is invalid" {
-
+      "throw return null for connect when the url is invalid" {
+        LsqlDriver().connect("jdbc:wibble", Properties()) shouldBe null
+      }
+      "throw for connection when the url is null" {
+        shouldThrow<SQLException> {
+          LsqlDriver().connect(null, Properties())
+        }
       }
       "require each url to be http or https" {
-
+        shouldThrow<SQLException> {
+          LsqlDriver().connect("jdbc:lsql:kafka:httpq://localhost:3030", Properties())
+        }
       }
     }
   }
