@@ -71,7 +71,11 @@ class RowResultSet(
   override fun getWarnings(): SQLWarning? = null
 
   // these resultsets are entirely offline
+  override fun isClosed(): Boolean = true
   override fun close() {}
+
+  override fun getCursorName(): String = throw SQLFeatureNotSupportedException()
+  override fun getConcurrency(): Int = ResultSet.CONCUR_READ_ONLY
 
   override fun isWrapperFor(iface: Class<*>): Boolean = iface.isInstance(this)
   override fun <T : Any?> unwrap(iface: Class<T>): T {
@@ -94,14 +98,15 @@ class RowResultSet(
   override fun getHoldability(): Int = ResultSet.CLOSE_CURSORS_AT_COMMIT
 
   override fun getFetchDirection(): Int = ResultSet.FETCH_FORWARD
-  override fun setFetchDirection(direction: Int) {} // no op since this resultset is offline
+  override fun setFetchDirection(direction: Int) = throw SQLException("This resultset is offline, so fetch direction does not need to be set")
 
   override fun getFetchSize(): Int = -1
   override fun setFetchSize(rows: Int) {} // no op since this resultset is offline
 
   // == methods that mutate or query the cursor ==
 
-  private val last = rows.size - 1
+  private val size = rows.size
+  private val last = size - 1
 
   override fun getRow(): Int = cursor
 
@@ -163,10 +168,15 @@ class RowResultSet(
   }
 
   override fun absolute(row: Int): Boolean {
-    // minus 1 because the public API is 1 indexed
-    checkCursorBounds(row - 1)
-    cursor = row - 1
-    return true
+    return if (row < 0) {
+      val positiveRow = size - Math.abs(row) + 1
+      absolute(positiveRow)
+    } else {
+      // minus 1 because the public API is 1 indexed
+      checkCursorBounds(row - 1)
+      cursor = row - 1
+      true
+    }
   }
 
   private fun checkCursorBounds(p: Int) {
@@ -221,15 +231,8 @@ class RowResultSet(
   override fun getRowId(label: String?): RowId = trackObject(LongRowId(cursor.toLong()))
   override fun getNString(index: Int): String? = trackObject(currentRow().getString(index))
   override fun getNString(label: String): String? = trackObject(currentRow().getString(meta.indexForLabel(label)))
-
-  override fun getCursorName(): String = throw SQLFeatureNotSupportedException()
-
-  override fun isClosed(): Boolean = true
-
   override fun getCharacterStream(index: Int): Reader? = currentRow().charStream(index)
   override fun getCharacterStream(label: String): Reader? = currentRow().charStream(meta.indexForLabel(label))
-
-  override fun getConcurrency(): Int = ResultSet.CONCUR_READ_ONLY
 
   // unsupported data types
 

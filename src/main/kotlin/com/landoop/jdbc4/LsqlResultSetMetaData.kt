@@ -216,11 +216,12 @@ class LsqlResultSetMetaData(private val schema: Schema,
   }
 
   // returns the index for a given column label
+  // 1-indexed
   internal fun indexForLabel(label: String): Int {
-    val index = schema.fields.indexOfFirst { it.name() == label } + 1
-    if (index < 1 || index > schema.fields.size)
+    val index = schema.fields.indexOfFirst { it.name() == label }
+    if (index < 0 || index > schema.fields.size -1)
       throw SQLException("Unknown column $label")
-    return index
+    return index + 1
   }
 
   // returns the field for a given column label

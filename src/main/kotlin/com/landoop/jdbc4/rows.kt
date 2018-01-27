@@ -27,6 +27,6 @@ class JsonNodeRow(val node: JsonNode) : ConvertingRow() {
 
 class RecordRow(val record: GenericData.Record) : ConvertingRow() {
   override fun getObject(index: Int): Any? {
-    return record.get(index)
+    return record.get(index - 1)
   }
 }
