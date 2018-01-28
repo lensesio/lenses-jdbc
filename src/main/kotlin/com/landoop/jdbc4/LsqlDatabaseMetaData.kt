@@ -58,9 +58,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsCatalogsInTableDefinitions(): Boolean = false
 
-  override fun storesLowerCaseQuotedIdentifiers(): Boolean = false
-  override fun storesLowerCaseIdentifiers(): Boolean = false
-  override fun storesUpperCaseIdentifiers(): Boolean = false
 
   override fun supportsResultSetConcurrency(type: Int, concurrency: Int): Boolean {
     return ResultSet.TYPE_FORWARD_ONLY == type && ResultSet.CONCUR_READ_ONLY == concurrency
@@ -150,7 +147,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
           null, // SQL_DATA_TYPE unused
           null, // SQL_DATETIME_SUB unused
           0, // CHAR_OCTET_LENGTH
-          pos, // ORDINAL_POSITION
+          pos + 1, // ORDINAL_POSITION
           if (field.schema().isNullable()) "YES" else "NO", // IS_NULLABLE
           null, // SCOPE_CATALOG
           null, // SCOPE_SCHEMA
@@ -209,12 +206,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
     return RowResultSet.emptyOf(Schemas.FunctionColumns)
   }
 
-
-  override fun nullsAreSortedAtStart(): Boolean = false
-  override fun nullsAreSortedAtEnd(): Boolean = false
-  override fun nullsAreSortedHigh(): Boolean = false
-  override fun nullsAreSortedLow(): Boolean = false
-
   override fun getPrimaryKeys(catalog: String?,
                               schema: String?,
                               table: String?): ResultSet {
@@ -225,17 +216,10 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsOuterJoins(): Boolean = false
 
-  override fun <T : Any?> unwrap(iface: Class<T>): T {
-    try {
-      return iface.cast(this)
-    } catch (cce: ClassCastException) {
-      throw SQLException("Unable to unwrap instance as " + iface.toString())
-    }
-  }
 
   override fun supportsLikeEscapeClause(): Boolean = false
-  override fun supportsPositionedUpdate(): Boolean = false
-  override fun supportsMixedCaseIdentifiers(): Boolean = false
+
+
   override fun supportsLimitedOuterJoins(): Boolean = false
 
   override fun getSQLStateType(): Int = DatabaseMetaData.sqlStateSQL
@@ -338,7 +322,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun usesLocalFilePerTable(): Boolean = false
 
-  override fun getIdentifierQuoteString(): String = "`"
 
   override fun supportsFullOuterJoins(): Boolean = false
 
@@ -432,10 +415,14 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun generatedKeyAlwaysReturned(): Boolean = false
 
   override fun isWrapperFor(iface: Class<*>): Boolean = iface.isInstance(this)
+  override fun <T : Any?> unwrap(iface: Class<T>): T {
+    try {
+      return iface.cast(this)
+    } catch (cce: ClassCastException) {
+      throw SQLException("Unable to unwrap instance as " + iface.toString())
+    }
+  }
 
-  override fun storesUpperCaseQuotedIdentifiers(): Boolean = false
-  override fun storesMixedCaseQuotedIdentifiers(): Boolean = false
-  override fun supportsMixedCaseQuotedIdentifiers(): Boolean = false
 
   override fun getMaxCharLiteralLength(): Int = 0
 
@@ -451,7 +438,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun supportsSelectForUpdate(): Boolean = false
 
   override fun supportsOpenCursorsAcrossCommit(): Boolean = false
-  override fun storesMixedCaseIdentifiers(): Boolean = false
 
   override fun getTablePrivileges(catalog: String?, schemaPattern: String?, tableNamePattern: String?): ResultSet {
     return RowResultSet.empty()
@@ -461,7 +447,26 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getResultSetHoldability(): Int = ResultSet.CLOSE_CURSORS_AT_COMMIT
 
-// keywords/functions supported by lenses
+  // null sorting
+
+  override fun nullsAreSortedAtStart(): Boolean = false
+  override fun nullsAreSortedAtEnd(): Boolean = false
+  override fun nullsAreSortedHigh(): Boolean = false
+  override fun nullsAreSortedLow(): Boolean = false
+
+  // -- identifers
+
+  override fun storesLowerCaseQuotedIdentifiers(): Boolean = false
+  override fun storesLowerCaseIdentifiers(): Boolean = false
+  override fun storesUpperCaseIdentifiers(): Boolean = false
+  override fun supportsMixedCaseIdentifiers(): Boolean = false
+  override fun getIdentifierQuoteString(): String = "`"
+  override fun storesMixedCaseIdentifiers(): Boolean = false
+  override fun storesUpperCaseQuotedIdentifiers(): Boolean = false
+  override fun storesMixedCaseQuotedIdentifiers(): Boolean = false
+  override fun supportsMixedCaseQuotedIdentifiers(): Boolean = false
+
+  // keywords/functions supported by lenses
 
   override fun getSystemFunctions(): String = ""
   override fun getTimeDateFunctions(): String = ""
@@ -479,7 +484,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun othersDeletesAreVisible(type: Int): Boolean = false
   override fun othersInsertsAreVisible(type: Int): Boolean = false
   override fun updatesAreDetected(type: Int): Boolean = false
-  override fun supportsSavepoints(): Boolean = false
+  override fun supportsPositionedUpdate(): Boolean = false
 
   // -- transactionsa are not supported
 
@@ -492,6 +497,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun dataDefinitionCausesTransactionCommit(): Boolean = false
   override fun supportsMultipleTransactions(): Boolean = false
   override fun supportsDataManipulationTransactionsOnly(): Boolean = false
+  override fun supportsSavepoints(): Boolean = false
 
 // -- software / driver versionings
 
