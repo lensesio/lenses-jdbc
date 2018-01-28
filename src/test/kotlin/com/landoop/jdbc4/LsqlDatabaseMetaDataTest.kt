@@ -19,7 +19,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
   init {
 
     LsqlDriver()
-    // val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "read", "read1")
+    //    val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "read", "read1")
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 
     "LsqlDatabaseMetaDataTest" should {
@@ -40,7 +40,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         tableNames should contain("cc_data")
         tableNames should contain("cc_payments")
         tableNames shouldNot contain("__consumer_offsets")
-        tableNames shouldNot contain("_schemas")
+        tableNames shouldNot contain("_kafka_lenses_processors")
 
         val systemTableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("SYSTEM TABLE"))).map { it[2].toString() }
         systemTableNames should containsAll("__consumer_offsets", "_schemas", "_kafka_lenses_processors")

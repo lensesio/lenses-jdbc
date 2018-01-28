@@ -21,10 +21,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
     val TABLE_TYPES = listOf(TABLE_NAME, SYSTEM_TABLE_NAME)
     val SYSTEM_TABLES = listOf(
         "__consumer_offsets",
-        "_kafka_lenses_audits",
-        "_kafka_lenses_cluster",
-        "_kafka_lenses_processors",
-        "_kafka_lenses_profiles",
+        "_kafka_lenses_.*",
         "_schemas"
     )
   }
@@ -35,7 +32,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsCoreSQLGrammar(): Boolean = false
 
-  override fun getMaxColumnsInIndex(): Int = 0
 
   override fun insertsAreDetected(type: Int): Boolean = false
   override fun deletesAreDetected(type: Int): Boolean = false
@@ -49,43 +45,22 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                              typeNamePattern: String?,
                              attributeNamePattern: String?): ResultSet = RowResultSet.emptyOf(Schemas.Attributes)
 
-
-  override fun supportsOpenStatementsAcrossRollback(): Boolean = false
-
-  override fun getMaxProcedureNameLength(): Int = 0
-
-
   override fun supportsCatalogsInDataManipulation(): Boolean = false
-
-  override fun getMaxUserNameLength(): Int = 0
-
 
   // is this right ?
   override fun supportsStoredFunctionsUsingCallSyntax(): Boolean = true
 
   override fun autoCommitFailureClosesAllResultSets(): Boolean = false
 
-  override fun getMaxColumnsInSelect(): Int = 0
 
   override fun getCatalogs(): ResultSet = RowResultSet.emptyOf(Schemas.Catalogs)
 
-  override fun storesLowerCaseQuotedIdentifiers(): Boolean = false
-
-  override fun supportsDataDefinitionAndDataManipulationTransactions(): Boolean = false
 
   override fun supportsCatalogsInTableDefinitions(): Boolean = false
 
-  override fun getMaxColumnsInOrderBy(): Int = 0
-
-
+  override fun storesLowerCaseQuotedIdentifiers(): Boolean = false
   override fun storesLowerCaseIdentifiers(): Boolean = false
   override fun storesUpperCaseIdentifiers(): Boolean = false
-
-  override fun supportsSchemasInIndexDefinitions(): Boolean = false
-
-  override fun getMaxStatementLength(): Int = 0
-
-  override fun supportsTransactions(): Boolean = false
 
   override fun supportsResultSetConcurrency(type: Int, concurrency: Int): Boolean {
     return ResultSet.TYPE_FORWARD_ONLY == type && ResultSet.CONCUR_READ_ONLY == concurrency
@@ -96,10 +71,23 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun usesLocalFiles(): Boolean = false
 
   override fun supportsResultSetType(type: Int): Boolean = ResultSet.TYPE_FORWARD_ONLY == type
+  override fun supportsSchemasInIndexDefinitions(): Boolean = false
 
   override fun getMaxConnections(): Int = 0
+  override fun getMaxStatementLength(): Int = 0
+  override fun getMaxColumnsInOrderBy(): Int = 0
 
-  private fun tableType(tableName: String) = if (SYSTEM_TABLES.contains(tableName)) SYSTEM_TABLE_NAME else TABLE_NAME
+  override fun getMaxProcedureNameLength(): Int = 0
+  override fun getMaxColumnsInSelect(): Int = 0
+  override fun getMaxUserNameLength(): Int = 0
+  override fun getMaxColumnsInIndex(): Int = 0
+
+  private fun tableType(tableName: String): String {
+    return when (SYSTEM_TABLES.any { it.toRegex().matches(tableName) }) {
+      true -> SYSTEM_TABLE_NAME
+      false -> TABLE_NAME
+    }
+  }
 
   private fun getTopics(tableNamePattern: String?,
                         types: Array<out String>?): List<Topic> {
@@ -192,7 +180,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsMultipleResultSets(): Boolean = true
 
-  override fun dataDefinitionIgnoredInTransactions(): Boolean = false
 
   override fun getFunctions(catalog: String?,
                             schemaPattern: String?,
@@ -204,7 +191,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getMaxTableNameLength(): Int = 0
 
-  override fun dataDefinitionCausesTransactionCommit(): Boolean = false
 
   override fun supportsOpenStatementsAcrossCommit(): Boolean = false
 
@@ -223,7 +209,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
     return RowResultSet.emptyOf(Schemas.FunctionColumns)
   }
 
-  override fun supportsTransactionIsolationLevel(level: Int): Boolean = false
 
   override fun nullsAreSortedAtStart(): Boolean = false
   override fun nullsAreSortedAtEnd(): Boolean = false
@@ -318,7 +303,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsCorrelatedSubqueries(): Boolean = false
 
-  override fun getDefaultTransactionIsolation(): Int = Connection.TRANSACTION_NONE
 
   override fun locatorsUpdateCopy(): Boolean = false
 
@@ -487,16 +471,26 @@ class LsqlDatabaseMetaData(private val conn: Connection,
     return "AVRO, JSON, STRING, _ktype,_vtype, _key, _partition, _offset, _topic,_ts, _value"
   }
 
-// -- updates are not permitted on this read only driver
+  // -- updates are not permitted on this read only driver
 
   override fun ownDeletesAreVisible(type: Int): Boolean = false
   override fun othersUpdatesAreVisible(type: Int): Boolean = false
   override fun ownUpdatesAreVisible(type: Int): Boolean = false
-  override fun supportsMultipleTransactions(): Boolean = false
   override fun othersDeletesAreVisible(type: Int): Boolean = false
   override fun othersInsertsAreVisible(type: Int): Boolean = false
   override fun updatesAreDetected(type: Int): Boolean = false
   override fun supportsSavepoints(): Boolean = false
+
+  // -- transactionsa are not supported
+
+  override fun getDefaultTransactionIsolation(): Int = Connection.TRANSACTION_NONE
+  override fun supportsTransactionIsolationLevel(level: Int): Boolean = level == Connection.TRANSACTION_NONE
+  override fun supportsDataDefinitionAndDataManipulationTransactions(): Boolean = false
+  override fun supportsOpenStatementsAcrossRollback(): Boolean = false
+  override fun supportsTransactions(): Boolean = false
+  override fun dataDefinitionIgnoredInTransactions(): Boolean = false
+  override fun dataDefinitionCausesTransactionCommit(): Boolean = false
+  override fun supportsMultipleTransactions(): Boolean = false
   override fun supportsDataManipulationTransactionsOnly(): Boolean = false
 
 // -- software / driver versionings
