@@ -99,6 +99,8 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getMaxConnections(): Int = 0
 
+  private fun tableType(tableName: String) = if (SYSTEM_TABLES.contains(tableName)) SYSTEM_TABLE_NAME else TABLE_NAME
+
   private fun getTopics(tableNamePattern: String?,
                         types: Array<out String>?): List<Topic> {
 
@@ -111,7 +113,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
     return when (types) {
       null -> topicsFilteredByTableName
-      else -> topicsFilteredByTableName.filter { types.contains(it.topicName) }
+      else -> topicsFilteredByTableName.filter { types.contains(tableType(it.topicName)) }
     }
   }
 
@@ -121,12 +123,11 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                          types: Array<out String>?): ResultSet {
 
     val rows = getTopics(tableNamePattern, types).map {
-      val tableType = if (SYSTEM_TABLES.contains(it.topicName)) SYSTEM_TABLE_NAME else TABLE_NAME
       val array = arrayOf<Any?>(
           null,
           null,
           it.topicName,
-          tableType,
+          tableType(it.topicName),
           null,
           null,
           null,

@@ -19,7 +19,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
   init {
 
     LsqlDriver()
-    //val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "read", "read1")
+    // val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "read", "read1")
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 
     "LsqlDatabaseMetaDataTest" should {
@@ -32,19 +32,20 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         resultSetList(conn.metaData.tableTypes).map { it[0] } shouldBe listOf("TABLE", "SYSTEM TABLE")
       }
       "return all table names" {
-        // lets add some of our own tables and make sure they appear in the list of all
-        val schema = SchemaBuilder.record("wibble").fields().requiredString("foo").endRecord()
-        val producer = KafkaProducer<String, GenericData.Record>(props())
-        val record = GenericData.Record(schema)
-        record.put("foo", "a")
-
-        producer.send(ProducerRecord<String, GenericData.Record>("topic_dibble", "key1", record))
-        producer.send(ProducerRecord<String, GenericData.Record>("topic_dobble", "key1", record))
-        producer.send(ProducerRecord<String, GenericData.Record>("topic_dubble", "key1", record))
-        producer.close()
-
         val tableNames = resultSetList(conn.metaData.getTables(null, null, null, null)).map { it[2].toString() }
-        tableNames should containsAll("cc_data", "topic_dibble", "topic_dobble", "topic_dubble")
+        tableNames should containsAll("cc_data", "cc_payments")
+      }
+      "support table types when listing tables" {
+        val tableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("TABLE"))).map { it[2].toString() }
+        tableNames should contain("cc_data")
+        tableNames should contain("cc_payments")
+        tableNames shouldNot contain("__consumer_offsets")
+        tableNames shouldNot contain("_schemas")
+
+        val systemTableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("SYSTEM TABLE"))).map { it[2].toString() }
+        systemTableNames should containsAll("__consumer_offsets", "_schemas", "_kafka_lenses_processors")
+        systemTableNames shouldNot contain("cc_data")
+        systemTableNames shouldNot contain("cc_payments")
       }
       "support table regex when listing tables" {
         // lets add some of our own tables and make sure they appear in the list of all
@@ -61,25 +62,6 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         val tableNames = resultSetList(conn.metaData.getTables(null, null, "topic_d%", null)).map { it[2].toString() }
         tableNames.size shouldBe 3
         tableNames should containsAll("topic_dibble", "topic_dobble", "topic_dubble")
-      }
-      "support table types when listing tables" {
-        val schema = SchemaBuilder.record("wibble").fields().requiredString("foo").endRecord()
-        val producer = KafkaProducer<String, GenericData.Record>(props())
-        val record = GenericData.Record(schema)
-        record.put("foo", "a")
-
-        producer.send(ProducerRecord<String, GenericData.Record>("topic_bobble", "key1", record))
-        producer.send(ProducerRecord<String, GenericData.Record>("topic_bibble", "key1", record))
-        producer.close()
-
-        val tableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("TABLE"))).map { it[2].toString() }
-        tableNames should contain("topic_bobble")
-        tableNames should contain("topic_bibble")
-        tableNames shouldNot contain("__consumer_offsets")
-
-        val systemTableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("SYSTEM TABLE"))).map { it[2].toString() }
-        systemTableNames should containsAll("__consumer_offsets", "_schemas", "_kafka_lenses_processors")
-        systemTableNames shouldNot contain("topic_bobble")
       }
       "support listing columns with correct types" {
         val columns = resultSetList(conn.metaData.getColumns(null, null, null, null))
