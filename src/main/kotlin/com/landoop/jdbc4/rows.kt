@@ -5,11 +5,11 @@ import org.apache.avro.generic.GenericData
 import java.math.BigDecimal
 import java.sql.SQLException
 
-class ArrayRow(val array: Array<Any?>) : ConvertingRow() {
+class ArrayRow(private val array: Array<Any?>) : ConvertingRow() {
   override fun getObject(index: Int): Any? = array[index - 1]
 }
 
-class JsonNodeRow(val node: JsonNode) : ConvertingRow() {
+class JsonNodeRow(private val node: JsonNode) : ConvertingRow() {
   override fun getObject(index: Int): Any? {
     // remember jdbc is 1-indexed
     val n = node.fields().asSequence().toList()[index - 1].value

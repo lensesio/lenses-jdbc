@@ -1,7 +1,6 @@
 package com.landoop.jdbc4
 
 import com.landoop.rest.RestClient
-import com.landoop.rest.domain.Topic
 import org.apache.avro.generic.GenericRecordBuilder
 import java.sql.Connection
 import java.sql.DatabaseMetaData
@@ -15,7 +14,17 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                            private val user: String) : DatabaseMetaData, Logging {
 
   companion object {
-    val TABLE_TYPES = listOf("TABLE", "SYSTEM TABLE")
+    val TABLE_NAME = "TABLE"
+    val SYSTEM_TABLE_NAME = "SYSTEM TABLE"
+    val TABLE_TYPES = listOf(TABLE_NAME, SYSTEM_TABLE_NAME)
+    val SYSTEM_TABLES = listOf(
+        "__consumer_offsets",
+        "_kafka_lenses_audits",
+        "_kafka_lenses_cluster",
+        "_kafka_lenses_processors",
+        "_kafka_lenses_profiles",
+        "_schemas"
+    )
   }
 
   override fun supportsSubqueriesInQuantifieds(): Boolean = false
@@ -97,23 +106,13 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                          types: Array<out String>?): ResultSet {
 
     val topics = client.topics()
-
-    val topicsFilteredByTableName: Array<Topic> = when (tableNamePattern) {
-      null -> topics
-      else -> topics.filter { it.topicName.matches(tableNamePattern.replace("%", ".*").toRegex()) }.toTypedArray()
-    }
-
-    val topicsFilteredByTypes: Array<Topic> = when (types) {
-      null -> topicsFilteredByTableName
-      else -> topicsFilteredByTableName.filter { types.contains("TABLE") }.toTypedArray()
-    }
-
-    val rows = topicsFilteredByTypes.map {
+    val rows = topics.map {
+      val tableType = if (SYSTEM_TABLES.contains(it.topicName)) SYSTEM_TABLE_NAME else TABLE_NAME
       val array = arrayOf<Any?>(
           null,
           null,
           it.topicName,
-          "TABLE",
+          tableType,
           null,
           null,
           null,
@@ -122,7 +121,17 @@ class LsqlDatabaseMetaData(private val conn: Connection,
       ArrayRow(array)
     }
 
-    return RowResultSet(null, Schemas.Tables, rows)
+    val rowsFilteredByTableName: List<Row> = when (tableNamePattern) {
+      null -> rows.toList()
+      else -> rows.filter { it.getString(3)!!.matches(tableNamePattern.replace("%", ".*").toRegex()) }
+    }
+
+    val rowsFilteredByTypes: List<Row> = when (types) {
+      null -> rowsFilteredByTableName
+      else -> rowsFilteredByTableName.filter { types.contains(it.getString(4)) }
+    }
+
+    return RowResultSet(null, Schemas.Tables, rowsFilteredByTypes)
   }
 
   override fun supportsMultipleResultSets(): Boolean = true
@@ -361,7 +370,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getRowIdLifetime(): RowIdLifetime = RowIdLifetime.ROWID_VALID_OTHER
 
-  override fun getDriverName(): String = "LSQL JDBC Driver"
 
   override fun doesMaxRowSizeIncludeBlobs(): Boolean = false
 
@@ -464,5 +472,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun getJDBCMinorVersion(): Int = 0
   override fun getJDBCMajorVersion(): Int = 4
   override fun getDatabaseProductName(): String = Constants.ProductName
+  override fun getDriverName(): String = Constants.DriverName
   override fun getDatabaseProductVersion(): String = databaseMajorVersion.toString() + "." + databaseMinorVersion
 }

@@ -1,9 +1,11 @@
 package com.landoop.jdbc4
 
+import io.kotlintest.matchers.contain
 import io.kotlintest.matchers.containsAll
 import io.kotlintest.matchers.gte
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
+import io.kotlintest.matchers.shouldNot
 import io.kotlintest.specs.WordSpec
 import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData
@@ -70,10 +72,13 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         producer.close()
 
         val tableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("TABLE"))).map { it[2].toString() }
-        tableNames should containsAll("topic_bobble", "topic_bibble")
+        tableNames should contain("topic_bobble")
+        tableNames should contain("topic_bibble")
+        tableNames shouldNot contain("__consumer_offsets")
 
         val systemTableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("SYSTEM TABLE"))).map { it[2].toString() }
-        systemTableNames.size shouldBe 0
+        systemTableNames should containsAll("__consumer_offsets", "_schemas", "_kafka_lenses_processors")
+        systemTableNames shouldNot contain("topic_bobble")
       }
       "return versioning information" {
         conn.metaData.databaseMajorVersion shouldBe gte(1)
@@ -83,6 +88,12 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         conn.metaData.databaseProductName shouldBe Constants.ProductName
         conn.metaData.jdbcMajorVersion shouldBe 4
         conn.metaData.jdbcMinorVersion shouldBe 0
+      }
+      "not support batch updates" {
+        conn.metaData.supportsBatchUpdates() shouldBe false
+      }
+      "be read only" {
+        conn.metaData.isReadOnly() shouldBe true
       }
     }
   }

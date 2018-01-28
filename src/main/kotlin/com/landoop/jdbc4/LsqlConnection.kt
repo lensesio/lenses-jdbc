@@ -82,6 +82,7 @@ class LsqlConnection(private val uri: String,
   }
 
   override fun getWarnings(): SQLWarning? = null
+  override fun clearWarnings() {}
 
   override fun getCatalog(): String? = null
 
@@ -136,8 +137,6 @@ class LsqlConnection(private val uri: String,
 
   override fun getTypeMap(): MutableMap<String, Class<*>> = throw SQLFeatureNotSupportedException()
 
-  override fun clearWarnings() {
-  }
 
   override fun getMetaData(): DatabaseMetaData {
     return LsqlDatabaseMetaData(this, client, uri, user)
