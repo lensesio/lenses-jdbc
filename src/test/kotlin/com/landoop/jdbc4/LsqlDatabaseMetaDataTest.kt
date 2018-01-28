@@ -1,6 +1,7 @@
 package com.landoop.jdbc4
 
 import io.kotlintest.matchers.containsAll
+import io.kotlintest.matchers.gte
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
@@ -58,6 +59,15 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
 
         val tableNames = resultSetList(conn.metaData.getTables(null, null, "topic_d%", null)).map { it[2].toString() }
         tableNames should containsAll("topic_dibble", "topic_dobble", "topic_dubble")
+      }
+      "return versioning information" {
+        conn.metaData.databaseMajorVersion shouldBe gte(1)
+        conn.metaData.databaseMinorVersion shouldBe gte(1)
+        conn.metaData.driverMajorVersion shouldBe 0
+        conn.metaData.driverMinorVersion shouldBe gte(1)
+        conn.metaData.databaseProductName shouldBe Constants.ProductName
+        conn.metaData.jdbcMajorVersion shouldBe 4
+        conn.metaData.jdbcMinorVersion shouldBe 0
       }
     }
   }

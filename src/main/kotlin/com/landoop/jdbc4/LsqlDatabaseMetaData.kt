@@ -38,11 +38,8 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                              typeNamePattern: String?,
                              attributeNamePattern: String?): ResultSet = RowResultSet.emptyOf(Schemas.Attributes)
 
-  override fun getDatabaseProductVersion(): String = "0" // todo
 
   override fun supportsOpenStatementsAcrossRollback(): Boolean = false
-
-  override fun getDatabaseProductName(): String = Constants.ProductName
 
   override fun getMaxProcedureNameLength(): Int = 0
 
@@ -51,9 +48,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun supportsCatalogsInDataManipulation(): Boolean = false
 
   override fun getMaxUserNameLength(): Int = 0
-
-  // todo set proper version
-  override fun getJDBCMajorVersion(): Int = 0
 
   override fun getTimeDateFunctions(): String = ""
 
@@ -74,7 +68,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getMaxColumnsInOrderBy(): Int = 0
 
-  override fun getDriverMinorVersion(): Int = 0 // todo
 
   override fun storesLowerCaseIdentifiers(): Boolean = false
   override fun storesUpperCaseIdentifiers(): Boolean = false
@@ -174,8 +167,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsANSI92IntermediateSQL(): Boolean = false
 
-  override fun getDatabaseMajorVersion(): Int = 0 //  todo add database version numbers
-
   override fun supportsOuterJoins(): Boolean = false
 
   override fun <T : Any?> unwrap(iface: Class<T>): T {
@@ -227,7 +218,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun allTablesAreSelectable(): Boolean = true
 
-  override fun getJDBCMinorVersion(): Int = 0 // todo
 
   override fun getCatalogSeparator(): String = "."
 
@@ -247,7 +237,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsMultipleOpenResults(): Boolean = false
 
-  override fun getDatabaseMinorVersion(): Int = 0 // todo
 
   override fun supportsMinimumSQLGrammar(): Boolean = false
 
@@ -337,7 +326,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsANSI92EntryLevelSQL(): Boolean = false
 
-  override fun getDriverVersion(): String = "todo" // todo
 
   override fun getPseudoColumns(catalog: String?,
                                 schemaPattern: String?,
@@ -350,7 +338,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                              schemaPattern: String?,
                              procedureNamePattern: String?): ResultSet = RowResultSet.emptyOf(Schemas.Procedures)
 
-  override fun getDriverMajorVersion(): Int = 0// todo
 
   override fun supportsANSI92FullSQL(): Boolean = false
 
@@ -460,4 +447,16 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun supportsBatchUpdates(): Boolean = false
 
   override fun getResultSetHoldability(): Int = ResultSet.CLOSE_CURSORS_AT_COMMIT
+
+  // -- software / driver versionings
+
+  override fun getDatabaseMinorVersion(): Int = Versions.databaseMinorVersion()
+  override fun getDatabaseMajorVersion(): Int = Versions.databaseMajorVersion()
+  override fun getDriverMinorVersion(): Int = Versions.driverMinorVersion()
+  override fun getDriverMajorVersion(): Int = Versions.driverMajorVersion()
+  override fun getDriverVersion(): String = driverMajorVersion.toString() + "." + driverMinorVersion
+  override fun getJDBCMinorVersion(): Int = 0
+  override fun getJDBCMajorVersion(): Int = 4
+  override fun getDatabaseProductName(): String = Constants.ProductName
+  override fun getDatabaseProductVersion(): String = databaseMajorVersion.toString() + "." + databaseMinorVersion
 }
