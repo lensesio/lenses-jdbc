@@ -85,9 +85,11 @@ class RestClient(private val urls: List<String>,
           401, 403 -> throw AuthenticationException("Invalid credentials for user '${credentials.user}'")
           else -> {
             val body = resp.entity.content.bufferedReader().use { it.readText() }
-            SQLException("${resp.statusLine.statusCode} ${resp.statusLine.reasonPhrase}: $body")
+            throw SQLException("url=$url, req=$req, ${resp.statusLine.statusCode} ${resp.statusLine.reasonPhrase}: $body")
           }
         }
+      } catch (e: SQLException) {
+        e
       } catch (e: IOException) {
         e
       }
@@ -145,7 +147,7 @@ class RestClient(private val urls: List<String>,
     }
 
     val responseFn: (HttpResponse) -> Array<Topic> = {
-      JacksonSupport.fromJson<Array<Topic>>(it.entity.content)
+      JacksonSupport.fromJson(it.entity.content)
     }
 
     return attemptAuthenticated(requestFn, responseFn)

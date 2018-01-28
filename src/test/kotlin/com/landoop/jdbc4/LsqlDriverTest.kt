@@ -28,6 +28,12 @@ class LsqlDriverTest : WordSpec() {
       "accept valid multiple host url" {
         LsqlDriver().acceptsURL("jdbc:lsql:kafka:http://localhost:3030,http://localhost:3031") shouldBe true
       }
+      "parse parameters from url" {
+        val (url, props) = LsqlDriver().parseUrl("jdbc:lsql:kafka:http://localhost:3030,http://localhost:3031?user=admin&wibble=wobble")
+        url shouldBe "jdbc:lsql:kafka:http://localhost:3030,http://localhost:3031"
+        props["user"] shouldBe "admin"
+        props["wibble"] shouldBe "wobble"
+      }
       "reject invalid url" {
         LsqlDriver().acceptsURL("jdbc:qqqqq") shouldBe false
       }

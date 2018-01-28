@@ -37,6 +37,18 @@ class LsqlDriver : Driver, Logging {
     )
   }
 
+  internal fun parseUrl(url: String): Pair<String, Properties> {
+    val props = Properties()
+    val parts = url.split('?')
+    if (parts.size == 2) {
+      parts[1].split('&').forEach {
+        val (key, value) = it.split('=')
+        props[key] = value
+      }
+    }
+    return Pair(parts[0], props)
+  }
+
   override fun jdbcCompliant(): Boolean = false
 
   override fun acceptsURL(url: String?): Boolean {
@@ -50,7 +62,11 @@ class LsqlDriver : Driver, Logging {
       return if (!acceptsURL(url)) {
         null
       } else {
-        LsqlConnection(url, props ?: Properties())
+        val (baseUrl, urlProps) = parseUrl(url)
+        if (props != null) {
+          props.putAll(urlProps)
+        }
+        LsqlConnection(baseUrl, props ?: Properties())
       }
     }
   }
