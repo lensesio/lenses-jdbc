@@ -11,7 +11,7 @@ import java.sql.Types
 class LsqlResultSetMetaData(private val schema: Schema,
                             private val rs: ResultSet) : ResultSetMetaData {
 
-  override fun getTableName(column: Int): String = TODO()
+  override fun getTableName(column: Int): String = schema.name
 
   override fun isNullable(column: Int): Int {
     return when (schemaForIndex(column).isNullable()) {

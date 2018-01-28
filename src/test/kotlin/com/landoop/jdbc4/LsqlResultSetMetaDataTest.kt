@@ -386,6 +386,13 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
         meta.getSchemaName(1) shouldBe ""
       }
+      "use the schema name as the table name" {
+        val schema = SchemaBuilder.record("foo").fields().requiredString("a").endRecord()
+        val record = GenericData.Record(schema)
+        record.put("a", "wibble")
+        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        meta.getTableName(1) shouldBe "foo"
+      }
     }
   }
 }
