@@ -5,6 +5,7 @@ data class Topic(
     val messagesPerSecond: Int,
     val timestamp: Long,
     val valueType: String,
+    val valueSchema: String?,
     val config: List<ConfigEntry>?,
     val totalMessages: Long,
     val replication: Int,
