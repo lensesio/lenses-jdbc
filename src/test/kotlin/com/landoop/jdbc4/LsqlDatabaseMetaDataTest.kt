@@ -11,6 +11,7 @@ import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.DriverManager
 
@@ -27,6 +28,17 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         conn.metaData.supportsMultipleResultSets() shouldBe true
         conn.metaData.supportsMultipleOpenResults() shouldBe false
         conn.metaData.supportsMultipleTransactions() shouldBe false
+      }
+      "declare support for transactions" {
+        conn.metaData.supportsTransactions() shouldBe false
+        conn.metaData.supportsMultipleTransactions() shouldBe true
+        conn.metaData.dataDefinitionIgnoredInTransactions() shouldBe false
+        conn.metaData.defaultTransactionIsolation shouldBe Connection.TRANSACTION_NONE
+        conn.metaData.supportsTransactionIsolationLevel(Connection.TRANSACTION_READ_COMMITTED) shouldBe false
+        conn.metaData.supportsTransactionIsolationLevel(Connection.TRANSACTION_REPEATABLE_READ) shouldBe false
+        conn.metaData.supportsTransactionIsolationLevel(Connection.TRANSACTION_SERIALIZABLE) shouldBe false
+        conn.metaData.supportsDataDefinitionAndDataManipulationTransactions() shouldBe false
+        conn.metaData.supportsDataManipulationTransactionsOnly() shouldBe false
       }
       "return compatible table types" {
         resultSetList(conn.metaData.tableTypes).map { it[0] } shouldBe listOf("TABLE", "SYSTEM TABLE")
