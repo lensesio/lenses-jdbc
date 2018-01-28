@@ -29,7 +29,6 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         resultSetList(conn.metaData.tableTypes).map { it[0] } shouldBe listOf("TABLE", "SYSTEM TABLE")
       }
       "return all table names" {
-
         // lets add some of our own tables and make sure they appear in the list of all
         val schema = SchemaBuilder.record("wibble").fields().requiredString("foo").endRecord()
         val producer = KafkaProducer<String, GenericData.Record>(props())
@@ -45,7 +44,6 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         tableNames should containsAll("cc_data", "topic_dibble", "topic_dobble", "topic_dubble")
       }
       "support table regex when listing table names" {
-
         // lets add some of our own tables and make sure they appear in the list of all
         val schema = SchemaBuilder.record("wibble").fields().requiredString("foo").endRecord()
         val producer = KafkaProducer<String, GenericData.Record>(props())
@@ -58,7 +56,24 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         producer.close()
 
         val tableNames = resultSetList(conn.metaData.getTables(null, null, "topic_d%", null)).map { it[2].toString() }
+        tableNames.size shouldBe 3
         tableNames should containsAll("topic_dibble", "topic_dobble", "topic_dubble")
+      }
+      "support table types when listing table names" {
+        val schema = SchemaBuilder.record("wibble").fields().requiredString("foo").endRecord()
+        val producer = KafkaProducer<String, GenericData.Record>(props())
+        val record = GenericData.Record(schema)
+        record.put("foo", "a")
+
+        producer.send(ProducerRecord<String, GenericData.Record>("topic_bobble", "key1", record))
+        producer.send(ProducerRecord<String, GenericData.Record>("topic_bibble", "key1", record))
+        producer.close()
+
+        val tableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("TABLE"))).map { it[2].toString() }
+        tableNames should containsAll("topic_bobble", "topic_bibble")
+
+        val systemTableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("SYSTEM TABLE"))).map { it[2].toString() }
+        systemTableNames.size shouldBe 0
       }
       "return versioning information" {
         conn.metaData.databaseMajorVersion shouldBe gte(1)

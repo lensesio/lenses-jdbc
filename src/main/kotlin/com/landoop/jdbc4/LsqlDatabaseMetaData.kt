@@ -97,12 +97,18 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                          types: Array<out String>?): ResultSet {
 
     val topics = client.topics()
-    val filteredTopics: Array<Topic> = when (tableNamePattern) {
+
+    val topicsFilteredByTableName: Array<Topic> = when (tableNamePattern) {
       null -> topics
       else -> topics.filter { it.topicName.matches(tableNamePattern.replace("%", ".*").toRegex()) }.toTypedArray()
     }
 
-    val rows = filteredTopics.map {
+    val topicsFilteredByTypes: Array<Topic> = when (types) {
+      null -> topicsFilteredByTableName
+      else -> topicsFilteredByTableName.filter { types.contains("TABLE") }.toTypedArray()
+    }
+
+    val rows = topicsFilteredByTypes.map {
       val array = arrayOf<Any?>(
           null,
           null,
