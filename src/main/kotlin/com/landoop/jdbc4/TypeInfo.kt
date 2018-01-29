@@ -25,7 +25,7 @@ data class TypeInfo(
     val String = TypeInfo(Schema.Type.STRING.name, java.sql.Types.VARCHAR, 0, false, 0, 0)
 
     val all = listOf(
-        Boolean, Bytes, Double, Float, Date, Time, Timestamp, Int, Long, String
+        Boolean, Bytes, Decimal, Double, Float, Date, Time, Timestamp, Int, Long, String
     )
   }
 }
