@@ -98,7 +98,7 @@ abstract class ConvertingRow : Row {
       else -> throw SQLException("Unable to convert $value to java.sql.Date")
     }
     val zone = cal?.timeZone?.toZoneId() ?: ZoneId.of("Z")
-    return java.sql.Date.valueOf(instant.atZone(zone).toLocalDate())
+    return java.sql.Date(instant.atZone(zone).toInstant().toEpochMilli())
   }
 
   override fun getTimestamp(index: Int): Timestamp = getTimestamp(index, null)
