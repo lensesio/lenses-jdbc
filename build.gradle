@@ -1,11 +1,11 @@
 buildscript {
-    ext.kotlin_version = '1.2.0'
+    ext.kotlin_version = '1.2.10'
     ext.kotlin_test = '2.0.4'
     ext.log4j_version = '2.9.1'
     ext.joda_version = '2.9.9'
     ext.avro_version = '1.8.2'
     ext.httpclient_version = '4.5.3'
-    ext.jackson_version = '2.9.0'
+    ext.jackson_version = '2.9.2'
     repositories {
 
         maven {
@@ -41,10 +41,11 @@ apply plugin: "kotlin"
 apply plugin: 'application'
 apply plugin: 'distribution'
 
-mainClassName = "com.landoop.license.ProgramKt"
-
 repositories {
     mavenCentral()
+    maven {
+        url "https://packages.confluent.io/maven"
+    }
 }
 
 dependencies {
@@ -54,16 +55,16 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile "org.apache.logging.log4j:log4j-core:$log4j_version"
     compile "org.apache.logging.log4j:log4j-api:$log4j_version"
-    compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j_version"
     compile "joda-time:joda-time:$joda_version"
     compile "org.apache.httpcomponents:httpclient:$httpclient_version"
-    //compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
     compile "org.apache.avro:avro:$avro_version"
-
+    
+    testCompile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j_version"
     testCompile "io.kotlintest:kotlintest:$kotlin_test"
-
-    //compile 'org.jetbrains.spek:spek-api:1.1.2'
+    testCompile 'org.apache.kafka:kafka-clients:0.11.0.2'
+    testCompile 'io.confluent:kafka-avro-serializer:3.2.1'
+    testCompile 'org.nanohttpd:nanohttpd:2.3.1'
 }
 
 jar {

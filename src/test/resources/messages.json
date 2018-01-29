@@ -1,0 +1,35 @@
+{
+  "messages": [
+    {
+      "timestamp": 1515438609862,
+      "partition": 0,
+      "key": "5290441401157247",
+      "offset": 7,
+      "topic": "cc_payments",
+      "value": "{\"id\":\"txn1515438609862\",\"time\":\"2018-01-08T19:10:09.862Z\",\"amount\":3593.700000000000000000,\"currency\":\"USD\",\"creditCardId\":\"5290441401157247\",\"merchantId\":15}"
+    },
+    {
+      "timestamp": 1515438610464,
+      "partition": 0,
+      "key": "5390713494347532",
+      "offset": 10,
+      "topic": "cc_payments",
+      "value": "{\"id\":\"txn1515438610463\",\"time\":\"2018-01-08T19:10:10.463Z\",\"amount\":2470.570000000000000000,\"currency\":\"USD\",\"creditCardId\":\"5390713494347532\",\"merchantId\":74}"
+    },
+    {
+      "timestamp": 1515438610664,
+      "partition": 0,
+      "key": "5290441401157247",
+      "offset": 11,
+      "topic": "cc_payments",
+      "value": "{\"id\":\"txn1515438610664\",\"time\":\"2018-01-08T19:10:10.664Z\",\"amount\":3676.860000000000000000,\"currency\":\"USD\",\"creditCardId\":\"5290441401157247\",\"merchantId\":34}"
+    }
+  ],
+  "offsets": [
+    {
+      "partition": 0,
+      "min": 0,
+      "max": 48889
+    }
+  ]
+}
