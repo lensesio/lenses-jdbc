@@ -29,6 +29,11 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         conn.metaData.supportsMultipleOpenResults() shouldBe false
         conn.metaData.supportsMultipleTransactions() shouldBe false
       }
+      "declare support for joins" {
+        conn.metaData.supportsFullOuterJoins() shouldBe false
+        conn.metaData.supportsLimitedOuterJoins() shouldBe false
+        conn.metaData.supportsOuterJoins() shouldBe false
+      }
       "declare support for transactions" {
         conn.metaData.supportsTransactions() shouldBe false
         conn.metaData.supportsMultipleTransactions() shouldBe true

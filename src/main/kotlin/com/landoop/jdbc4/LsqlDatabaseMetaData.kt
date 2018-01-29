@@ -214,16 +214,9 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsANSI92IntermediateSQL(): Boolean = false
 
-  override fun supportsOuterJoins(): Boolean = false
-
-
   override fun supportsLikeEscapeClause(): Boolean = false
 
-
-  override fun supportsLimitedOuterJoins(): Boolean = false
-
   override fun getSQLStateType(): Int = DatabaseMetaData.sqlStateSQL
-
 
   override fun getMaxRowSize(): Int = 0
 
@@ -331,12 +324,12 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsCatalogsInIndexDefinitions(): Boolean = false
 
-  // todo add schema
   override fun getUDTs(catalog: String?,
                        schemaPattern: String?,
                        typeNamePattern: String?,
-                       types: IntArray?): ResultSet = RowResultSet.empty()
-
+                       types: IntArray?): ResultSet {
+    return RowResultSet.emptyOf(Schemas.UDT)
+  }
 
   override fun supportsColumnAliasing(): Boolean = true
 
@@ -344,8 +337,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun usesLocalFilePerTable(): Boolean = false
 
-
-  override fun supportsFullOuterJoins(): Boolean = false
 
   override fun supportsOrderByUnrelated(): Boolean = false
 
@@ -466,6 +457,12 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun supportsBatchUpdates(): Boolean = false
 
   override fun getResultSetHoldability(): Int = ResultSet.CLOSE_CURSORS_AT_COMMIT
+
+  // join support
+  override fun supportsOuterJoins(): Boolean = false
+  override fun supportsFullOuterJoins(): Boolean = false
+  override fun supportsLimitedOuterJoins(): Boolean = false
+
 
   // group by functions
 

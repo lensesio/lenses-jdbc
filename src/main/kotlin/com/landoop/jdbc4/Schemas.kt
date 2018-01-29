@@ -45,6 +45,17 @@ object Schemas {
       .requiredInt("PSEUDO_COLUMN")
       .endRecord()
 
+  val UDT = SchemaBuilder.builder().record("UDT")
+      .fields()
+      .optionalString("TYPE_CAT")
+      .optionalString("TYPE_SCHEM")
+      .requiredString("TYPE_NAME")
+      .requiredString("CLASS_NAME")
+      .requiredInt("DATA_TYPE")
+      .optionalString("REMARKS")
+      .requiredInt("BASE_TYPE")
+      .endRecord()
+
   val TableTypes = SchemaBuilder.builder().record("table_types")
       .fields()
       .nullableString("TABLE_TYPE", null)
