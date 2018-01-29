@@ -244,6 +244,16 @@ object Schemas {
       .nullableString("SUPERTABLE_NAME", null)
       .endRecord()
 
+  val Supertypes = SchemaBuilder.builder().record("supertypes")
+      .fields()
+      .optionalString("TYPE_CAT")
+      .optionalString("TYPE_SCHEM")
+      .requiredString("TYPE_NAME")
+      .optionalString("SUPERTYPE_CAT")
+      .optionalString("SUPERTYPE_SCHEM")
+      .requiredString("SUPERTYPE_NAME")
+      .endRecord()
+
   val Functions = SchemaBuilder.builder()
       .record("functions")
       .fields()

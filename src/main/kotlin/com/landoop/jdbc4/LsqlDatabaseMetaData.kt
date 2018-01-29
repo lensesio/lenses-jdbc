@@ -256,10 +256,11 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getCatalogSeparator(): String = "."
 
-  // todo add proper schema
   override fun getSuperTypes(catalog: String?,
                              schemaPattern: String?,
-                             typeNamePattern: String?): ResultSet = RowResultSet.empty()
+                             typeNamePattern: String?): ResultSet {
+    return RowResultSet.emptyOf(Schemas.Supertypes)
+  }
 
   override fun getMaxBinaryLiteralLength(): Int = 0
 
@@ -405,7 +406,9 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getSuperTables(catalog: String?,
                               schemaPattern: String?,
-                              tableNamePattern: String?): ResultSet = RowResultSet.emptyOf(Schemas.Supertables)
+                              tableNamePattern: String?): ResultSet {
+    return RowResultSet.emptyOf(Schemas.Supertables)
+  }
 
   override fun generatedKeyAlwaysReturned(): Boolean = false
 
