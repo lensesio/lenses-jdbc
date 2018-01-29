@@ -26,7 +26,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
     )
   }
 
-  override fun supportsSubqueriesInQuantifieds(): Boolean = false
 
   override fun supportsGetGeneratedKeys(): Boolean = false
 
@@ -70,14 +69,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun supportsResultSetType(type: Int): Boolean = ResultSet.TYPE_FORWARD_ONLY == type
   override fun supportsSchemasInIndexDefinitions(): Boolean = false
 
-  override fun getMaxConnections(): Int = 0
-  override fun getMaxStatementLength(): Int = 0
-  override fun getMaxColumnsInOrderBy(): Int = 0
 
-  override fun getMaxProcedureNameLength(): Int = 0
-  override fun getMaxColumnsInSelect(): Int = 0
-  override fun getMaxUserNameLength(): Int = 0
-  override fun getMaxColumnsInIndex(): Int = 0
 
   private fun tableType(tableName: String): String {
     return when (SYSTEM_TABLES.any { it.toRegex().matches(tableName) }) {
@@ -303,7 +295,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun getSchemas(catalog: String?,
                           schemaPattern: String?): ResultSet = RowResultSet.emptyOf(Schemas.Schemas)
 
-  override fun supportsCorrelatedSubqueries(): Boolean = false
 
 
   override fun getMaxTablesInSelect(): Int = 0
@@ -311,7 +302,12 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun getMaxColumnsInTable(): Int = 0
   override fun getMaxSchemaNameLength(): Int = 0
   override fun getMaxIndexLength(): Int = 0
-
+  override fun getMaxConnections(): Int = 0
+  override fun getMaxStatementLength(): Int = 0
+  override fun getMaxProcedureNameLength(): Int = 0
+  override fun getMaxColumnsInSelect(): Int = 0
+  override fun getMaxUserNameLength(): Int = 0
+  override fun getMaxColumnsInIndex(): Int = 0
 
   override fun getCrossReference(parentCatalog: String?,
                                  parentSchema: String?,
@@ -338,7 +334,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun usesLocalFilePerTable(): Boolean = false
 
 
-  override fun supportsOrderByUnrelated(): Boolean = false
+
 
   override fun supportsSchemasInTableDefinitions(): Boolean = false
 
@@ -353,7 +349,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsTableCorrelationNames(): Boolean = false
 
-  override fun supportsSubqueriesInExists(): Boolean = false
 
   override fun supportsANSI92EntryLevelSQL(): Boolean = false
 
@@ -390,7 +385,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                             unique: Boolean,
                             approximate: Boolean): ResultSet = RowResultSet.emptyOf(Schemas.IndexInfo)
 
-  override fun supportsSubqueriesInIns(): Boolean = true
+
 
   override fun supportsStoredProcedures(): Boolean = true
 
@@ -400,13 +395,11 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsAlterTableWithDropColumn(): Boolean = false
 
-  override fun supportsExpressionsInOrderBy(): Boolean = false
 
   override fun getMaxCatalogNameLength(): Int = 0
 
   override fun supportsExtendedSQLGrammar(): Boolean = false
 
-  override fun supportsSubqueriesInComparisons(): Boolean = false
 
   override fun getMaxColumnNameLength(): Int = 0
 
@@ -454,15 +447,28 @@ class LsqlDatabaseMetaData(private val conn: Connection,
     return RowResultSet.empty()
   }
 
-  override fun supportsBatchUpdates(): Boolean = false
 
   override fun getResultSetHoldability(): Int = ResultSet.CLOSE_CURSORS_AT_COMMIT
 
+  // subquery declarations
+
+  override fun supportsSubqueriesInIns(): Boolean = true
+  override fun supportsCorrelatedSubqueries(): Boolean = false
+  override fun supportsSubqueriesInComparisons(): Boolean = false
+  override fun supportsSubqueriesInExists(): Boolean = false
+  override fun supportsSubqueriesInQuantifieds(): Boolean = false
+
+  // order support
+
+  override fun supportsExpressionsInOrderBy(): Boolean = false
+  override fun supportsOrderByUnrelated(): Boolean = false
+  override fun getMaxColumnsInOrderBy(): Int = 0
+
   // join support
+
   override fun supportsOuterJoins(): Boolean = false
   override fun supportsFullOuterJoins(): Boolean = false
   override fun supportsLimitedOuterJoins(): Boolean = false
-
 
   // group by functions
 
@@ -510,6 +516,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun updatesAreDetected(type: Int): Boolean = false
   override fun supportsPositionedUpdate(): Boolean = false
   override fun locatorsUpdateCopy(): Boolean = false
+  override fun supportsBatchUpdates(): Boolean = false
 
   // -- transactions are not supported
 

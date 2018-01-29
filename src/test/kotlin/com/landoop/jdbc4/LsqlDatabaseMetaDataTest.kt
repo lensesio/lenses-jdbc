@@ -34,6 +34,13 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         conn.metaData.supportsLimitedOuterJoins() shouldBe false
         conn.metaData.supportsOuterJoins() shouldBe false
       }
+      "declare support for subqueries" {
+        conn.metaData.supportsSubqueriesInIns() shouldBe true
+        conn.metaData.supportsCorrelatedSubqueries() shouldBe false
+        conn.metaData.supportsSubqueriesInComparisons() shouldBe false
+        conn.metaData.supportsSubqueriesInExists() shouldBe false
+        conn.metaData.supportsSubqueriesInQuantifieds() shouldBe false
+      }
       "declare support for transactions" {
         conn.metaData.supportsTransactions() shouldBe false
         conn.metaData.supportsMultipleTransactions() shouldBe true
