@@ -43,7 +43,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
       }
       "declare support for transactions" {
         conn.metaData.supportsTransactions() shouldBe false
-        conn.metaData.supportsMultipleTransactions() shouldBe true
+        conn.metaData.supportsMultipleTransactions() shouldBe false
         conn.metaData.dataDefinitionIgnoredInTransactions() shouldBe false
         conn.metaData.defaultTransactionIsolation shouldBe Connection.TRANSACTION_NONE
         conn.metaData.supportsTransactionIsolationLevel(Connection.TRANSACTION_READ_COMMITTED) shouldBe false
@@ -53,11 +53,18 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         conn.metaData.supportsDataManipulationTransactionsOnly() shouldBe false
       }
       "return type info" {
-        resultSetList(conn.metaData.typeInfo).first { it[0] == "STRING" }[1] shouldBe java.sql.Types.VARCHAR
-        resultSetList(conn.metaData.typeInfo).first { it[0] == "STRING" }[6] shouldBe DatabaseMetaData.typeNullable
 
-        resultSetList(conn.metaData.typeInfo).first { it[0] == "LONG" }[1] shouldBe java.sql.Types.BIGINT
-        resultSetList(conn.metaData.typeInfo).first { it[0] == "LONG" }[6] shouldBe DatabaseMetaData.typeNullable
+        val string = resultSetList(conn.metaData.typeInfo).first { it[0] == "STRING" }
+        string[1] shouldBe java.sql.Types.VARCHAR
+        string[6] shouldBe DatabaseMetaData.typeNullable
+        string[3] shouldBe '"'
+        string[4] shouldBe '"'
+
+        val long = resultSetList(conn.metaData.typeInfo).first { it[0] == "LONG" }
+        long[1] shouldBe java.sql.Types.BIGINT
+        long[6] shouldBe DatabaseMetaData.typeNullable
+        long[3] shouldBe null
+        long[4] shouldBe null
       }
       "return compatible table types" {
         resultSetList(conn.metaData.tableTypes).map { it[0] } shouldBe listOf("TABLE", "SYSTEM TABLE")
