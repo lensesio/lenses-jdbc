@@ -22,8 +22,8 @@ object Schemas {
       .optionalString("LOCAL_TYPE_NAME")
       .requiredInt("MINIMUM_SCALE")
       .requiredInt("MAXIMUM_SCALE")
-      .requiredInt("SQL_DATA_TYPE")
-      .requiredInt("SQL_DATETIME_SUB")
+      .optionalInt("SQL_DATA_TYPE")
+      .optionalInt("SQL_DATETIME_SUB")
       .requiredInt("NUM_PREC_RADIX")
       .endRecord()
 
@@ -154,7 +154,6 @@ object Schemas {
       .requiredInt("COLUMN_TYPE")
       .requiredInt("DATA_TYPE")
       .requiredString("TYPE_NAME")
-      .requiredInt("DATA_TYPE")
       .requiredInt("PRECISION")
       .requiredInt("LENGTH")
       .optionalInt("SCALE")

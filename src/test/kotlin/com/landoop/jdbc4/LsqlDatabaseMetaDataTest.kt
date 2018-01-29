@@ -20,8 +20,8 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
   init {
 
     LsqlDriver()
-    //    val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "read", "read1")
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
+    val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "read", "read1")
+    // val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 
     "LsqlDatabaseMetaDataTest" should {
       "declare support for multiple result sets" {
@@ -39,6 +39,13 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         conn.metaData.supportsTransactionIsolationLevel(Connection.TRANSACTION_SERIALIZABLE) shouldBe false
         conn.metaData.supportsDataDefinitionAndDataManipulationTransactions() shouldBe false
         conn.metaData.supportsDataManipulationTransactionsOnly() shouldBe false
+      }
+      "return type info" {
+        resultSetList(conn.metaData.typeInfo).first { it[0] == "STRING" }[1] shouldBe java.sql.Types.VARCHAR
+        resultSetList(conn.metaData.typeInfo).first { it[0] == "STRING" }[6] shouldBe DatabaseMetaData.typeNullable
+
+        resultSetList(conn.metaData.typeInfo).first { it[0] == "LONG" }[1] shouldBe java.sql.Types.BIGINT
+        resultSetList(conn.metaData.typeInfo).first { it[0] == "LONG" }[6] shouldBe DatabaseMetaData.typeNullable
       }
       "return compatible table types" {
         resultSetList(conn.metaData.tableTypes).map { it[0] } shouldBe listOf("TABLE", "SYSTEM TABLE")
@@ -118,7 +125,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         conn.metaData.supportsBatchUpdates() shouldBe false
       }
       "be read only" {
-        conn.metaData.isReadOnly() shouldBe true
+        conn.metaData.isReadOnly shouldBe true
       }
     }
   }

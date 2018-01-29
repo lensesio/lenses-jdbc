@@ -264,8 +264,31 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getMaxBinaryLiteralLength(): Int = 0
 
-  // todo implement
-  override fun getTypeInfo(): ResultSet = RowResultSet.emptyOf(Schemas.TypeInfo)
+  override fun getTypeInfo(): ResultSet {
+    val rows = TypeInfo.all.map {
+      val array = arrayOf(
+          it.name,
+          it.dataType,
+          it.precision,
+          null,
+          null,
+          null,
+          DatabaseMetaData.typeNullable,
+          false,
+          true,
+          it.signed,
+          false,
+          false,
+          null,
+          it.minScale,
+          it.maxScale,
+          0,
+          0,
+          10)
+      ArrayRow(array)
+    }
+    return RowResultSet(null, Schemas.TypeInfo, rows)
+  }
 
   override fun getVersionColumns(catalog: String?,
                                  schema: String?,
@@ -288,7 +311,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                           schemaPattern: String?): ResultSet = RowResultSet.emptyOf(Schemas.Schemas)
 
   override fun supportsCorrelatedSubqueries(): Boolean = false
-
 
 
   override fun getMaxTablesInSelect(): Int = 0
