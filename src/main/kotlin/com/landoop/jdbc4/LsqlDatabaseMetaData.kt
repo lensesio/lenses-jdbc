@@ -245,11 +245,12 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun supportsConvert(): Boolean = false
   override fun supportsConvert(fromType: Int, toType: Int): Boolean = false
 
-  // todo add proper schema
   override fun getProcedureColumns(catalog: String?,
                                    schemaPattern: String?,
                                    procedureNamePattern: String?,
-                                   columnNamePattern: String?): ResultSet = RowResultSet.empty()
+                                   columnNamePattern: String?): ResultSet {
+    return RowResultSet.emptyOf(Schemas.ProcedureColumns)
+  }
 
   override fun allTablesAreSelectable(): Boolean = true
 
@@ -288,11 +289,9 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun supportsCorrelatedSubqueries(): Boolean = false
 
 
-  override fun locatorsUpdateCopy(): Boolean = false
 
   override fun getMaxTablesInSelect(): Int = 0
   override fun getMaxStatements(): Int = 0
-  override fun getMaxColumnsInGroupBy(): Int = 0
   override fun getMaxColumnsInTable(): Int = 0
   override fun getMaxSchemaNameLength(): Int = 0
   override fun getMaxIndexLength(): Int = 0
@@ -371,9 +370,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun doesMaxRowSizeIncludeBlobs(): Boolean = false
 
-  override fun supportsGroupBy(): Boolean = false
-  override fun supportsGroupByUnrelated(): Boolean = false
-
   override fun getIndexInfo(catalog: String?,
                             schema: String?,
                             table: String?,
@@ -402,7 +398,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun nullPlusNonNullIsNull(): Boolean = false
 
-  override fun supportsGroupByBeyondSelect(): Boolean = false
 
   override fun supportsCatalogsInPrivilegeDefinitions(): Boolean = false
 
@@ -447,6 +442,13 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getResultSetHoldability(): Int = ResultSet.CLOSE_CURSORS_AT_COMMIT
 
+  // group by functions
+
+  override fun supportsGroupBy(): Boolean = false
+  override fun supportsGroupByUnrelated(): Boolean = false
+  override fun supportsGroupByBeyondSelect(): Boolean = false
+  override fun getMaxColumnsInGroupBy(): Int = 0
+
   // null sorting
 
   override fun nullsAreSortedAtStart(): Boolean = false
@@ -485,8 +487,9 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun othersInsertsAreVisible(type: Int): Boolean = false
   override fun updatesAreDetected(type: Int): Boolean = false
   override fun supportsPositionedUpdate(): Boolean = false
+  override fun locatorsUpdateCopy(): Boolean = false
 
-  // -- transactionsa are not supported
+  // -- transactions are not supported
 
   override fun getDefaultTransactionIsolation(): Int = Connection.TRANSACTION_NONE
   override fun supportsTransactionIsolationLevel(level: Int): Boolean = level == Connection.TRANSACTION_NONE
