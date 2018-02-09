@@ -8,7 +8,11 @@ import com.landoop.rest.domain.JdbcData
 import com.landoop.rest.domain.LoginResponse
 import com.landoop.rest.domain.Message
 import com.landoop.rest.domain.PreparedInsertStatementResponse
+import com.landoop.rest.domain.SqlInsertField
 import com.landoop.rest.domain.Topic
+import org.apache.avro.Schema
+import org.apache.avro.generic.GenericData
+import org.apache.avro.generic.GenericRecord
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.client.config.RequestConfig
@@ -177,6 +181,37 @@ class RestClient(private val urls: List<String>,
     }
 
     val responseFn: (HttpResponse) -> InsertResponse = {
+      JacksonSupport.fromJson(it.entity.content)
+    }
+
+    return attemptAuthenticatedWithRetry(requestFn, responseFn)
+  }
+
+  fun executePrepared(topic: String, fields: List<SqlInsertField>, schema: Schema, rows: List<List<Any?>>): Any {
+
+    fun rowToRecord(row: List<Any?>): GenericRecord {
+      val record = GenericData.Record(schema)
+      schema.fields.forEach { field ->
+        val rowIndex = fields.indexOfFirst { it.name == field.name() }
+        val value = when (rowIndex) {
+        // if -1 then the schema field did not exist in the insert statement, so we pad with null
+          -1 -> null
+        // otherwise we know the offset into the row
+          else -> row[rowIndex]
+        }
+        record.put(field.name(), value)
+      }
+      return record
+    }
+
+    val requestFn: (String) -> HttpUriRequest = {
+      val endpoint = "$it/api/jdbc/insert/prepared/$topic"
+      val records: List<GenericRecord> = rows.map { rowToRecord(it) }
+      val entity = RestClient.jsonEntity(records)
+      RestClient.jsonPost(endpoint, entity)
+    }
+
+    val responseFn: (HttpResponse) -> JdbcData = {
       JacksonSupport.fromJson(it.entity.content)
     }
 

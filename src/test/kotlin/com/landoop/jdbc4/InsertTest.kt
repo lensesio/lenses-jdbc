@@ -1,10 +1,12 @@
 package com.landoop.jdbc4
 
 import io.kotlintest.matchers.shouldBe
+import io.kotlintest.matchers.shouldThrow
 import io.kotlintest.specs.WordSpec
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import java.sql.DriverManager
+import java.sql.SQLException
 
 class InsertTest : WordSpec(), ProducerSetup {
 
@@ -34,9 +36,19 @@ class InsertTest : WordSpec(), ProducerSetup {
         val rs = stmt.execute(sql)
       }
       "support prepared statements" {
-        val sql = "INSERT INTO cc_data (customerFirstName, country, currency) values (?,?,?)"
+        val sql = "INSERT INTO cc_data (customerFirstName, number, currency) values (?,?,?)"
         val stmt = conn.prepareStatement(sql)
         val rs = stmt.execute()
+      }
+      "throw an exception trying to set a parameter out of range" {
+        val sql = "INSERT INTO cc_data (customerFirstName, number, currency) values (?,?,?)"
+        val stmt = conn.prepareStatement(sql)
+        shouldThrow<IndexOutOfBoundsException> {
+          stmt.setString(0, "wibble")
+        }
+        shouldThrow<IndexOutOfBoundsException> {
+          stmt.setString(4, "wibble")
+        }
       }
       "return parameter info for prepared statements" {
         val sql = "INSERT INTO cc_data (customerFirstName, country, number) values (?,?,?)"
