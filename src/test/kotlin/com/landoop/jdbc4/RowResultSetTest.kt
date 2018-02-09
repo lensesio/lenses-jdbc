@@ -8,7 +8,6 @@ import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericRecordBuilder
 import java.sql.ResultSet
 import java.sql.SQLFeatureNotSupportedException
-import java.sql.SQLNonTransientConnectionException
 import java.sql.Statement
 
 class RowResultSetTest : WordSpec() {

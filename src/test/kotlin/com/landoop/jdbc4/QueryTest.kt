@@ -8,9 +8,10 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import java.sql.DriverManager
 import java.sql.SQLException
 
-data class Starship(val name: String, val designation: String)
 
 class QueryTest : WordSpec(), ProducerSetup {
+
+  data class Starship(val name: String, val designation: String)
 
   fun populateStarships() {
     val starships = listOf(

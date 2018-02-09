@@ -9,8 +9,8 @@ import java.sql.SQLFeatureNotSupportedException
 import java.sql.SQLWarning
 import java.sql.Statement
 
-class LsqlStatement(private val conn: Connection,
-                    private val client: RestClient) : Statement, AutoCloseable {
+open class LsqlStatement(private val conn: Connection,
+                         private val client: RestClient) : Statement, AutoCloseable {
 
   // the last resultset retrieved by this statement
   private var rs: ResultSet = RowResultSet.empty()
@@ -29,6 +29,20 @@ class LsqlStatement(private val conn: Connection,
   override fun getMaxRows(): Int = 0
 
   override fun execute(sql: String): Boolean {
+    if (sql.startsWith("INSERT")) {
+      insert(sql)
+      return true
+    } else {
+      return query(sql)
+    }
+  }
+
+  private fun insert(sql: String): Boolean {
+    val resp = client.insert(sql)
+    return true
+  }
+
+  private fun query(sql: String): Boolean {
     val data = client.query(sql)
 
     // if the reply had no results, then the schema will be null

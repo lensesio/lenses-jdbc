@@ -7,6 +7,7 @@ import com.landoop.rest.domain.InsertResponse
 import com.landoop.rest.domain.JdbcData
 import com.landoop.rest.domain.LoginResponse
 import com.landoop.rest.domain.Message
+import com.landoop.rest.domain.PreparedInsertStatementResponse
 import com.landoop.rest.domain.Topic
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -196,6 +197,21 @@ class RestClient(private val urls: List<String>,
     }
 
     return attemptAuthenticatedWithRetry(requestFn, responseFn)
+  }
+
+  fun prepareStatement(sql: String): PreparedInsertStatementResponse {
+    val requestFn: (String) -> HttpUriRequest = {
+      val endpoint = "$it/api/jdbc/insert/prepared?sql=$sql"
+      val escaped = escape(endpoint)
+      logger.debug("Executing query $escaped")
+      RestClient.jsonGet(escaped)
+    }
+
+    val responseFn: (HttpResponse) -> PreparedInsertStatementResponse = {
+      JacksonSupport.fromJson(it.entity.content)
+    }
+
+    return attemptAuthenticated(requestFn, responseFn)
   }
 
   fun messages(sql: String): List<Message> {
