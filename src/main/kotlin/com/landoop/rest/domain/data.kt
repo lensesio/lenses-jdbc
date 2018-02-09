@@ -13,3 +13,5 @@ data class JdbcData(
     val data: List<String>,
     val schema: String?
 )
+
+data class InsertResponse(val name: String)

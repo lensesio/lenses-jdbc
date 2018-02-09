@@ -3,6 +3,7 @@ package com.landoop.rest
 import com.landoop.jdbc4.Constants
 import com.landoop.jdbc4.JacksonSupport
 import com.landoop.rest.domain.Credentials
+import com.landoop.rest.domain.InsertResponse
 import com.landoop.rest.domain.JdbcData
 import com.landoop.rest.domain.LoginResponse
 import com.landoop.rest.domain.Message
@@ -166,6 +167,21 @@ class RestClient(private val urls: List<String>,
     return uri.toURL().toString().replace("%20", "+")
   }
 
+  fun insert(sql: String): InsertResponse {
+    val requestFn: (String) -> HttpUriRequest = {
+      val endpoint = "$it/api/jdbc/insert"
+      val entity = RestClient.stringEntity(sql)
+      logger.debug("Executing query $endpoint")
+      RestClient.jsonPost(endpoint, entity)
+    }
+
+    val responseFn: (HttpResponse) -> InsertResponse = {
+      JacksonSupport.fromJson(it.entity.content)
+    }
+
+    return attemptAuthenticatedWithRetry(requestFn, responseFn)
+  }
+
   fun query(sql: String): JdbcData {
 
     val requestFn: (String) -> HttpUriRequest = {
@@ -212,6 +228,10 @@ class RestClient(private val urls: List<String>,
       val entity = StringEntity(JacksonSupport.toJson(t))
       entity.setContentType("application/json")
       return entity
+    }
+
+    fun stringEntity(string: String): HttpEntity {
+      return StringEntity(string)
     }
 
     fun jsonGet(endpoint: String): HttpGet {
