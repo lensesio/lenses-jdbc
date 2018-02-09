@@ -1,5 +1,6 @@
 package com.landoop.jdbc4
 
+import com.landoop.rest.domain.SqlInsertField
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.avro.SchemaBuilder
@@ -8,6 +9,19 @@ import java.sql.ParameterMetaData
 class AvroSchemaParameterMetaDataTest : WordSpec() {
 
   init {
+
+    val fields = listOf(
+        SqlInsertField("optstring", emptyList(), false),
+        SqlInsertField("reqstring", emptyList(), false),
+        SqlInsertField("optint", emptyList(), false),
+        SqlInsertField("reqint", emptyList(), false),
+        SqlInsertField("optdouble", emptyList(), false),
+        SqlInsertField("reqdouble", emptyList(), false),
+        SqlInsertField("optlong", emptyList(), false),
+        SqlInsertField("reqlong", emptyList(), false),
+        SqlInsertField("optfloat", emptyList(), false),
+        SqlInsertField("reqfloat", emptyList(), false)
+    )
 
     val schema = SchemaBuilder.record("wibble").fields()
         .optionalString("optstring")
@@ -22,7 +36,7 @@ class AvroSchemaParameterMetaDataTest : WordSpec() {
         .requiredFloat("reqfloat")
         .endRecord()
 
-    val meta = AvroSchemaParameterMetaData(schema)
+    val meta = AvroSchemaParameterMetaData(fields, schema)
 
     "AvroSchemaParameterMetaData" should {
       "return correct JVM type for parameters" {

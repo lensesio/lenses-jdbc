@@ -1,5 +1,6 @@
 package com.landoop.jdbc4
 
+import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -23,7 +24,7 @@ class InsertTest : WordSpec(), ProducerSetup {
   init {
 
     LsqlDriver()
- //   val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
+    //   val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "read", "read1")
 
     "JDBC Driver" should {
@@ -33,9 +34,19 @@ class InsertTest : WordSpec(), ProducerSetup {
         val rs = stmt.execute(sql)
       }
       "support prepared statements" {
-        val sql = "INSERT INTO topic (f1, f2) values (?,?)"
+        val sql = "INSERT INTO cc_data (customerFirstName, country, currency) values (?,?,?)"
         val stmt = conn.prepareStatement(sql)
-        val rs = stmt.execute(sql)
+        val rs = stmt.execute()
+      }
+      "return parameter info for prepared statements" {
+        val sql = "INSERT INTO cc_data (customerFirstName, country, number) values (?,?,?)"
+        val stmt = conn.prepareStatement(sql)
+        val meta = stmt.parameterMetaData
+        // this should be 3 even though the schema will have 6
+        meta.parameterCount shouldBe 3
+        meta.getParameterClassName(1) shouldBe "java.lang.String"
+        meta.getParameterClassName(2) shouldBe "java.lang.String"
+        meta.getParameterClassName(3) shouldBe "java.lang.String"
       }
     }
   }

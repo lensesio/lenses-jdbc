@@ -1,6 +1,7 @@
 package com.landoop.jdbc4
 
 import com.landoop.rest.RestClient
+import com.landoop.rest.domain.PreparedInsertStatementInfo
 import org.apache.avro.Schema
 import java.io.InputStream
 import java.io.Reader
@@ -17,6 +18,7 @@ import java.sql.Ref
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
 import java.sql.RowId
+import java.sql.SQLException
 import java.sql.SQLFeatureNotSupportedException
 import java.sql.SQLXML
 import java.sql.Time
@@ -29,13 +31,15 @@ class LsqlPreparedStatement(conn: Connection,
 
   // for a prepared statement we need to connect to bring back parameter details,
   // as the endpoint will parse our query
-  private val parameters = client.prepareStatement(sql)
+  private val info: PreparedInsertStatementInfo = client.prepareStatement(sql).let {
+    it.info ?: throw SQLException(it.error ?: "No error info available")
+  }
 
   // the last resultset retrieved by this statement
   private var rs: ResultSet = RowResultSet.empty()
 
   // contains the values being set for the current prepared statement
-  private val record = ArrayList<Any?>(parameters.info!!.fields.size)
+  private val record = ArrayList<Any?>(info.fields.size)
 
   override fun execute(sql: String): Boolean = throw SQLFeatureNotSupportedException("This method cannot be called on a prepared statement")
   override fun executeQuery(sql: String): ResultSet = throw SQLFeatureNotSupportedException("This method cannot be called on a prepared statement")
@@ -56,8 +60,8 @@ class LsqlPreparedStatement(conn: Connection,
   }
 
   override fun getParameterMetaData(): ParameterMetaData {
-    val schema = Schema.Parser().parse(parameters.info!!.valueSchema)
-    return AvroSchemaParameterMetaData(schema)
+    val schema = Schema.Parser().parse(info.valueSchema)
+    return AvroSchemaParameterMetaData(info.fields, schema)
   }
 
   override fun getMetaData(): ResultSetMetaData {
