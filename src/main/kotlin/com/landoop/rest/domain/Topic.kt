@@ -1,23 +1,9 @@
 package com.landoop.rest.domain
 
 data class Topic(
+    val name: String,
     val keyType: String,
-    val messagesPerSecond: Int,
-    val timestamp: Long,
+    val keySchema: String?,
     val valueType: String,
-    val valueSchema: String?,
-    val config: List<ConfigEntry>?,
-    val totalMessages: Long,
-    val replication: Int,
-    val topicName: String,
-    val isMarkedForDeletion: Boolean,
-    val partitions: Int,
-    val isControlTopic: Boolean,
-    val messagesPerPartition: List<MessagesPerPartition>?
+    val valueSchema: String?
 )
-
-data class ConfigEntry(val configuration: String, val value: String, val defaultValue: String, val documentation: String)
-data class MessagesPerPartition(val partition: Int,
-                                val messages: Long,
-                                val begin: Long,
-                                val end: Long)

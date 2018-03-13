@@ -147,7 +147,7 @@ class RestClient(private val urls: List<String>,
   fun topics(): Array<Topic> {
 
     val requestFn: (String) -> HttpUriRequest = {
-      val endpoint = "$it/api/topics"
+      val endpoint = "$it/api/jdbc/metadata/table"
       logger.debug("Fetching topics @ $endpoint")
       RestClient.jsonGet(endpoint)
     }

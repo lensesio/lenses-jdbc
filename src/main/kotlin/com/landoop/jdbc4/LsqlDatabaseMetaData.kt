@@ -83,12 +83,12 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
     val topicsFilteredByTableName: List<Topic> = when (tableNamePattern) {
       null -> topics.toList()
-      else -> topics.filter { it.topicName.matches(tableNamePattern.replace("%", ".*").toRegex()) }
+      else -> topics.filter { it.name.matches(tableNamePattern.replace("%", ".*").toRegex()) }
     }
 
     return when (types) {
       null -> topicsFilteredByTableName
-      else -> topicsFilteredByTableName.filter { types.contains(tableType(it.topicName)) }
+      else -> topicsFilteredByTableName.filter { types.contains(tableType(it.name)) }
     }
   }
 
@@ -101,8 +101,8 @@ class LsqlDatabaseMetaData(private val conn: Connection,
       val array = arrayOf<Any?>(
           null,
           null,
-          it.topicName,
-          tableType(it.topicName),
+          it.name,
+          tableType(it.name),
           null,
           null,
           null,
@@ -123,7 +123,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
       val array = arrayOf(
           null,
           null,
-          topic.topicName,
+          topic.name,
           field.name(),
           AvroSchemas.sqlType(field.schema()),
           AvroSchemas.normalizedName(field.schema()),
