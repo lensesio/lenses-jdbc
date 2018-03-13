@@ -7,11 +7,10 @@ import com.landoop.rest.domain.InsertResponse
 import com.landoop.rest.domain.JdbcData
 import com.landoop.rest.domain.LoginResponse
 import com.landoop.rest.domain.Message
-import com.landoop.rest.domain.PreparedInsertStatementResponse
-import com.landoop.rest.domain.SqlInsertField
+import com.landoop.rest.domain.PreparedInsertResponse
+import com.landoop.rest.domain.InsertField
 import com.landoop.rest.domain.Topic
 import org.apache.avro.Schema
-import org.apache.avro.generic.GenericData
 import org.apache.avro.generic.GenericRecord
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -187,26 +186,19 @@ class RestClient(private val urls: List<String>,
     return attemptAuthenticatedWithRetry(requestFn, responseFn)
   }
 
-  fun executePrepared(topic: String, fields: List<SqlInsertField>, schema: Schema, rows: List<List<Any?>>): Any {
-
-    fun rowToRecord(row: List<Any?>): GenericRecord {
-      val record = GenericData.Record(schema)
-      schema.fields.forEach { field ->
-        val rowIndex = fields.indexOfFirst { it.name == field.name() }
-        val value = when (rowIndex) {
-        // if -1 then the schema field did not exist in the insert statement, so we pad with null
-          -1 -> null
-        // otherwise we know the offset into the row
-          else -> row[rowIndex]
-        }
-        record.put(field.name(), value)
-      }
-      return record
-    }
+  /**
+   * Executes a prepared insert statement.
+   *
+   * @param topic the topic to run the insert again
+   * @param fields the fields required by the insert statement
+   * @param schema the schema of the values on the topic
+   * @param rows the insert variables for each row
+   */
+  fun executePreparedInsert(topic: String, fields: List<InsertField>, schema: Schema, rows: List<List<Any?>>): Any {
 
     val requestFn: (String) -> HttpUriRequest = {
       val endpoint = "$it/api/jdbc/insert/prepared/$topic"
-      val records: List<GenericRecord> = rows.map { rowToRecord(it) }
+      val records: List<GenericRecord> = rows.map { rowToValueRecord(schema, fields, it) }
       val entity = RestClient.jsonEntity(records)
       RestClient.jsonPost(endpoint, entity)
     }
@@ -234,7 +226,7 @@ class RestClient(private val urls: List<String>,
     return attemptAuthenticatedWithRetry(requestFn, responseFn)
   }
 
-  fun prepareStatement(sql: String): PreparedInsertStatementResponse {
+  fun prepareStatement(sql: String): PreparedInsertResponse {
     val requestFn: (String) -> HttpUriRequest = {
       val endpoint = "$it/api/jdbc/insert/prepared?sql=$sql"
       val escaped = escape(endpoint)
@@ -242,7 +234,7 @@ class RestClient(private val urls: List<String>,
       RestClient.jsonGet(escaped)
     }
 
-    val responseFn: (HttpResponse) -> PreparedInsertStatementResponse = {
+    val responseFn: (HttpResponse) -> PreparedInsertResponse = {
       JacksonSupport.fromJson(it.entity.content)
     }
 

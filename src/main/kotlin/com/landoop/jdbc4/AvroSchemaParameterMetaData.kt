@@ -1,19 +1,32 @@
 package com.landoop.jdbc4
 
-import com.landoop.rest.domain.SqlInsertField
+import com.landoop.rest.domain.PreparedInsertInfo
 import org.apache.avro.Schema
 import java.sql.ParameterMetaData
 import java.sql.SQLException
 
-class AvroSchemaParameterMetaData(val fields: List<SqlInsertField>, val schema: Schema) : ParameterMetaData {
+/**
+ * Implementation of [[ParameterMetaData]] that uses an avro based schema for the parameters.
+ */
+class AvroSchemaParameterMetaData(val info: PreparedInsertInfo) : ParameterMetaData {
+
+  val valueSchema = Schema.Parser().parse(info.valueSchema)
 
   private fun field(param: Int): Schema.Field {
-    val name = fields[param - 1].name
-    return schema.fields.find { it.name() == name } ?: throw SQLException("Could not find field $name in ${schema.fields}")
+    return if (param == 1) {
+      // info.fields.find { it.isKey }
+      throw RuntimeException()
+    } else {
+      val name = info.fields[param - 1].name
+      return valueSchema.fields.find { it.name() == name }
+          ?: throw SQLException("Could not find field $name in ${valueSchema.fields}")
+    }
   }
 
   override fun isNullable(param: Int): Int {
-    return if (field(param).schema().isNullable()) ParameterMetaData.parameterNullable else ParameterMetaData.parameterNoNulls
+    return if (param == 1) {
+      ParameterMetaData.parameterNoNulls
+    } else if (field(param).schema().isNullable()) ParameterMetaData.parameterNullable else ParameterMetaData.parameterNoNulls
   }
 
   override fun isWrapperFor(iface: Class<*>?): Boolean = this.isWrapperFor(iface)
@@ -30,7 +43,9 @@ class AvroSchemaParameterMetaData(val fields: List<SqlInsertField>, val schema: 
   override fun getPrecision(param: Int): Int = 0
   override fun getScale(param: Int): Int = 0
 
-  override fun getParameterCount(): Int = fields.size
+  // plus one to account for the key field
+  override fun getParameterCount(): Int = info.fields.size + 1
+
   override fun getParameterMode(param: Int): Int = ParameterMetaData.parameterModeIn
 
   override fun getParameterClassName(param: Int): String = AvroSchemas.jvmClassName(field(param).schema().fromUnion().type)

@@ -1,6 +1,7 @@
 package com.landoop.jdbc4
 
-import com.landoop.rest.domain.SqlInsertField
+import com.landoop.rest.domain.InsertField
+import com.landoop.rest.domain.PreparedInsertInfo
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.avro.SchemaBuilder
@@ -11,19 +12,19 @@ class AvroSchemaParameterMetaDataTest : WordSpec() {
   init {
 
     val fields = listOf(
-        SqlInsertField("optstring", emptyList(), false),
-        SqlInsertField("reqstring", emptyList(), false),
-        SqlInsertField("optint", emptyList(), false),
-        SqlInsertField("reqint", emptyList(), false),
-        SqlInsertField("optdouble", emptyList(), false),
-        SqlInsertField("reqdouble", emptyList(), false),
-        SqlInsertField("optlong", emptyList(), false),
-        SqlInsertField("reqlong", emptyList(), false),
-        SqlInsertField("optfloat", emptyList(), false),
-        SqlInsertField("reqfloat", emptyList(), false)
+        InsertField("optstring", emptyList(), false),
+        InsertField("reqstring", emptyList(), false),
+        InsertField("optint", emptyList(), false),
+        InsertField("reqint", emptyList(), false),
+        InsertField("optdouble", emptyList(), false),
+        InsertField("reqdouble", emptyList(), false),
+        InsertField("optlong", emptyList(), false),
+        InsertField("reqlong", emptyList(), false),
+        InsertField("optfloat", emptyList(), false),
+        InsertField("reqfloat", emptyList(), false)
     )
 
-    val schema = SchemaBuilder.record("wibble").fields()
+    val valueSchema = SchemaBuilder.record("wibble").fields()
         .optionalString("optstring")
         .requiredString("reqstring")
         .optionalInt("optint")
@@ -36,7 +37,8 @@ class AvroSchemaParameterMetaDataTest : WordSpec() {
         .requiredFloat("reqfloat")
         .endRecord()
 
-    val meta = AvroSchemaParameterMetaData(fields, schema)
+    val info = PreparedInsertInfo("anytopic", fields, "avro", "avro", null, valueSchema.toString(true))
+    val meta = AvroSchemaParameterMetaData(info)
 
     "AvroSchemaParameterMetaData" should {
       "return correct JVM type for parameters" {

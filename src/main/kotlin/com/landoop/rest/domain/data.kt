@@ -16,14 +16,18 @@ data class JdbcData(
 
 data class InsertResponse(val name: String)
 
-data class PreparedInsertStatementResponse(val info: PreparedInsertStatementInfo?,
-                                           val error: String?)
+data class PreparedInsertBody(val topic: String, val records: List<InsertRecord>)
 
-data class PreparedInsertStatementInfo(val topic: String,
-                                       val fields: List<SqlInsertField>,
-                                       val keyType: String,
-                                       val valueType: String,
-                                       val keySchema: String?,
-                                       val valueSchema: String)
+data class InsertRecord(val key: String, val value: String)
 
-data class SqlInsertField(val name: String, val parents: List<String>, val isKey: Boolean)
+data class PreparedInsertResponse(val info: PreparedInsertInfo?,
+                                  val error: String?)
+
+data class PreparedInsertInfo(val topic: String,
+                              val fields: List<InsertField>,
+                              val keyType: String,
+                              val valueType: String,
+                              val keySchema: String?,
+                              val valueSchema: String)
+
+data class InsertField(val name: String, val parents: List<String>, val isKey: Boolean)
