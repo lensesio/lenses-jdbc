@@ -17,7 +17,7 @@ class RestClientTest : WordSpec() {
     }
   }
 
-  val server = LoginServer()
+  private val server = LoginServer()
 
   override fun interceptSpec(context: Spec, spec: () -> Unit) {
     server.makeSecure(NanoHTTPD.makeSSLSocketFactory("/keystore.jks", "password".toCharArray()), null)

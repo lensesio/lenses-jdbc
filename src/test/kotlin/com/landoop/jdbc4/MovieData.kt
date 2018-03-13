@@ -10,7 +10,7 @@ interface MovieData : ProducerSetup, Logging {
   data class Imdb(val url: String, val ranking: Int, val rating: Double)
   data class Movie(val name: String, val year: Int, val director: String, val imdb: Imdb)
 
-  fun populateMovies() {
+  fun populateMovies(): String {
 
     val topic = createTopic()
 
@@ -55,5 +55,7 @@ interface MovieData : ProducerSetup, Logging {
 
     logger.debug("Closing producer")
     producer.close()
+
+    return topic
   }
 }

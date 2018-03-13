@@ -2,64 +2,14 @@ package com.landoop.jdbc4
 
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
-import org.apache.avro.LogicalTypes
-import org.apache.avro.SchemaBuilder
-import org.apache.avro.generic.GenericData
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerRecord
-import java.math.BigDecimal
-import java.nio.ByteBuffer
 import java.sql.DriverManager
-import java.util.*
 
-data class Equity(val ticker: String, val amount: BigDecimal)
-
-class PrecisionQueryTest : WordSpec(), ProducerSetup {
-
-  val topic = "topic_" + UUID.randomUUID().toString().replace('-', '_')
-
-  private fun populateEquities() {
-
-    val equities = listOf(Equity("goog", BigDecimal(99.11)))
-
-    val foo = SchemaBuilder.fixed("foo").size(5)
-    val amount = SchemaBuilder.builder().bytesType()
-    LogicalTypes.decimal(10, 4).addToSchema(amount)
-
-    val schema = SchemaBuilder.record("equity").fields()
-        .requiredString("ticker")
-        .name("amount").type(amount).noDefault()
-        .name("foo").type(foo).noDefault()
-        .requiredBoolean("boolean")
-        .requiredBytes("bytes")
-        .requiredDouble("double")
-        .requiredInt("int")
-        .requiredLong("long")
-        .endRecord()
-
-    val producer = KafkaProducer<String, GenericData.Record>(producerProps())
-    for (equity in equities) {
-
-      val fixed = GenericData.Fixed(foo)
-      fixed.bytes(byteArrayOf(1, 2, 3, 4, 5))
-
-      val record = GenericData.Record(schema)
-      record.put("ticker", equity.ticker)
-      record.put("amount", ByteBuffer.wrap(equity.amount.unscaledValue().toByteArray()))
-      record.put("foo", fixed)
-      record.put("boolean", true)
-      record.put("bytes", ByteBuffer.wrap(byteArrayOf(1, 2, 3)))
-      record.put("double", 4.6523)
-      record.put("int", 123)
-      record.put("long", 556L)
-      producer.send(ProducerRecord<String, GenericData.Record>(topic, equity.ticker, record))
-    }
-  }
+class PrecisionQueryTest : WordSpec(), EquitiesData {
 
   init {
 
     LsqlDriver()
-    populateEquities()
+    val topic = populateEquities()
 
     val q = "SELECT * FROM $topic"
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
