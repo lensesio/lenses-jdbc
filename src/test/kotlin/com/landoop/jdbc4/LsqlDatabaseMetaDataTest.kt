@@ -14,14 +14,12 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.DriverManager
-import java.util.*
 
 class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
 
   init {
 
     LsqlDriver()
-    // val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "read", "read1")
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 
     "LsqlDatabaseMetaDataTest" should {
@@ -123,7 +121,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
       }
       "support listing columns with correct nullability" {
 
-        val topic = "topic_" + Random().nextDouble()
+        val topic = createTopic()
 
         val schema = SchemaBuilder.record("dabble").fields()
             .optionalDouble("optdouble")
@@ -131,6 +129,9 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
             .requiredString("reqstring")
             .requiredLong("reqlong")
             .endRecord()
+
+        registerSchema(topic, schema)
+
         val producer = KafkaProducer<String, GenericData.Record>(producerProps())
         val record = GenericData.Record(schema)
         record.put("optdouble", 123.4)

@@ -18,7 +18,7 @@ class PrecisionQueryTest : WordSpec(), ProducerSetup {
 
   val topic = "topic_" + UUID.randomUUID().toString().replace('-', '_')
 
-  fun populateEquities() {
+  private fun populateEquities() {
 
     val equities = listOf(Equity("goog", BigDecimal(99.11)))
 

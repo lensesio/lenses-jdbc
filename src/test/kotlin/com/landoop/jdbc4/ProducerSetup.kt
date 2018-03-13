@@ -7,12 +7,17 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import java.util.*
 import java.util.concurrent.TimeUnit
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
-
+import org.apache.avro.Schema
 
 
 interface ProducerSetup : Logging {
 
   fun schemaClient() = CachedSchemaRegistryClient("http://127.0.0.1:8081", 1000)
+
+  fun registerSchema(topic: String, schema: Schema) {
+    val client = schemaClient()
+    client.register(topic, schema)
+  }
 
   fun newTopicName() = "topic_" + UUID.randomUUID().toString().replace('-', '_')
 
@@ -25,6 +30,13 @@ interface ProducerSetup : Logging {
 
     logger.debug("Waiting on result")
     result.all().get(10, TimeUnit.SECONDS)
+
+    fun topicNames(): List<String> = client.listTopics().names().get().toList()
+
+    while (!topicNames().contains(topic)) {
+      logger.debug("Waiting for topic to be created...")
+      Thread.sleep(1000)
+    }
 
     logger.debug("Closing admin client")
     client.close(10, TimeUnit.SECONDS)
