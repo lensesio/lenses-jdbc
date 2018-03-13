@@ -13,24 +13,20 @@ data class Country(val name: String)
 
 class SingleFieldSchemaQueryTest : WordSpec(), ProducerSetup {
 
-  val topic = "topic_" + UUID.randomUUID().toString().replace('-', '_')
+  private val topic = "topic_" + UUID.randomUUID().toString().replace('-', '_')
 
-  fun populateCountries() {
-
+  private fun populateCountries() {
     val countries = listOf(
         Country("Vanuatu"),
         Country("Comoros")
     )
-
     val schema = SchemaBuilder.record("country").fields().requiredString("name").endRecord()
-
-    val producer = KafkaProducer<String, GenericData.Record>(props())
+    val producer = KafkaProducer<String, GenericData.Record>(producerProps())
     for (country in countries) {
       val record = GenericData.Record(schema)
       record.put("name", country.name)
       producer.send(ProducerRecord<String, GenericData.Record>(topic, country.name, record))
     }
-
   }
 
   init {

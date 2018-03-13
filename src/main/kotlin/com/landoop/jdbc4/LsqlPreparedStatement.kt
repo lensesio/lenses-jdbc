@@ -51,6 +51,11 @@ class LsqlPreparedStatement(conn: Connection,
     record.clear()
   }
 
+  private fun checkBounds(k: Int) {
+    if (k < 1 || k > info.fields.size)
+      throw IndexOutOfBoundsException("$k is out of bounds")
+  }
+
   override fun execute(): Boolean {
     // we must have set all the required parameters
     checkRecord()
@@ -79,7 +84,7 @@ class LsqlPreparedStatement(conn: Connection,
   }
 
   private fun checkRecord() {
-    for (k in 0..info.fields.size) {
+    for (k in 1..info.fields.size) {
       if (!record.contains(k))
         throw SQLException("You must set all values before executing; if null is desired, explicitly set this using setNull(pos); variable $k was not set")
     }
@@ -118,94 +123,117 @@ class LsqlPreparedStatement(conn: Connection,
   }
 
   override fun setDate(parameterIndex: Int, x: Date?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setDate(parameterIndex: Int, x: Date?, cal: Calendar?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setObject(parameterIndex: Int, x: Any?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setLong(parameterIndex: Int, x: Long) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setNString(parameterIndex: Int, x: String?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setURL(parameterIndex: Int, x: URL?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setFloat(parameterIndex: Int, x: Float) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setTime(parameterIndex: Int, x: Time?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setTime(parameterIndex: Int, x: Time?, cal: Calendar?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setNCharacterStream(parameterIndex: Int, value: Reader?, length: Long) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = value!!.readLines()
   }
 
   override fun setNCharacterStream(parameterIndex: Int, value: Reader?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = value!!.readLines()
   }
 
   override fun setInt(parameterIndex: Int, x: Int) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setDouble(parameterIndex: Int, x: Double) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setBigDecimal(parameterIndex: Int, x: BigDecimal?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setObject(parameterIndex: Int, x: Any?, targetSqlType: Int) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setString(parameterIndex: Int, x: String?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setNull(parameterIndex: Int, sqlType: Int) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = null
   }
 
   override fun setNull(parameterIndex: Int, sqlType: Int, typeName: String?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = null
   }
 
   override fun setTimestamp(parameterIndex: Int, x: Timestamp?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setTimestamp(parameterIndex: Int, x: Timestamp?, cal: Calendar?) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setShort(parameterIndex: Int, x: Short) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setBoolean(parameterIndex: Int, x: Boolean) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 
   override fun setByte(parameterIndex: Int, x: Byte) {
+    checkBounds(parameterIndex)
     record[parameterIndex] = x
   }
 

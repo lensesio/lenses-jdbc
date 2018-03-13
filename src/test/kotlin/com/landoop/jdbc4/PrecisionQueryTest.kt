@@ -37,7 +37,7 @@ class PrecisionQueryTest : WordSpec(), ProducerSetup {
         .requiredLong("long")
         .endRecord()
 
-    val producer = KafkaProducer<String, GenericData.Record>(props())
+    val producer = KafkaProducer<String, GenericData.Record>(producerProps())
     for (equity in equities) {
 
       val fixed = GenericData.Fixed(foo)

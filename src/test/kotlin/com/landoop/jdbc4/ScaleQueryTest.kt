@@ -25,7 +25,7 @@ class ScaleQueryTest : WordSpec(), ProducerSetup {
         .name("a").type(amount).noDefault()
         .endRecord()
 
-    val producer = KafkaProducer<String, GenericData.Record>(props())
+    val producer = KafkaProducer<String, GenericData.Record>(producerProps())
     val record = GenericData.Record(schema)
     record.put("a", ByteBuffer.wrap(BigDecimal(12.34).unscaledValue().toByteArray()))
     producer.send(ProducerRecord<String, GenericData.Record>(topic, "key1", record))

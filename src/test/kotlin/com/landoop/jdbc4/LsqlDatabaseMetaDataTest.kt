@@ -88,7 +88,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
       "support table regex when listing tables" {
         // lets add some of our own tables and make sure they appear in the list of all
         val schema = SchemaBuilder.record("wibble").fields().requiredString("foo").endRecord()
-        val producer = KafkaProducer<String, GenericData.Record>(props())
+        val producer = KafkaProducer<String, GenericData.Record>(producerProps())
         val record = GenericData.Record(schema)
         record.put("foo", "a")
 

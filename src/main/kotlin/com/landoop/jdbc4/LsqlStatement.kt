@@ -39,7 +39,7 @@ open class LsqlStatement(private val conn: Connection,
 
   private fun insert(sql: String): Boolean {
     val resp = client.insert(sql)
-    return true
+    return false
   }
 
   private fun query(sql: String): Boolean {

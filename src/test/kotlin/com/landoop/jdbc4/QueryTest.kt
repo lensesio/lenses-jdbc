@@ -18,7 +18,7 @@ class QueryTest : WordSpec(), ProducerSetup {
         Starship("USS Enterprise", "1701D"),
         Starship("USS Discovery", "1031")
     )
-    val producer = KafkaProducer<String, String>(props())
+    val producer = KafkaProducer<String, String>(producerProps())
     for (starship in starships) {
       producer.send(ProducerRecord<String, String>("starfleet", starship.name, JacksonSupport.toJson(starship)))
     }
@@ -29,7 +29,7 @@ class QueryTest : WordSpec(), ProducerSetup {
         Country("Vanuatu"),
         Country("Comoros")
     )
-    val producer = KafkaProducer<String, String>(props())
+    val producer = KafkaProducer<String, String>(producerProps())
     for (country in countries) {
       producer.send(ProducerRecord<String, String>("country", country.name, country.name))
     }
