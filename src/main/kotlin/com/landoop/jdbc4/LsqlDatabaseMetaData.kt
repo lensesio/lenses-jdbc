@@ -8,12 +8,11 @@ import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.ResultSet
 import java.sql.RowIdLifetime
-import java.sql.SQLException
 
 class LsqlDatabaseMetaData(private val conn: Connection,
                            private val client: RestClient,
                            private val uri: String,
-                           private val user: String) : DatabaseMetaData, Logging {
+                           private val user: String) : DatabaseMetaData, Logging, IWrapper {
 
   companion object {
     const val TABLE_NAME = "TABLE"
@@ -68,7 +67,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun supportsResultSetType(type: Int): Boolean = ResultSet.TYPE_FORWARD_ONLY == type
   override fun supportsSchemasInIndexDefinitions(): Boolean = false
-
 
 
   private fun tableType(tableName: String): String {
@@ -296,7 +294,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                           schemaPattern: String?): ResultSet = RowResultSet.emptyOf(Schemas.Schemas)
 
 
-
   override fun getMaxTablesInSelect(): Int = 0
   override fun getMaxStatements(): Int = 0
   override fun getMaxColumnsInTable(): Int = 0
@@ -332,8 +329,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun getClientInfoProperties(): ResultSet = RowResultSet.empty()
 
   override fun usesLocalFilePerTable(): Boolean = false
-
-
 
 
   override fun supportsSchemasInTableDefinitions(): Boolean = false
@@ -386,7 +381,6 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                             approximate: Boolean): ResultSet = RowResultSet.emptyOf(Schemas.IndexInfo)
 
 
-
   override fun supportsStoredProcedures(): Boolean = true
 
   override fun getExportedKeys(catalog: String?, schema: String?, table: String?): ResultSet = RowResultSet.empty()
@@ -418,15 +412,8 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun generatedKeyAlwaysReturned(): Boolean = false
 
-  override fun isWrapperFor(iface: Class<*>): Boolean = iface.isInstance(this)
-  override fun <T : Any?> unwrap(iface: Class<T>): T {
-    try {
-      return iface.cast(this)
-    } catch (cce: ClassCastException) {
-      throw SQLException("Unable to unwrap instance as " + iface.toString())
-    }
-  }
-
+  override fun isWrapperFor(iface: Class<*>?): Boolean = _isWrapperFor(iface)
+  override fun <T : Any?> unwrap(iface: Class<T>): T = _unwrap(iface)
 
   override fun getMaxCharLiteralLength(): Int = 0
 

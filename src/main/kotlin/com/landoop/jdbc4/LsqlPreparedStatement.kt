@@ -57,7 +57,6 @@ class LsqlPreparedStatement(conn: Connection,
   }
 
   override fun execute(): Boolean {
-    // we must have set all the required parameters
     checkRecord()
     //client.executePreparedInsert(info.topic, listOf(record.toList()))
     return true

@@ -4,27 +4,20 @@ import com.landoop.rest.RestClient
 import org.apache.avro.Schema
 import java.sql.Connection
 import java.sql.ResultSet
-import java.sql.SQLException
 import java.sql.SQLFeatureNotSupportedException
 import java.sql.SQLWarning
 import java.sql.Statement
 
 open class LsqlStatement(private val conn: Connection,
-                         private val client: RestClient) : Statement, AutoCloseable {
+                         private val client: RestClient) : Statement, AutoCloseable, IWrapper {
 
   // the last resultset retrieved by this statement
   private var rs: ResultSet = RowResultSet.empty()
 
   override fun getResultSetType(): Int = ResultSet.TYPE_FORWARD_ONLY
 
-  override fun isWrapperFor(iface: Class<*>): Boolean = iface.isInstance(this)
-  override fun <T : Any?> unwrap(iface: Class<T>): T {
-    try {
-      return iface.cast(this)
-    } catch (cce: ClassCastException) {
-      throw SQLException("Unable to unwrap instance as " + iface.toString())
-    }
-  }
+  override fun isWrapperFor(iface: Class<*>?): Boolean = _isWrapperFor(iface)
+  override fun <T : Any?> unwrap(iface: Class<T>): T = _unwrap(iface)
 
   override fun getMaxRows(): Int = 0
 

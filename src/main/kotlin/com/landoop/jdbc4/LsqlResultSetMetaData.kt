@@ -7,7 +7,7 @@ import java.sql.ResultSetMetaData
 import java.sql.SQLException
 
 class LsqlResultSetMetaData(private val schema: Schema,
-                            private val rs: ResultSet) : ResultSetMetaData {
+                            private val rs: ResultSet) : ResultSetMetaData, IWrapper {
 
   override fun getTableName(column: Int): String = schema.name
 
@@ -18,14 +18,8 @@ class LsqlResultSetMetaData(private val schema: Schema,
     }
   }
 
-  override fun <T : Any?> unwrap(iface: Class<T>): T {
-    try {
-      return iface.cast(this)
-    } catch (cce: ClassCastException) {
-      throw SQLException("Unable to unwrap instance as " + iface.toString())
-    }
-  }
-
+  override fun isWrapperFor(iface: Class<*>?): Boolean = _isWrapperFor(iface)
+  override fun <T : Any?> unwrap(iface: Class<T>): T = _unwrap(iface)
   override fun isDefinitelyWritable(column: Int): Boolean = false
 
   override fun isSearchable(column: Int): Boolean = true
@@ -69,8 +63,6 @@ class LsqlResultSetMetaData(private val schema: Schema,
     val type = typeForIndex(column)
     return AvroSchemas.jvmClassName(type)
   }
-
-  override fun isWrapperFor(iface: Class<*>): Boolean = iface.isInstance(iface)
 
   override fun getColumnType(column: Int): Int {
     val schema = schemaForIndex(column)
@@ -167,7 +159,7 @@ class LsqlResultSetMetaData(private val schema: Schema,
   // 1-indexed
   internal fun indexForLabel(label: String): Int {
     val index = schema.fields.indexOfFirst { it.name() == label }
-    if (index < 0 || index > schema.fields.size -1)
+    if (index < 0 || index > schema.fields.size - 1)
       throw SQLException("Unknown column $label")
     return index + 1
   }

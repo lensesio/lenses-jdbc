@@ -9,7 +9,7 @@ import java.sql.SQLFeatureNotSupportedException
 import java.util.*
 import java.util.logging.Logger
 
-class LsqlDriver : Driver, Logging {
+class LsqlDriver : Driver, Logging, IWrapper {
 
   companion object : Logging {
     init {
