@@ -153,7 +153,10 @@ class RestClient(private val urls: List<String>,
     }
 
     val responseFn: (HttpResponse) -> Array<Topic> = {
-      JacksonSupport.fromJson(it.entity.content)
+      logger.debug("Topics json")
+      val str = it.entity.content.bufferedReader().use { it.readText() }
+      logger.debug(str)
+      JacksonSupport.fromJson(str)
     }
 
     return attemptAuthenticated(requestFn, responseFn)

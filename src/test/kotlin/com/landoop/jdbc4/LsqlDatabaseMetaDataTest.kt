@@ -14,14 +14,15 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.DriverManager
+import java.util.*
 
 class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
 
   init {
 
     LsqlDriver()
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "read", "read1")
-    // val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
+    // val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "read", "read1")
+    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 
     "LsqlDatabaseMetaDataTest" should {
       "declare support for multiple result sets" {
@@ -92,14 +93,14 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         val record = GenericData.Record(schema)
         record.put("foo", "a")
 
-        producer.send(ProducerRecord<String, GenericData.Record>("topic_dibble", "key1", record))
-        producer.send(ProducerRecord<String, GenericData.Record>("topic_dobble", "key1", record))
-        producer.send(ProducerRecord<String, GenericData.Record>("topic_dubble", "key1", record))
+        producer.send(ProducerRecord<String, GenericData.Record>("topicregex_dibble", "key1", record))
+        producer.send(ProducerRecord<String, GenericData.Record>("topicregex_dobble", "key1", record))
+        producer.send(ProducerRecord<String, GenericData.Record>("topicregex_dubble", "key1", record))
         producer.close()
 
-        val tableNames = resultSetList(conn.metaData.getTables(null, null, "topic_d%", null)).map { it[2].toString() }
+        val tableNames = resultSetList(conn.metaData.getTables(null, null, "topicregex_d%", null)).map { it[2].toString() }
         tableNames.size shouldBe 3
-        tableNames should containsAll("topic_dibble", "topic_dobble", "topic_dubble")
+        tableNames should containsAll("topicregex_dibble", "topicregex_dobble", "topicregex_dubble")
       }
       "support listing columns with correct types" {
         val columns = resultSetList(conn.metaData.getColumns(null, null, null, null))
@@ -121,15 +122,42 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         blocked[5] shouldBe "BOOLEAN"
       }
       "support listing columns with correct nullability" {
-        val columns = resultSetList(conn.metaData.getColumns(null, null, null, null))
-        println(columns)
-        val currency = columns.filter { it[2] == "cc_payments" }.first { it[3] == "currency" }
-        currency[10] shouldBe DatabaseMetaData.columnNoNulls
-        currency[17] shouldBe "NO"
 
-        val inputs = columns.filter { it[2] == "bitcoin_transactions" }.first { it[3] == "inputs" }
-        inputs[10] shouldBe DatabaseMetaData.columnNullable
-        inputs[17] shouldBe "YES"
+        val topic = "topic_" + Random().nextDouble()
+
+        val schema = SchemaBuilder.record("dabble").fields()
+            .optionalDouble("optdouble")
+            .optionalBoolean("optbool")
+            .requiredString("reqstring")
+            .requiredLong("reqlong")
+            .endRecord()
+        val producer = KafkaProducer<String, GenericData.Record>(producerProps())
+        val record = GenericData.Record(schema)
+        record.put("optdouble", 123.4)
+        record.put("optbool", true)
+        record.put("reqstring", "a")
+        record.put("reqlong", 555L)
+
+        producer.send(ProducerRecord<String, GenericData.Record>(topic, "key1", record))
+        producer.close()
+
+        val columns = resultSetList(conn.metaData.getColumns(null, null, topic, null))
+        println(columns)
+        val reqstring = columns.first { it[3] == "reqstring" }
+        reqstring[10] shouldBe DatabaseMetaData.columnNoNulls
+        reqstring[17] shouldBe "NO"
+
+        val reqlong = columns.first { it[3] == "reqlong" }
+        reqlong[10] shouldBe DatabaseMetaData.columnNoNulls
+        reqlong[17] shouldBe "NO"
+
+        val optdouble = columns.first { it[3] == "optdouble" }
+        optdouble[10] shouldBe DatabaseMetaData.columnNullable
+        optdouble[17] shouldBe "YES"
+
+        val optbool = columns.first { it[3] == "optbool" }
+        optbool[10] shouldBe DatabaseMetaData.columnNullable
+        optbool[17] shouldBe "YES"
       }
       "return versioning information" {
         conn.metaData.databaseMajorVersion shouldBe gte(1)
