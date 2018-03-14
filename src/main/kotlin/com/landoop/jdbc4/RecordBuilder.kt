@@ -1,49 +1,59 @@
 package com.landoop.jdbc4
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.landoop.rest.domain.InsertField
 import com.landoop.rest.domain.PreparedInsertInfo
+import java.math.BigDecimal
+import java.math.BigInteger
 import java.sql.SQLException
 
 // used by prepared statements to build up records
 class RecordBuilder(val info: PreparedInsertInfo) {
 
-  // all values in this list are paths of branch nodes
-  private val branches = info.fields.filter { it.parents.isNotEmpty() }.map { it.parents.joinToString(".") }
+  data class Path(val parts: List<String>) {
+    override fun toString(): String = parts.joinToString(".")
+  }
 
-  private var key: Any? = null
-  private val values = mutableMapOf<String, Any?>()
+  private val values = mutableMapOf<Int, Any?>()
 
-  private fun InsertField.path(): String {
+  private fun InsertField.path(): Path {
     val parents = this.parents.toMutableList()
     parents.add(this.name)
-    return parents.joinToString(".")
+    return Path(parents)
   }
 
-  private fun InsertField.isBranch(): Boolean = branches.contains(this.path())
-  private fun InsertField.isLeaf(): Boolean = !this.isBranch()
-
-  private fun put(field: InsertField, value: Any?) {
-    // we cannot insert a value to a branch, all values must be
-    // inserted into leaf nodes
-    when {
-      field.isKey -> key = value
-      field.isBranch() -> throw SQLException("Can only insert values into leaf fields; ${field.path()} is a branch field")
-      else -> values[field.name] = value
+  fun build(): Pair<String?, JsonNode> {
+    val root = JacksonSupport.mapper.createObjectNode()
+    fun find(parents: List<String>): ObjectNode = parents.fold(root, { node, field ->
+      node.findParent(field) ?: node.putObject(field)
+    })
+    // the key is not included in the value json
+    info.fields.withIndex().filterNot { it.value.isKey }.forEach {
+      val node = find(it.value.parents)
+      val value = values[it.index]
+      when (value) {
+        null -> node.putNull(it.value.name)
+        is String -> node.put(it.value.name, value)
+        is Boolean -> node.put(it.value.name, value)
+        is Long -> node.put(it.value.name, value)
+        is Float -> node.put(it.value.name, value)
+        is Int -> node.put(it.value.name, value)
+        is Double -> node.put(it.value.name, value)
+        is BigInteger -> node.put(it.value.name, value)
+        is BigDecimal -> node.put(it.value.name, value)
+        else -> throw SQLException("Unsupported value type $value")
+      }
     }
+    val key = info.fields.withIndex().filter { it.value.isKey }.map { values[it.index] }.first()?.toString()
+    return key to root
   }
 
-  // sets a value by name, using the fields info to locate the fields
-  fun put(key: String, value: Any?) {
-    val field = info.fields.find { it.name == key } ?: throw SQLException("Unknown field $key")
-    put(field, value)
-  }
-
-  // sets a value by index, using the fields info to locate that field
+  // sets a value by index, where the index is the original position in the sql query
   fun put(index: Int, value: Any?) {
     checkBounds(index)
     // remember jdbc indexes are 1 based
-    val field = info.fields[index - 1]
-    put(field, value)
+    values[index - 1] = value
   }
 
   private fun checkBounds(k: Int) {
@@ -53,23 +63,10 @@ class RecordBuilder(val info: PreparedInsertInfo) {
 
   // throws an exception if this record is not valid because of missing values
   fun checkRecord() {
-
-    // if we have a key field, we must set the key
-    // todo check this assumption
-    if (info.fields.any { it.isKey })
-      if (key == null)
-        throw SQLException("Key field must be specified")
-
-    info.fields.filterNot { it.isKey }.forEach { field ->
-      val path = field.path()
-      when {
-        field.isBranch() ->
-          if (values.containsKey(path))
-            throw SQLException("Variable $path was set; You cannot set values on branches")
-        field.isLeaf() ->
-          if (!values.containsKey(path))
-            throw SQLException("Variable $path was not set; You must set all values before executing; if null is desired, explicitly set this using setNull(pos)")
-      }
+    for (k in 0 until info.fields.size) {
+      val field = info.fields[k]
+      if (!values.containsKey(k))
+        throw SQLException("Variable ${field.path()} was not set; You must set all values before executing; if null is desired, explicitly set this using setNull(pos)")
     }
   }
 }
