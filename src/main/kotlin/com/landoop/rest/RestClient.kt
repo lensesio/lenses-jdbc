@@ -179,7 +179,8 @@ class RestClient(private val urls: List<String>,
       val endpoint = "$it/api/jdbc/insert"
       val entity = RestClient.stringEntity(sql)
       logger.debug("Executing query $endpoint")
-      RestClient.jsonPost(endpoint, entity)
+      logger.debug(sql)
+      RestClient.plainTextPost(endpoint, entity)
     }
 
     val responseFn: (HttpResponse) -> InsertResponse = {
@@ -283,6 +284,13 @@ class RestClient(private val urls: List<String>,
     fun jsonGet(endpoint: String): HttpGet {
       return HttpGet(endpoint).apply {
         this.setHeader("Accept", "application/json")
+      }
+    }
+
+    fun plainTextPost(endpoint: String, entity: HttpEntity): HttpPost {
+      return HttpPost(endpoint).apply {
+        this.entity = entity
+        this.setHeader("Content-type", "text/plain")
       }
     }
 

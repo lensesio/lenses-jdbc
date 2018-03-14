@@ -10,17 +10,12 @@ class PreparedInsertTest : WordSpec(), MovieData {
   init {
 
     LsqlDriver()
-    populateMovies()
+//     populateMovies()
 
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
-    //val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "read", "read1")
+    // val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
+     val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "write", "write1")
 
     "JDBC Driver" should {
-      "support insertion" {
-        val sql = "INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values ('sammy', '123123123123', 'GBP' ,'smith', 'UK', true)"
-        val stmt = conn.createStatement()
-        stmt.execute(sql) shouldBe true
-      }
       "support prepared statements" {
         val sql = "INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)"
         val stmt = conn.prepareStatement(sql)
@@ -49,6 +44,12 @@ class PreparedInsertTest : WordSpec(), MovieData {
         shouldThrow<IndexOutOfBoundsException> {
           stmt.setString(7, "wibble")
         }
+      }
+      "throw an exception if a parameter is not set" {
+
+      }
+      "throw an exception if a nested parameter is not set" {
+
       }
       "return parameter info for prepared statements" {
         val sql = "INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)"

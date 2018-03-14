@@ -31,7 +31,8 @@ open class LsqlStatement(private val conn: Connection,
   }
 
   private fun insert(sql: String): Boolean {
-    val resp = client.insert(sql)
+    val withSetKey = """SET _ktype='STRING'; $sql"""
+    val resp = client.insert(withSetKey)
     return false
   }
 
