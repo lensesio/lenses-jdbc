@@ -3,15 +3,13 @@ package com.landoop.rest
 import com.landoop.jdbc4.Constants
 import com.landoop.jdbc4.JacksonSupport
 import com.landoop.rest.domain.Credentials
+import com.landoop.rest.domain.InsertRecord
 import com.landoop.rest.domain.InsertResponse
 import com.landoop.rest.domain.JdbcData
 import com.landoop.rest.domain.LoginResponse
 import com.landoop.rest.domain.Message
 import com.landoop.rest.domain.PreparedInsertResponse
-import com.landoop.rest.domain.InsertField
 import com.landoop.rest.domain.Topic
-import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.client.config.RequestConfig
@@ -79,12 +77,13 @@ class RestClient(private val urls: List<String>,
   // a 401 or 403 will result in a short circuit exit
   // an IOException, or an unsupported http status code will result in trying the next url
   // once all urls are exhausted, the last exception will be thrown
-  fun <T> attempt(reqFn: (String) -> HttpUriRequest, respFn: (HttpResponse) -> T): T {
+  private fun <T> attempt(reqFn: (String) -> HttpUriRequest, respFn: (HttpResponse) -> T): T {
     var lastException: Throwable? = null
     for (url in urls) {
       lastException = try {
         val req = reqFn(url)
         val resp = httpClient.execute(req)
+        logger.debug("Response $resp")
         when (resp.statusLine.statusCode) {
           200, 201, 202 -> return respFn(resp)
           401, 403 -> throw AuthenticationException("Invalid credentials for user '${credentials.user}'")
@@ -103,7 +102,7 @@ class RestClient(private val urls: List<String>,
   }
 
   // attempts the given request with authentication by adding the current token as a header
-  fun <T> attemptAuthenticated(reqFn: (String) -> HttpUriRequest, respFn: (HttpResponse) -> T): T {
+  private fun <T> attemptAuthenticated(reqFn: (String) -> HttpUriRequest, respFn: (HttpResponse) -> T): T {
     val reqWithTokenHeaderFn: (String) -> HttpUriRequest = {
       reqFn(it).apply {
         addHeader(Constants.LensesTokenHeader, token)
@@ -116,7 +115,7 @@ class RestClient(private val urls: List<String>,
   // if an authentication error is received, then it will attempt to
   // re-authenticate before retrying again
   // if auth is still invalid then it will give up
-  fun <T> attemptAuthenticatedWithRetry(reqFn: (String) -> HttpUriRequest, respFn: (HttpResponse) -> T): T {
+  private fun <T> attemptAuthenticatedWithRetry(reqFn: (String) -> HttpUriRequest, respFn: (HttpResponse) -> T): T {
     return try {
       attemptAuthenticated(reqFn, respFn)
     } catch (e: AuthenticationException) {
@@ -194,15 +193,12 @@ class RestClient(private val urls: List<String>,
    * Executes a prepared insert statement.
    *
    * @param topic the topic to run the insert again
-   * @param fields the fields required by the insert statement
-   * @param schema the schema of the values on the topic
-   * @param rows the insert variables for each row
+   * @param records the insert variables for each row
    */
-  fun executePreparedInsert(topic: String, fields: List<InsertField>, schema: Schema, rows: List<List<Any?>>): Any {
+  fun executePreparedInsert(topic: String, records: List<InsertRecord>): Any {
 
     val requestFn: (String) -> HttpUriRequest = {
       val endpoint = "$it/api/jdbc/insert/prepared/$topic"
-      val records: List<GenericRecord> = rows.map { rowToValueRecord(schema, fields, it) }
       val entity = RestClient.jsonEntity(records)
       RestClient.jsonPost(endpoint, entity)
     }

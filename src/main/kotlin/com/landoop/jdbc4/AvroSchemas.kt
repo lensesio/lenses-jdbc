@@ -15,6 +15,9 @@ object AvroSchemas {
     }
   }
 
+  /**
+   * @return the JVM fully qualified classname for the given avro type.
+   */
   fun jvmClassName(type: Schema.Type): String {
     return when (type) {
       Schema.Type.BOOLEAN -> java.lang.Boolean::class.java.canonicalName

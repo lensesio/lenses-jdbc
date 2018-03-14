@@ -26,7 +26,7 @@ import java.sql.Timestamp
 import java.util.*
 
 class LsqlPreparedStatement(conn: Connection,
-                            client: RestClient,
+                            val client: RestClient,
                             sql: String) : LsqlStatement(conn, client), PreparedStatement {
 
   // for a prepared statement we need to connect to the lenses server, as the parsing
@@ -53,7 +53,7 @@ class LsqlPreparedStatement(conn: Connection,
 
   override fun execute(): Boolean {
     builder.checkRecord()
-    //client.executePreparedInsert(info.topic, listOf(record.toList()))
+    client.executePreparedInsert(info.topic, listOf(builder.build()))
     return true
   }
 
@@ -63,11 +63,7 @@ class LsqlPreparedStatement(conn: Connection,
     return 0
   }
 
-  override fun getParameterMetaData(): ParameterMetaData {
-    val schema = Schema.Parser().parse(info.valueSchema)
-    // return AvroSchemaParameterMetaData(info.fields, schema)
-    TODO()
-  }
+  override fun getParameterMetaData(): ParameterMetaData = AvroSchemaParameterMetaData(info)
 
   override fun getMetaData(): ResultSetMetaData {
     TODO()

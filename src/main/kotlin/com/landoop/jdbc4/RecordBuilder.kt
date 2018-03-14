@@ -1,8 +1,7 @@
 package com.landoop.jdbc4
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.landoop.rest.domain.InsertField
+import com.landoop.rest.domain.InsertRecord
 import com.landoop.rest.domain.PreparedInsertInfo
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -11,19 +10,9 @@ import java.sql.SQLException
 // used by prepared statements to build up records
 class RecordBuilder(val info: PreparedInsertInfo) {
 
-  data class Path(val parts: List<String>) {
-    override fun toString(): String = parts.joinToString(".")
-  }
-
   private val values = mutableMapOf<Int, Any?>()
 
-  private fun InsertField.path(): Path {
-    val parents = this.parents.toMutableList()
-    parents.add(this.name)
-    return Path(parents)
-  }
-
-  fun build(): Pair<String?, JsonNode> {
+  fun build(): InsertRecord {
     val root = JacksonSupport.mapper.createObjectNode()
     fun find(parents: List<String>): ObjectNode = parents.fold(root, { node, field ->
       node.findParent(field) ?: node.putObject(field)
@@ -45,8 +34,8 @@ class RecordBuilder(val info: PreparedInsertInfo) {
         else -> throw SQLException("Unsupported value type $value")
       }
     }
-    val key = info.fields.withIndex().filter { it.value.isKey }.map { values[it.index] }.first()?.toString()
-    return key to root
+    val key = info.fields.withIndex().filter { it.value.isKey }.map { values[it.index] }.firstOrNull()
+    return InsertRecord(JacksonSupport.mapper.writeValueAsString(key), JacksonSupport.mapper.writeValueAsString(root))
   }
 
   // sets a value by index, where the index is the original position in the sql query
