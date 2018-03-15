@@ -6,5 +6,5 @@ object Constants {
   val JdbcPrefix = "jdbc:lsql:kafka:"
   val DatabaseName = "default"
   val LensesTokenHeader = "X-Kafka-Lenses-Token"
-
+  val BATCH_HARD_LIMIT = 1000
 }

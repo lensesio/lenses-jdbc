@@ -1,8 +1,10 @@
 package com.landoop.jdbc4
 
 import io.kotlintest.matchers.shouldBe
+import io.kotlintest.matchers.shouldThrow
 import io.kotlintest.specs.WordSpec
 import java.sql.DriverManager
+import java.sql.SQLException
 import java.util.*
 
 class BatchInsertTest : WordSpec(), MovieData {
@@ -28,14 +30,16 @@ class BatchInsertTest : WordSpec(), MovieData {
     fun randomFirstName() = randomElement(firstnames)
     fun randomSurname() = randomElement(surnames)
     fun randomCardNumber() = IntArray(16, { _ -> Random().nextInt(9) }).joinToString("")
-
-    val values = Array(50, { _ -> Values(randomCountry(), randomCurrency(), randomSurname(), randomFirstName(), Random().nextBoolean(), randomCardNumber()) })
+    fun randomValue() = Values(randomCountry(), randomCurrency(), randomSurname(), randomFirstName(), Random().nextBoolean(), randomCardNumber())
 
     // val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "write", "write1")
 
     "JDBC Driver" should {
       "support batched prepared statements" {
+
+        val batchSize = 20
+        val values = Array(batchSize, { _ -> randomValue() })
         val sql = "INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)"
         val stmt = conn.prepareStatement(sql)
 
@@ -50,7 +54,7 @@ class BatchInsertTest : WordSpec(), MovieData {
         }
 
         val result = stmt.executeBatch()
-        result.size shouldBe 50
+        result.size shouldBe batchSize
         result.toSet() shouldBe setOf(0)
 
         // now we must check that our values have been inserted
@@ -63,6 +67,26 @@ class BatchInsertTest : WordSpec(), MovieData {
           rs.getString("currency") shouldBe value.currency
           rs.getString("country") shouldBe value.country
           rs.getBoolean("blocked") shouldBe value.blocked
+        }
+      }
+      "throw exception if batch size exceeded" {
+        val sql = "INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)"
+        val stmt = conn.prepareStatement(sql)
+        fun add() {
+          stmt.setString(1, "a")
+          stmt.setString(2, "123")
+          stmt.setString(3, "GBP")
+          stmt.setString(4, "b")
+          stmt.setString(5, "UK")
+          stmt.setBoolean(6, false)
+          stmt.addBatch()
+        }
+        for (k in 1..Constants.BATCH_HARD_LIMIT) {
+          add()
+        }
+        // the next element should exceed the batch limit and throw an exception
+        shouldThrow<SQLException> {
+          add()
         }
       }
     }

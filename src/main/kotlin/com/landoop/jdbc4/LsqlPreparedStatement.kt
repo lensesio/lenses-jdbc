@@ -87,6 +87,8 @@ class LsqlPreparedStatement(conn: Connection,
   // adds the current record to the batch
   override fun addBatch() {
     builder.checkRecord()
+    if (batch.size == Constants.BATCH_HARD_LIMIT)
+      throw SQLException("Batch size would exceed maximum of ${Constants.BATCH_HARD_LIMIT}")
     batch.add(builder.build())
     // we don't clear the builder here as parameters should remain in force for the next record
   }
