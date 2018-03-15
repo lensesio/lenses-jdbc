@@ -1,5 +1,6 @@
 package com.landoop.rest.domain
 
+import com.fasterxml.jackson.databind.JsonNode
 import org.apache.avro.Schema
 import java.sql.SQLException
 
@@ -21,7 +22,7 @@ data class InsertResponse(val name: String)
 
 data class PreparedInsertBody(val topic: String, val records: List<InsertRecord>)
 
-data class InsertRecord(val key: String, val value: String)
+data class InsertRecord(val key: JsonNode, val value: JsonNode)
 
 data class PreparedInsertResponse(val info: PreparedInsertInfo?,
                                   val error: String?)

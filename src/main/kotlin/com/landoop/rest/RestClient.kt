@@ -195,17 +195,17 @@ class RestClient(private val urls: List<String>,
    * @param topic the topic to run the insert again
    * @param records the insert variables for each row
    */
-  fun executePreparedInsert(topic: String, records: List<InsertRecord>): Any {
+  fun executePreparedInsert(topic: String, keyType: String, valueType: String, records: List<InsertRecord>): Any {
 
     val requestFn: (String) -> HttpUriRequest = {
-      val endpoint = "$it/api/jdbc/insert/prepared/$topic"
+      val endpoint = "$it/api/jdbc/insert/prepared/$topic?kt=$keyType&vt=$valueType"
       val entity = RestClient.jsonEntity(records)
       RestClient.jsonPost(endpoint, entity)
     }
 
-    val responseFn: (HttpResponse) -> JdbcData = {
-      JacksonSupport.fromJson(it.entity.content)
-    }
+    // at the moment the response just returns ok or an error status
+    // in the case of receiving an ok (201) there's not much to do but return true
+    val responseFn: (HttpResponse) -> Boolean = { true }
 
     return attemptAuthenticatedWithRetry(requestFn, responseFn)
   }

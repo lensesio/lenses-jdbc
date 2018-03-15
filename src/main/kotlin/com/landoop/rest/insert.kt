@@ -1,25 +1,12 @@
 package com.landoop.rest
 
 import com.landoop.rest.domain.InsertField
-import com.landoop.rest.domain.InsertRecord
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericData
 import org.apache.avro.generic.GenericDatumWriter
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.io.EncoderFactory
 import java.io.ByteArrayOutputStream
-import java.sql.SQLException
-
-fun rowToInsert(schema: Schema, fields: List<InsertField>, row: List<Any?>): InsertRecord {
-
-  val keypos = fields.indexOfFirst { it.isKey }
-  if (keypos == -1)
-    throw SQLException("No key field defined")
-  val key = row[keypos].toString()
-
-  val value = recordToJson(rowToValueRecord(schema, fields, row))
-  return InsertRecord(key, value)
-}
 
 fun rowToValueRecord(schema: Schema, fields: List<InsertField>, row: List<Any?>): GenericRecord {
   val record = GenericData.Record(schema)

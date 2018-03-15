@@ -2,7 +2,6 @@ package com.landoop.jdbc4
 
 import com.landoop.rest.RestClient
 import com.landoop.rest.domain.PreparedInsertInfo
-import org.apache.avro.Schema
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigDecimal
@@ -26,7 +25,7 @@ import java.sql.Timestamp
 import java.util.*
 
 class LsqlPreparedStatement(conn: Connection,
-                            val client: RestClient,
+                            private val client: RestClient,
                             sql: String) : LsqlStatement(conn, client), PreparedStatement {
 
   // for a prepared statement we need to connect to the lenses server, as the parsing
@@ -53,7 +52,7 @@ class LsqlPreparedStatement(conn: Connection,
 
   override fun execute(): Boolean {
     builder.checkRecord()
-    client.executePreparedInsert(info.topic, listOf(builder.build()))
+    client.executePreparedInsert(info.topic, info.keyType, info.valueType, listOf(builder.build()))
     return true
   }
 

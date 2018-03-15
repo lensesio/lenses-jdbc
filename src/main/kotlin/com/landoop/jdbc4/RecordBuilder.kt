@@ -1,6 +1,7 @@
 package com.landoop.jdbc4
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.TextNode
 import com.landoop.rest.domain.InsertRecord
 import com.landoop.rest.domain.PreparedInsertInfo
 import java.math.BigDecimal
@@ -34,8 +35,8 @@ class RecordBuilder(val info: PreparedInsertInfo) {
         else -> throw SQLException("Unsupported value type $value")
       }
     }
-    val key = info.fields.withIndex().filter { it.value.isKey }.map { values[it.index] }.firstOrNull()
-    return InsertRecord(JacksonSupport.mapper.writeValueAsString(key), JacksonSupport.mapper.writeValueAsString(root))
+    val key = TextNode(info.fields.withIndex().filter { it.value.isKey }.map { values[it.index] }.firstOrNull()?.toString())
+    return InsertRecord(key, root)
   }
 
   // sets a value by index, where the index is the original position in the sql query
