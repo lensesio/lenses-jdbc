@@ -205,7 +205,11 @@ class RestClient(private val urls: List<String>,
 
     // at the moment the response just returns ok or an error status
     // in the case of receiving an ok (201) there's not much to do but return true
-    val responseFn: (HttpResponse) -> Boolean = { true }
+    val responseFn: (HttpResponse) -> Boolean = {
+      val entity = it.entity.content.bufferedReader().use { it.readText() }
+      logger.debug("Prepared insert response $entity")
+      true
+    }
 
     return attemptAuthenticatedWithRetry(requestFn, responseFn)
   }

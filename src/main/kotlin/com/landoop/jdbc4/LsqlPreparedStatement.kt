@@ -1,6 +1,7 @@
 package com.landoop.jdbc4
 
 import com.landoop.rest.RestClient
+import com.landoop.rest.domain.InsertRecord
 import com.landoop.rest.domain.PreparedInsertInfo
 import java.io.InputStream
 import java.io.Reader
@@ -26,7 +27,7 @@ import java.util.*
 
 class LsqlPreparedStatement(conn: Connection,
                             private val client: RestClient,
-                            sql: String) : LsqlStatement(conn, client), PreparedStatement {
+                            sql: String) : LsqlStatement(conn, client), PreparedStatement, Logging {
 
   // for a prepared statement we need to connect to the lenses server, as the parsing
   // of the SQL will take place on the server side
@@ -42,6 +43,11 @@ class LsqlPreparedStatement(conn: Connection,
   // holder for values currently being built up
   private var builder = RecordBuilder(info)
 
+  // holds all the records for a batch, should be cleared between batches
+  private val batch = mutableListOf<InsertRecord>()
+
+  private fun setValue(k: Int, value: Any?) = builder.put(k, value)
+
   /**
    * Clears the current parameter values immediately.
    * That is, the current record that is being "built" will be reset to empty.
@@ -50,31 +56,51 @@ class LsqlPreparedStatement(conn: Connection,
     builder = RecordBuilder(info)
   }
 
-  override fun execute(): Boolean {
+  private fun dispatchRecord() {
     builder.checkRecord()
     client.executePreparedInsert(info.topic, info.keyType, info.valueType, listOf(builder.build()))
+  }
+
+  override fun execute(): Boolean {
+    dispatchRecord()
     return true
   }
 
   override fun executeUpdate(): Int {
-    builder.checkRecord()
-    //client.executePreparedInsert(info.topic, listOf(record.toList()))
-    return 0
+    dispatchRecord()
+    // this method returns 1 because executeUpdate() always sends only a single insert statement
+    // if we want to send multiple we use executeBatch()
+    return 1
   }
+
+  // -- meta data methods
+
+  /**
+   * @return an empty result set because we do not yet support prepared statements for queries
+   */
+  override fun getMetaData(): ResultSetMetaData = EmptyResultSetMetaData
 
   override fun getParameterMetaData(): ParameterMetaData = AvroSchemaParameterMetaData(info)
 
-  override fun getMetaData(): ResultSetMetaData {
-    TODO()
+  // -- batching support
+
+  // adds the current record to the batch
+  override fun addBatch() {
+    builder.checkRecord()
+    batch.add(builder.build())
+    // we don't clear the builder here as parameters should remain in force for the next record
   }
 
-  private fun setValue(k: Int, value: Any?) = builder.put(k, value)
+  override fun clearBatch() {
+    batch.clear()
+  }
 
-  // todo support batching
-
-  override fun addBatch() = throw SQLFeatureNotSupportedException("Batching is not supported in this version")
-  override fun clearBatch() {}
-  override fun executeBatch(): IntArray = throw SQLFeatureNotSupportedException("Batching is not supported in this version")
+  override fun executeBatch(): IntArray {
+    logger.debug("Executing batch of ${batch.size} records")
+    client.executePreparedInsert(info.topic, info.keyType, info.valueType, batch.toList())
+    // we should return an array of update counts, but we are only inserting, so we return an array of 0s
+    return IntArray(batch.size, { k -> 0 })
+  }
 
   // -- methods which set values on the current record
 

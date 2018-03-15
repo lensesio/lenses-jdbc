@@ -27,9 +27,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
 
   override fun supportsGetGeneratedKeys(): Boolean = false
-
   override fun supportsCoreSQLGrammar(): Boolean = false
-
 
   override fun insertsAreDetected(type: Int): Boolean = false
   override fun deletesAreDetected(type: Int): Boolean = false
