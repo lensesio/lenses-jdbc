@@ -22,7 +22,7 @@ open class LsqlStatement(private val conn: Connection,
   override fun getMaxRows(): Int = 0
 
   override fun execute(sql: String): Boolean {
-    if (sql.startsWith("INSERT")) {
+    if (sql.toUpperCase().trim().startsWith("INSERT")) {
       insert(sql)
       return true
     } else {

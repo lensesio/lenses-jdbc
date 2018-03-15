@@ -5,32 +5,9 @@ import io.kotlintest.matchers.shouldThrow
 import io.kotlintest.specs.WordSpec
 import java.sql.DriverManager
 import java.sql.SQLException
-import java.util.*
 
-class BatchInsertTest : WordSpec(), MovieData {
+class BatchInsertTest : WordSpec(), CCData {
   init {
-
-    val countries = listOf("UK", "US", "DE", "ES", "FR")
-    val currencies = listOf("GBP", "USD", "AUD", "YEN", "EUR")
-    val surnames = listOf("picard", "riker", "troi", "crusher", "yar", "la forge", "son of mogh", "obrien", "soong")
-    val firstnames = listOf("jean luc", "william", "deanna", "beverley", "tasha", "geordi", "worf", "wesley", "miles", "data")
-    LsqlDriver()
-
-    data class Values(val country: String,
-                      val currency: String,
-                      val surname: String,
-                      val firstname: String,
-                      val blocked: Boolean,
-                      val number: String)
-
-    fun <T> randomElement(list: List<T>): T = list[Random().nextInt(list.size)]
-
-    fun randomCountry() = randomElement(countries)
-    fun randomCurrency() = randomElement(currencies)
-    fun randomFirstName() = randomElement(firstnames)
-    fun randomSurname() = randomElement(surnames)
-    fun randomCardNumber() = IntArray(16, { _ -> Random().nextInt(9) }).joinToString("")
-    fun randomValue() = Values(randomCountry(), randomCurrency(), randomSurname(), randomFirstName(), Random().nextBoolean(), randomCardNumber())
 
     // val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "write", "write1")
@@ -39,7 +16,7 @@ class BatchInsertTest : WordSpec(), MovieData {
       "support batched prepared statements" {
 
         val batchSize = 20
-        val values = Array(batchSize, { _ -> randomValue() })
+        val values = Array(batchSize, { _ -> generateCC() })
         val sql = "INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)"
         val stmt = conn.prepareStatement(sql)
 
