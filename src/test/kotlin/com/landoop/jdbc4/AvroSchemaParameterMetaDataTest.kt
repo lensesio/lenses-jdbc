@@ -5,11 +5,15 @@ import com.landoop.rest.domain.PreparedInsertInfo
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.avro.SchemaBuilder
+import java.sql.DriverManager
 import java.sql.ParameterMetaData
 
 class AvroSchemaParameterMetaDataTest : WordSpec() {
 
   init {
+    LsqlDriver()
+
+    val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "write", "write1")
 
     val fields = listOf(
         InsertField("mykey", emptyList(), true),
@@ -110,6 +114,25 @@ class AvroSchemaParameterMetaDataTest : WordSpec() {
         meta.isNullable(9) shouldBe ParameterMetaData.parameterNoNulls
         meta.isNullable(10) shouldBe ParameterMetaData.parameterNullable
         meta.isNullable(11) shouldBe ParameterMetaData.parameterNoNulls
+      }
+      "detect columns from a connection" {
+        val stmt = conn.prepareStatement("INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)")
+        val meta = stmt.parameterMetaData
+        meta.parameterCount shouldBe 6
+        for (k in 1 until meta.parameterCount) {
+          meta.getParameterClassName(1) shouldBe "java.lang.String"
+          meta.getParameterType(1) shouldBe java.sql.Types.VARCHAR
+          meta.getParameterTypeName(1) shouldBe "STRING"
+          meta.getParameterMode(k) shouldBe ParameterMetaData.parameterModeIn
+          meta.isNullable(k) shouldBe ParameterMetaData.parameterNoNulls
+          meta.isSigned(k) shouldBe false
+        }
+        meta.getParameterClassName(6) shouldBe "java.lang.Boolean"
+        meta.getParameterType(6) shouldBe java.sql.Types.BOOLEAN
+        meta.getParameterTypeName(6) shouldBe "BOOLEAN"
+        meta.getParameterMode(6) shouldBe ParameterMetaData.parameterModeIn
+        meta.isNullable(6) shouldBe ParameterMetaData.parameterNoNulls
+        meta.isSigned(6) shouldBe false
       }
     }
   }
