@@ -115,7 +115,7 @@ class AvroSchemaParameterMetaDataTest : WordSpec() {
         meta.isNullable(10) shouldBe ParameterMetaData.parameterNullable
         meta.isNullable(11) shouldBe ParameterMetaData.parameterNoNulls
       }
-      "detect columns from a connection" {
+      "detect field from a connection" {
         val stmt = conn.prepareStatement("INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)")
         val meta = stmt.parameterMetaData
         meta.parameterCount shouldBe 6
@@ -133,6 +133,11 @@ class AvroSchemaParameterMetaDataTest : WordSpec() {
         meta.getParameterMode(6) shouldBe ParameterMetaData.parameterModeIn
         meta.isNullable(6) shouldBe ParameterMetaData.parameterNoNulls
         meta.isSigned(6) shouldBe false
+      }
+      "detect fields for nested data" {
+        val stmt = conn.prepareStatement("INSERT INTO users-mock-json (value.id, value.email, address.street, address.streetnumber, address.postalcode, address.state, personal.firstname, personal.lastname, personal.birthday, personal.title, lastlogingeo.lat, lastlogingeo.lon) values (?,?,?,?,?,?,?,?,?,?,?,?)")
+        val meta = stmt.parameterMetaData
+        meta.parameterCount shouldBe 12
       }
     }
   }
