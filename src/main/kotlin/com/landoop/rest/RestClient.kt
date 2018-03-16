@@ -257,7 +257,9 @@ class RestClient(private val urls: List<String>,
     }
 
     val responseFn: (HttpResponse) -> PreparedInsertResponse = {
-      JacksonSupport.fromJson(it.entity.content)
+      val entity = it.entity.content.bufferedReader().use { it.readText() }
+      logger.debug("Prepare response $entity")
+      JacksonSupport.fromJson(entity)
     }
 
     return attemptAuthenticated(requestFn, responseFn)
