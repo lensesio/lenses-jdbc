@@ -1,7 +1,7 @@
 package com.landoop.jdbc4
 
 import com.landoop.rest.RestClient
-import com.landoop.rest.domain.Topic
+import com.landoop.rest.domain.Table
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecordBuilder
 import java.sql.Connection
@@ -74,14 +74,14 @@ class LsqlDatabaseMetaData(private val conn: Connection,
     }
   }
 
-  private fun getTopics(tableNamePattern: String?,
-                        types: Array<out String>?): List<Topic> {
+  private fun fetchTables(tableNamePattern: String?,
+                          types: Array<out String>?): List<Table> {
 
-    val topics = client.topics()
+    val tables = client.tables()
 
-    val topicsFilteredByTableName: List<Topic> = when (tableNamePattern) {
-      null -> topics.toList()
-      else -> topics.filter { it.name.matches(tableNamePattern.replace("%", ".*").toRegex()) }
+    val topicsFilteredByTableName: List<Table> = when (tableNamePattern) {
+      null -> tables.toList()
+      else -> tables.filter { it.name.matches(tableNamePattern.replace("%", ".*").toRegex()) }
     }
 
     return when (types) {
@@ -95,7 +95,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                          tableNamePattern: String?,
                          types: Array<out String>?): ResultSet {
 
-    val rows = getTopics(tableNamePattern, types).map {
+    val rows = fetchTables(tableNamePattern, types).map {
       val array = arrayOf<Any?>(
           null,
           null,
@@ -117,11 +117,11 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                           tableNamePattern: String?,
                           columnNamePattern: String?): ResultSet {
 
-    fun fieldToRow(topic: Topic, field: Schema.Field, pos: Int): Row {
+    fun fieldToRow(table: Table, field: Schema.Field, pos: Int): Row {
       val array = arrayOf(
           null,
           null,
-          topic.name,
+          table.name,
           field.name(),
           AvroSchemas.sqlType(field.schema()),
           AvroSchemas.normalizedName(field.schema()),
@@ -148,7 +148,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
       return ArrayRow(array)
     }
 
-    val rows: List<Row> = getTopics(tableNamePattern, null).flatMap { topic ->
+    val rows: List<Row> = fetchTables(tableNamePattern, null).flatMap { topic ->
       when (topic.valueSchema) {
         null, "" -> emptyList()
         else -> {

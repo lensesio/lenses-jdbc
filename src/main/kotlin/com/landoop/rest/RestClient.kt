@@ -9,6 +9,7 @@ import com.landoop.rest.domain.JdbcData
 import com.landoop.rest.domain.LoginResponse
 import com.landoop.rest.domain.Message
 import com.landoop.rest.domain.PreparedInsertResponse
+import com.landoop.rest.domain.Table
 import com.landoop.rest.domain.Topic
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -143,7 +144,26 @@ class RestClient(private val urls: List<String>,
     return attempt(requestFn, responseFn)
   }
 
-  fun topics(): Array<Topic> {
+  fun topic(topicName: String): Topic {
+
+    val requestFn: (String) -> HttpUriRequest = {
+      val endpoint = "$it/api/topics/$topicName"
+      logger.debug("Fetching topic @ $endpoint")
+      RestClient.jsonGet(endpoint)
+    }
+
+    // once we get 200
+    val responseFn: (HttpResponse) -> Topic = {
+      logger.debug("Topic json")
+      val str = it.entity.content.bufferedReader().use { it.readText() }
+      logger.debug(str)
+      JacksonSupport.fromJson(str)
+    }
+
+    return attemptAuthenticated(requestFn, responseFn)
+  }
+
+  fun tables(): Array<Table> {
 
     val requestFn: (String) -> HttpUriRequest = {
       val endpoint = "$it/api/jdbc/metadata/table"
@@ -151,10 +171,8 @@ class RestClient(private val urls: List<String>,
       RestClient.jsonGet(endpoint)
     }
 
-    val responseFn: (HttpResponse) -> Array<Topic> = {
-      logger.debug("Topics json")
+    val responseFn: (HttpResponse) -> Array<Table> = {
       val str = it.entity.content.bufferedReader().use { it.readText() }
-      logger.debug(str)
       JacksonSupport.fromJson(str)
     }
 

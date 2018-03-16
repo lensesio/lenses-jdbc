@@ -1,5 +1,7 @@
 package com.landoop.jdbc4
 
+import com.landoop.rest.RestClient
+import com.landoop.rest.domain.Credentials
 import org.apache.avro.generic.GenericData
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic
@@ -13,35 +15,44 @@ import org.apache.avro.Schema
 interface ProducerSetup : Logging {
 
   fun schemaClient() = CachedSchemaRegistryClient("http://127.0.0.1:8081", 1000)
+  fun restClient() = RestClient(listOf("http://localhost:3030"), Credentials("admin", "admin"), true)
 
   fun registerSchema(topic: String, schema: Schema) {
     val client = schemaClient()
     client.register(topic, schema)
+    logger.debug("Schema registered at $topic")
   }
 
   fun newTopicName() = "topic_" + UUID.randomUUID().toString().replace('-', '_')
 
   fun createTopic(): String {
-    val topic = newTopicName()
-    val client = createAdmin()
+    val topicName = newTopicName()
 
-    logger.debug("Creating topic $topic")
-    val result = client.createTopics(listOf(NewTopic(topic, 1, 1)))
+    createAdmin().use {
+      logger.debug("Creating topic $topicName")
+      val result = it.createTopics(listOf(NewTopic(topicName, 1, 1)))
 
-    logger.debug("Waiting on result")
-    result.all().get(10, TimeUnit.SECONDS)
+      logger.debug("Waiting on result")
+      result.all().get(10, TimeUnit.SECONDS)
 
-    fun topicNames(): List<String> = client.listTopics().names().get().toList()
-
-    while (!topicNames().contains(topic)) {
-      logger.debug("Waiting for topic to be created...")
-      Thread.sleep(1000)
+      logger.debug("Closing admin client")
+      it.close(10, TimeUnit.SECONDS)
     }
 
-    logger.debug("Closing admin client")
-    client.close(10, TimeUnit.SECONDS)
+    fun topicInLenses(): Boolean = restClient().use {
+      try {
+        it.topic(topicName)
+        true
+      } catch (e: Exception) {
+        false
+      }
+    }
 
-    return topic
+    while (!topicInLenses()) {
+      Thread.sleep(3000)
+    }
+
+    return topicName
   }
 
   fun adminProps() = Properties().apply {

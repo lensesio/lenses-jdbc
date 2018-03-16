@@ -84,6 +84,9 @@ class LsqlPreparedStatement(conn: Connection,
 
   // -- batching support
 
+  // returns the current batch size
+  fun batchSize(): Int = batch.size
+
   // adds the current record to the batch
   override fun addBatch() {
     builder.checkRecord()

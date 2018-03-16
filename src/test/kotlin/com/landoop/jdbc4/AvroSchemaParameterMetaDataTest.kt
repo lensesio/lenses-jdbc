@@ -7,12 +7,16 @@ import io.kotlintest.specs.WordSpec
 import org.apache.avro.SchemaBuilder
 import java.sql.DriverManager
 import java.sql.ParameterMetaData
+import java.util.*
 
-class AvroSchemaParameterMetaDataTest : WordSpec() {
+class AvroSchemaParameterMetaDataTest : WordSpec(), LocationData {
+
+  override val random = Random()
 
   init {
     LsqlDriver()
 
+    //val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "write", "write1")
 
     val fields = listOf(
@@ -120,9 +124,9 @@ class AvroSchemaParameterMetaDataTest : WordSpec() {
         val meta = stmt.parameterMetaData
         meta.parameterCount shouldBe 6
         for (k in 1 until meta.parameterCount) {
-          meta.getParameterClassName(1) shouldBe "java.lang.String"
-          meta.getParameterType(1) shouldBe java.sql.Types.VARCHAR
-          meta.getParameterTypeName(1) shouldBe "STRING"
+          meta.getParameterClassName(k) shouldBe "java.lang.String"
+          meta.getParameterType(k) shouldBe java.sql.Types.VARCHAR
+          meta.getParameterTypeName(k) shouldBe "STRING"
           meta.getParameterMode(k) shouldBe ParameterMetaData.parameterModeIn
           meta.isNullable(k) shouldBe ParameterMetaData.parameterNoNulls
           meta.isSigned(k) shouldBe false
@@ -134,10 +138,37 @@ class AvroSchemaParameterMetaDataTest : WordSpec() {
         meta.isNullable(6) shouldBe ParameterMetaData.parameterNoNulls
         meta.isSigned(6) shouldBe false
       }
+//      "detect fields for nested data" {
+//       // val topic = populateLocations()
+//        val stmt = conn.prepareStatement("INSERT INTO `$topic` (`id`, `address`.`street`, `address`.`number`, `address`.`zip`, `address`.`state`, `geo`.`lat`, `geo`.`lon`) values (?,?,?,?,?,?,?)")
+//        val meta = stmt.parameterMetaData
+//        meta.parameterCount shouldBe 7
+//      }
       "detect fields for nested data" {
-        val stmt = conn.prepareStatement("INSERT INTO users-mock-json (value.id, value.email, address.street, address.streetnumber, address.postalcode, address.state, personal.firstname, personal.lastname, personal.birthday, personal.title, lastlogingeo.lat, lastlogingeo.lon) values (?,?,?,?,?,?,?,?,?,?,?,?)")
+        val stmt = conn.prepareStatement("INSERT INTO `users-mock-avro` (id, email, `address`.`street`, `address`.`streetnumber`, `address`.`postalcode`, `address`.`state`, `personal`.`firstname`, `personal`.`lastname`, `personal`.`birthday`, `personal`.`title`, `lastlogingeo`.`lat`, `lastlogingeo`.`lon`) values (?,?,?,?,?,?,?,?,?,?,?,?)")
         val meta = stmt.parameterMetaData
         meta.parameterCount shouldBe 12
+
+        fun check(k: Int, className: String = "java.lang.String", typeName: String = "STRING", type: Int = java.sql.Types.VARCHAR, signed: Boolean = false) {
+          logger.debug("Testing $k")
+          meta.getParameterClassName(k) shouldBe className
+          meta.getParameterType(k) shouldBe type
+          meta.getParameterTypeName(k) shouldBe typeName
+          meta.getParameterMode(k) shouldBe ParameterMetaData.parameterModeIn
+          meta.isNullable(k) shouldBe ParameterMetaData.parameterNoNulls
+          meta.isSigned(k) shouldBe signed
+        }
+
+        check(1, "java.lang.Integer", "INT", java.sql.Types.INTEGER, true)
+        check(2)
+        check(3)
+        check(4, "java.lang.Integer", "INT", java.sql.Types.INTEGER, true)
+        check(5, "java.lang.Integer", "INT", java.sql.Types.INTEGER, true)
+        check(6)
+        check(7)
+        check(8)
+        check(11, "java.lang.Double", "DOUBLE", java.sql.Types.DOUBLE, true)
+        check(12, "java.lang.Double", "DOUBLE", java.sql.Types.DOUBLE, true)
       }
     }
   }
