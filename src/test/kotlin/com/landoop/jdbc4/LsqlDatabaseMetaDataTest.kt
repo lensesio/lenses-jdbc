@@ -131,7 +131,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
             .requiredLong("reqlong")
             .endRecord()
 
-        registerSchema(topic, schema)
+        registerValueSchema(topic, schema)
 
         val producer = KafkaProducer<String, GenericData.Record>(producerProps())
         val record = GenericData.Record(schema)

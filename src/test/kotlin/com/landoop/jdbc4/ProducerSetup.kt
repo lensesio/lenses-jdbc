@@ -17,16 +17,16 @@ interface ProducerSetup : Logging {
   fun schemaClient() = CachedSchemaRegistryClient("http://127.0.0.1:8081", 1000)
   fun restClient() = RestClient(listOf("http://localhost:3030"), Credentials("admin", "admin"), true)
 
-  fun registerSchema(topic: String, schema: Schema) {
+  fun registerValueSchema(topic: String, schema: Schema) {
     val client = schemaClient()
-    client.register(topic, schema)
-    logger.debug("Schema registered at $topic")
+    val valueTopic = "$topic-value"
+    client.register(valueTopic, schema)
+    logger.debug("Schema registered at $valueTopic")
   }
 
   fun newTopicName() = "topic_" + UUID.randomUUID().toString().replace('-', '_')
 
-  fun createTopic(): String {
-    val topicName = newTopicName()
+  fun createTopic(topicName: String): String {
 
     createAdmin().use {
       logger.debug("Creating topic $topicName")
@@ -54,6 +54,8 @@ interface ProducerSetup : Logging {
 
     return topicName
   }
+
+  fun createTopic(): String = createTopic(newTopicName())
 
   fun adminProps() = Properties().apply {
     this["bootstrap.servers"] = "PLAINTEXT://127.0.0.1:9092"

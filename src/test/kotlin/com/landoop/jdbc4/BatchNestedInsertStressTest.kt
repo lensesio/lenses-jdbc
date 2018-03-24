@@ -22,8 +22,9 @@ class BatchNestedInsertStressTest : WordSpec(), LocationData {
         val locations = Array(count, { _ -> randomLocation() })
         logger.debug("Generated $count locations")
 
-        val topic = createTopic()
-        registerSchema(topic, schema())
+        val topic = newTopicName()
+        registerValueSchema(topic, schema())
+        createTopic(topic)
 
         val sql = "INSERT INTO `$topic` (id, `address.street`, `address.number`, `address.zip`, `address.state`, `geo.lat`, `geo.lon`) values (?,?,?,?,?,?,?)"
         val stmt = conn.prepareStatement(sql)

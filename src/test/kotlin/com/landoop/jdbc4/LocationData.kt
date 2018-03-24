@@ -73,7 +73,7 @@ interface LocationData : ProducerSetup, Logging {
   fun populateLocations(): String {
     val topic = createTopic()
     val locations = List(5, { _ -> randomLocation() })
-    registerSchema(topic, schema())
+    registerValueSchema(topic, schema())
     val producer = super.createProducer()
 
     for (location in locations) {
