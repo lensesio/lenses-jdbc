@@ -11,6 +11,7 @@ import com.landoop.rest.domain.Message
 import com.landoop.rest.domain.PreparedInsertResponse
 import com.landoop.rest.domain.Table
 import com.landoop.rest.domain.Topic
+import org.apache.avro.Schema
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.client.config.RequestConfig
@@ -23,17 +24,29 @@ import org.apache.http.conn.ssl.TrustSelfSignedStrategy
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.ssl.SSLContextBuilder
+import org.glassfish.tyrus.client.ClientManager
+import org.glassfish.tyrus.client.ClientProperties
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.URI
 import java.net.URL
 import java.sql.SQLException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import javax.websocket.ClientEndpointConfig
+import javax.websocket.Endpoint
+import javax.websocket.EndpointConfig
+import javax.websocket.MessageHandler
+import javax.websocket.Session
 
 class RestClient(private val urls: List<String>,
                  private val credentials: Credentials,
                  private val weakSSL: Boolean // if set to true then will allow self signed certificates
 ) : AutoCloseable {
 
+  private val client = ClientManager.createClient().apply {
+    this.properties[ClientProperties.REDIRECT_ENABLED] = true
+  }
   private val logger = LoggerFactory.getLogger(RestClient::class.java)
   private val timeout = 60_000
 
@@ -125,6 +138,28 @@ class RestClient(private val urls: List<String>,
     }
   }
 
+  private fun attemptAuthenticatedWithRetry(endpoint: Endpoint, uri: URI) {
+    return try {
+      attemptAuthenticated(endpoint, uri)
+    } catch (e: Exception) {
+      token = authenticate()
+      attemptAuthenticated(endpoint, uri)
+    }
+  }
+
+  private fun attemptAuthenticated(endpoint: Endpoint, uri: URI) {
+
+    val configurator = object : ClientEndpointConfig.Configurator() {
+      override fun beforeRequest(headers: MutableMap<String, MutableList<String>>) {
+        println("Setting header")
+        headers[Constants.LensesTokenHeader] = mutableListOf(token)
+      }
+    }
+
+    val config: ClientEndpointConfig = ClientEndpointConfig.Builder.create().configurator(configurator).build()
+    client.connectToServer(endpoint, config, uri)
+  }
+
   // attempts to authenticate, and returns the token if successful
   private fun authenticate(): String {
 
@@ -179,7 +214,7 @@ class RestClient(private val urls: List<String>,
     return attemptAuthenticated(requestFn, responseFn)
   }
 
-  internal fun escape(url: String): String {
+  private fun escape(url: String): String {
     val u = URL(url)
     val uri = URI(
         u.protocol,
@@ -232,20 +267,51 @@ class RestClient(private val urls: List<String>,
     return attemptAuthenticatedWithRetry(requestFn, responseFn)
   }
 
-  fun query(sql: String): JdbcData {
+  fun select(sql: String): JdbcData {
 
-    val requestFn: (String) -> HttpUriRequest = {
-      val endpoint = "$it/api/jdbc/data?sql=$sql"
-      val escaped = escape(endpoint)
-      logger.debug("Executing query $escaped")
-      RestClient.jsonGet(escaped)
+    val url = "${urls[0]}/api/sql/data/ws?sql=$sql"
+    val escaped = escape(url)
+    val uri = URI.create(escaped.replace("https://", "ws://").replace("http://", "ws://"))
+
+    val latch = CountDownLatch(1)
+    val records = mutableListOf<String>()
+    var schema: String? = null
+    var error: String? = null
+    val endpoint = object : Endpoint() {
+
+      override fun onOpen(session: Session, config: EndpointConfig) {
+        try {
+          session.addMessageHandler(MessageHandler.Whole<String> { handleMessage(it) })
+        } catch (e: IOException) {
+          e.printStackTrace()
+        }
+      }
+
+      fun handleMessage(message: String) {
+        println("Message=" + message)
+        when (message.take(1)) {
+        // records
+          "0" -> {
+          }
+        // error case
+          "2" -> {
+            error = message
+            latch.countDown()
+          }
+        // schema
+          "1" -> {
+          }
+        // all done
+          "3" -> latch.countDown()
+        }
+      }
     }
 
-    val responseFn: (HttpResponse) -> JdbcData = {
-      JacksonSupport.fromJson(it.entity.content)
-    }
+    attemptAuthenticatedWithRetry(endpoint, uri)
+    latch.await(1, TimeUnit.HOURS)
 
-    return attemptAuthenticatedWithRetry(requestFn, responseFn)
+    if (error == null) return JdbcData(emptyList(), schema)
+    else throw SQLException(error)
   }
 
   fun prepareStatement(sql: String): PreparedInsertResponse {

@@ -63,8 +63,11 @@ dependencies {
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
     compile "org.apache.avro:avro:$avro_version"
     compile 'javax.websocket:javax.websocket-api:1.1'
+    compile 'javax.websocket:javax.websocket-client:1.1'
     compile 'org.glassfish.tyrus:tyrus-client:1.13.1'
-    
+    compile 'org.glassfish.tyrus:tyrus-core:1.13.1'
+    compile 'org.glassfish.tyrus:tyrus-container-grizzly-client:1.13.1'
+
     testCompile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j_version"
     testCompile "io.kotlintest:kotlintest-runner-junit5:$kotlin_test"
     testCompile "org.apache.kafka:kafka-clients:$kafka_version"

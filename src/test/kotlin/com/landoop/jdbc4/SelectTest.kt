@@ -3,42 +3,41 @@ package com.landoop.jdbc4
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.WordSpec
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerRecord
 import java.sql.DriverManager
 import java.sql.SQLException
 
+class SelectTest : WordSpec(), ProducerSetup {
 
-class QueryTest : WordSpec(), ProducerSetup {
-
-  data class Starship(val name: String, val designation: String)
-
-  fun populateStarships() {
-    val starships = listOf(
-        Starship("USS Enterprise", "1701D"),
-        Starship("USS Discovery", "1031")
-    )
-    val producer = KafkaProducer<String, String>(producerProps())
-    for (starship in starships) {
-      producer.send(ProducerRecord<String, String>("starfleet", starship.name, JacksonSupport.toJson(starship)))
-    }
-  }
-
-  fun populateCountries() {
-    val countries = listOf(
-        Country("Vanuatu"),
-        Country("Comoros")
-    )
-    val producer = KafkaProducer<String, String>(producerProps())
-    for (country in countries) {
-      producer.send(ProducerRecord<String, String>("country", country.name, country.name))
-    }
-  }
+//  data class Starship(val name: String, val designation: String)
+//
+//  fun populateStarships() {
+//    val starships = listOf(
+//        Starship("USS Enterprise", "1701D"),
+//        Starship("USS Discovery", "1031")
+//    )
+//    val producer = KafkaProducer<String, String>(producerProps())
+//    for (starship in starships) {
+//      producer.send(ProducerRecord<String, String>("starfleet", starship.name, JacksonSupport.toJson(starship)))
+//    }
+//  }
+//
+//  fun populateCountries() {
+//    val countries = listOf(
+//        Country("Vanuatu"),
+//        Country("Comoros")
+//    )
+//    val producer = KafkaProducer<String, String>(producerProps())
+//    for (country in countries) {
+//      producer.send(ProducerRecord<String, String>("country", country.name, country.name))
+//    }
+//  }
 
   init {
 
     LsqlDriver()
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
+
+    val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "write", "write1")
+    //   val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 
     "JDBC Driver" should {
       "support wildcard selection" {
