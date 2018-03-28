@@ -1,9 +1,10 @@
 package com.landoop.jdbc4
 
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldThrow
+import io.kotlintest.shouldBe
+import io.kotlintest.shouldThrow
 import io.kotlintest.specs.WordSpec
 import java.sql.DriverManager
+
 import java.sql.SQLException
 
 class PreparedInsertTest : WordSpec(), MovieData {

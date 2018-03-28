@@ -1,6 +1,6 @@
 package com.landoop.jdbc4
 
-import io.kotlintest.matchers.shouldThrow
+import io.kotlintest.shouldThrow
 import io.kotlintest.specs.WordSpec
 import java.sql.DriverManager
 

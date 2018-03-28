@@ -3,9 +3,9 @@ package com.landoop.jdbc4
 import io.kotlintest.matchers.contain
 import io.kotlintest.matchers.containsAll
 import io.kotlintest.matchers.gte
-import io.kotlintest.matchers.should
-import io.kotlintest.matchers.shouldBe
-import io.kotlintest.matchers.shouldNot
+import io.kotlintest.should
+import io.kotlintest.shouldBe
+import io.kotlintest.shouldNot
 import io.kotlintest.specs.WordSpec
 import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData

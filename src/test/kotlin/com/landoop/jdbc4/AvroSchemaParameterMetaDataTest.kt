@@ -2,7 +2,7 @@ package com.landoop.jdbc4
 
 import com.landoop.rest.domain.InsertField
 import com.landoop.rest.domain.PreparedInsertInfo
-import io.kotlintest.matchers.shouldBe
+import io.kotlintest.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.avro.SchemaBuilder
 import java.sql.DriverManager

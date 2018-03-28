@@ -1,6 +1,6 @@
 package com.landoop.jdbc4
 
-import io.kotlintest.matchers.shouldBe
+import io.kotlintest.shouldBe
 import io.kotlintest.specs.WordSpec
 import java.sql.DriverManager
 import java.util.*
@@ -10,7 +10,7 @@ class BatchNestedInsertStressTest : WordSpec(), LocationData {
   override val random: Random = Random()
 
   init {
-    LsqlDriver()
+    com.landoop.jdbc4.LsqlDriver()
 
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 
