@@ -1,4 +1,4 @@
-package com.landoop.rest
+package com.landoop.jdbc4.client
 
 import org.apache.http.HttpResponse
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy

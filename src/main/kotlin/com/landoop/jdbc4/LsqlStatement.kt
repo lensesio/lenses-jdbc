@@ -1,7 +1,7 @@
 package com.landoop.jdbc4
 
-import com.landoop.rest.RestClient
-import com.landoop.rest.domain.StreamingSelectResult
+import com.landoop.jdbc4.client.RestClient
+import com.landoop.jdbc4.client.domain.StreamingSelectResult
 import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.SQLFeatureNotSupportedException
@@ -30,6 +30,7 @@ open class LsqlStatement(private val conn: Connection,
       // in this execute method we must block until we are completed
       // or we receive a record, otherwise we don't know if we can return true or false
       val result = select(sql)
+      rs = StreamingRowResultSet(this, result)
       result.hasData(1, TimeUnit.DAYS)
     }
   }

@@ -2,8 +2,8 @@ package com.landoop.jdbc4
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
-import com.landoop.rest.domain.InsertRecord
-import com.landoop.rest.domain.PreparedInsertInfo
+import com.landoop.jdbc4.client.domain.InsertRecord
+import com.landoop.jdbc4.client.domain.PreparedInsertInfo
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.sql.SQLException

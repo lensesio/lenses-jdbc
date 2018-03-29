@@ -1,7 +1,7 @@
 package com.landoop.jdbc4
 
-import com.landoop.rest.RestClient
-import com.landoop.rest.domain.Credentials
+import com.landoop.jdbc4.client.RestClient
+import com.landoop.jdbc4.client.domain.Credentials
 import org.apache.avro.generic.GenericData
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic

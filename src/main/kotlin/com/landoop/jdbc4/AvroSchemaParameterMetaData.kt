@@ -1,6 +1,6 @@
 package com.landoop.jdbc4
 
-import com.landoop.rest.domain.PreparedInsertInfo
+import com.landoop.jdbc4.client.domain.PreparedInsertInfo
 import org.apache.avro.Schema
 import java.sql.ParameterMetaData
 

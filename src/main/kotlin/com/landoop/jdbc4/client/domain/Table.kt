@@ -1,4 +1,4 @@
-package com.landoop.rest.domain
+package com.landoop.jdbc4.client.domain
 
 data class Table(val name: String,
                  val keyType: String,

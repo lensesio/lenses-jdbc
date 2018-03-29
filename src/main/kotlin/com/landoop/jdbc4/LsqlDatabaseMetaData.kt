@@ -1,7 +1,7 @@
 package com.landoop.jdbc4
 
-import com.landoop.rest.RestClient
-import com.landoop.rest.domain.Table
+import com.landoop.jdbc4.client.RestClient
+import com.landoop.jdbc4.client.domain.Table
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecordBuilder
 import java.sql.Connection

@@ -1,8 +1,8 @@
 package com.landoop.jdbc4
 
-import com.landoop.rest.RestClient
-import com.landoop.rest.domain.InsertRecord
-import com.landoop.rest.domain.PreparedInsertInfo
+import com.landoop.jdbc4.client.RestClient
+import com.landoop.jdbc4.client.domain.InsertRecord
+import com.landoop.jdbc4.client.domain.PreparedInsertInfo
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigDecimal

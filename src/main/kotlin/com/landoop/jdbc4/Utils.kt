@@ -1,4 +1,4 @@
-package com.landoop
+package com.landoop.jdbc4
 
 import java.util.regex.Pattern
 

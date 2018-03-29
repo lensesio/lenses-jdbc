@@ -1,7 +1,7 @@
 package com.landoop.jdbc4
 
-import com.landoop.rest.RestClient
-import com.landoop.rest.domain.Credentials
+import com.landoop.jdbc4.client.RestClient
+import com.landoop.jdbc4.client.domain.Credentials
 import java.sql.Blob
 import java.sql.CallableStatement
 import java.sql.Clob

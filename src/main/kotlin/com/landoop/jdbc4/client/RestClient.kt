@@ -1,16 +1,16 @@
-package com.landoop.rest
+package com.landoop.jdbc4.client
 
 import com.landoop.jdbc4.Constants
 import com.landoop.jdbc4.JacksonSupport
-import com.landoop.rest.domain.Credentials
-import com.landoop.rest.domain.InsertRecord
-import com.landoop.rest.domain.InsertResponse
-import com.landoop.rest.domain.LoginResponse
-import com.landoop.rest.domain.Message
-import com.landoop.rest.domain.PreparedInsertResponse
-import com.landoop.rest.domain.StreamingSelectResult
-import com.landoop.rest.domain.Table
-import com.landoop.rest.domain.Topic
+import com.landoop.jdbc4.client.domain.Credentials
+import com.landoop.jdbc4.client.domain.InsertRecord
+import com.landoop.jdbc4.client.domain.InsertResponse
+import com.landoop.jdbc4.client.domain.LoginResponse
+import com.landoop.jdbc4.client.domain.Message
+import com.landoop.jdbc4.client.domain.PreparedInsertResponse
+import com.landoop.jdbc4.client.domain.StreamingSelectResult
+import com.landoop.jdbc4.client.domain.Table
+import com.landoop.jdbc4.client.domain.Topic
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.client.config.RequestConfig
@@ -32,7 +32,6 @@ import java.net.URL
 import java.net.URLEncoder
 import java.sql.SQLException
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import javax.websocket.ClientEndpointConfig
 import javax.websocket.Endpoint
 import javax.websocket.EndpointConfig
@@ -163,10 +162,10 @@ class RestClient(private val urls: List<String>,
   private fun authenticate(): String {
 
     val requestFn: (String) -> HttpUriRequest = {
-      val entity = RestClient.jsonEntity(credentials)
+      val entity = jsonEntity(credentials)
       val endpoint = "$it/api/login"
       logger.debug("Authenticating at $endpoint")
-      RestClient.jsonPost(endpoint, entity)
+      jsonPost(endpoint, entity)
     }
 
     val responseFn: (HttpResponse) -> String = {
@@ -183,7 +182,7 @@ class RestClient(private val urls: List<String>,
     val requestFn: (String) -> HttpUriRequest = {
       val endpoint = "$it/api/topics/$topicName"
       logger.debug("Fetching topic @ $endpoint")
-      RestClient.jsonGet(endpoint)
+      jsonGet(endpoint)
     }
 
     // once we get 200
@@ -202,7 +201,7 @@ class RestClient(private val urls: List<String>,
     val requestFn: (String) -> HttpUriRequest = {
       val endpoint = "$it/api/jdbc/metadata/table"
       logger.debug("Fetching topics @ $endpoint")
-      RestClient.jsonGet(endpoint)
+      jsonGet(endpoint)
     }
 
     val responseFn: (HttpResponse) -> Array<Table> = {
@@ -228,10 +227,10 @@ class RestClient(private val urls: List<String>,
   fun insert(sql: String): InsertResponse {
     val requestFn: (String) -> HttpUriRequest = {
       val endpoint = "$it/api/jdbc/insert"
-      val entity = RestClient.stringEntity(sql)
+      val entity = stringEntity(sql)
       logger.debug("Executing query $endpoint")
       logger.debug(sql)
-      RestClient.plainTextPost(endpoint, entity)
+      plainTextPost(endpoint, entity)
     }
 
     val responseFn: (HttpResponse) -> InsertResponse = {
@@ -251,8 +250,8 @@ class RestClient(private val urls: List<String>,
 
     val requestFn: (String) -> HttpUriRequest = {
       val endpoint = "$it/api/jdbc/insert/prepared/$topic?kt=$keyType&vt=$valueType"
-      val entity = RestClient.jsonEntity(records)
-      RestClient.jsonPost(endpoint, entity)
+      val entity = jsonEntity(records)
+      jsonPost(endpoint, entity)
     }
 
     // at the moment the response just returns ok or an error status
@@ -293,14 +292,14 @@ class RestClient(private val urls: List<String>,
             "2" -> result.setSchema(message.drop(1))
           // all done
             "3" -> {
-              executor.submit({ result.complete() })
+              executor.submit({ result.endStream() })
               executor.shutdown()
             }
           }
         } catch (t: Throwable) {
           t.printStackTrace()
           result.setError(t)
-          executor.submit({ result.complete() })
+          executor.submit({ result.endStream() })
           executor.shutdown()
         }
       }
@@ -315,7 +314,7 @@ class RestClient(private val urls: List<String>,
       val endpoint = "$it/api/jdbc/insert/prepared?sql=$sql"
       val escaped = escape(endpoint)
       logger.debug("Executing query $escaped")
-      RestClient.jsonGet(escaped)
+      jsonGet(escaped)
     }
 
     val responseFn: (HttpResponse) -> PreparedInsertResponse = {
@@ -333,7 +332,7 @@ class RestClient(private val urls: List<String>,
       val endpoint = "$it/api/sql/data?sql=$sql"
       val escaped = escape(endpoint)
       logger.debug("Executing query $escaped")
-      RestClient.jsonGet(escaped)
+      jsonGet(escaped)
     }
 
     val responseFn: (HttpResponse) -> List<Message> = {

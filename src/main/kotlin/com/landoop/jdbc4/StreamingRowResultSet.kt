@@ -1,6 +1,6 @@
 package com.landoop.jdbc4
 
-import com.landoop.rest.domain.StreamingSelectResult
+import com.landoop.jdbc4.client.domain.StreamingSelectResult
 import org.apache.avro.Schema
 import java.sql.ResultSet
 import java.sql.SQLException
@@ -64,16 +64,12 @@ class StreamingRowResultSet(
 
   override fun next(): Boolean {
     cursor += 1
-    val record = result.records.take()
-    val error = result.error()
-    if (error != null) {
-      throw error
-    }
-    row = if (record == null || record == result.endOfRecords) null else {
+    val record = result.next()
+    row = if (record == null) null else {
       val node = JacksonSupport.mapper.readTree(record)
       JsonNodeRow(node)
     }
-    return record != result.endOfRecords
+    return record != null
   }
 
   override fun previous() = throw SQLException("Cannot invoke previous() on streaming Results")

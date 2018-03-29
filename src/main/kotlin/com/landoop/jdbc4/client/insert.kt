@@ -1,6 +1,6 @@
-package com.landoop.rest
+package com.landoop.jdbc4.client
 
-import com.landoop.rest.domain.InsertField
+import com.landoop.jdbc4.client.domain.InsertField
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericData
 import org.apache.avro.generic.GenericDatumWriter
