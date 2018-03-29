@@ -1,12 +1,13 @@
 package com.landoop.jdbc4
 
 import com.landoop.rest.RestClient
-import org.apache.avro.Schema
+import com.landoop.rest.domain.StreamingSelectResult
 import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.SQLFeatureNotSupportedException
 import java.sql.SQLWarning
 import java.sql.Statement
+import java.util.concurrent.TimeUnit
 
 open class LsqlStatement(private val conn: Connection,
                          private val client: RestClient) : Statement, AutoCloseable, IWrapper {
@@ -26,7 +27,10 @@ open class LsqlStatement(private val conn: Connection,
       insert(sql)
       true
     } else {
-      select(sql)
+      // in this execute method we must block until we are completed
+      // or we receive a record, otherwise we don't know if we can return true or false
+      val result = select(sql)
+      result.hasData(1, TimeUnit.DAYS)
     }
   }
 
@@ -36,26 +40,14 @@ open class LsqlStatement(private val conn: Connection,
     return true
   }
 
-  private fun select(sql: String): Boolean {
-    val resp = client.select(sql)
-
-    // if the reply had no results, then the schema will be null
-    return if (resp.data.isEmpty()) {
-      rs = RowResultSet.empty()
-      false
-    } else {
-      val schema = Schema.Parser().parse(resp.schema)!!
-      val rows = resp.data.map {
-        val node = JacksonSupport.mapper.readTree(it)
-        JsonNodeRow(node)
-      }
-      rs = RowResultSet(this, schema, rows)
-      true
-    }
+  private fun select(sql: String): StreamingSelectResult {
+    val result = client.select(sql)
+    rs = StreamingRowResultSet(this, result)
+    return result
   }
 
   override fun executeQuery(sql: String): ResultSet {
-    execute(sql)
+    select(sql)
     return rs
   }
 

@@ -1,6 +1,7 @@
 package com.landoop.jdbc4
 
 import io.kotlintest.shouldBe
+import io.kotlintest.shouldNotBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.WordSpec
 import java.sql.DriverManager
@@ -59,6 +60,9 @@ class SelectTest : WordSpec(), ProducerSetup {
         rs.metaData.columnCount shouldBe 2
         rs.metaData.getColumnLabel(1) shouldBe "merchantId"
         rs.metaData.getColumnLabel(2) shouldBe "currency"
+        rs.next()
+        rs.getString("currency") shouldNotBe null
+        rs.getString("merchantId") shouldNotBe null
       }
       "return all results without a limit"  {
         val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
@@ -67,31 +71,25 @@ class SelectTest : WordSpec(), ProducerSetup {
         var counter = 0
         while (rs.next()) {
           counter += 1
+          rs.getString("currency") shouldNotBe null
         }
         (counter > 500) shouldBe true
       }
       "throw SQL exception if the topic does not exist" {
-        val q = "SELECT * FROM wobble"
+        val q = "SELECT * FROM dribble_dobble"
         val stmt = conn.createStatement()
+        val rs = stmt.executeQuery(q)
         shouldThrow<SQLException> {
-          stmt.executeQuery(q)
+          rs.next()
         }
       }
-      "support schemas with two fields" {
-        val q = "SELECT * FROM starfleet"
-        val stmt = conn.createStatement()
-        val rs = stmt.executeQuery(q)
-        rs.metaData.columnCount shouldBe 6
-        rs.metaData.getColumnLabel(1) shouldBe "id"
-      }
-      "support schemas with two fields" {
-        val q = "SELECT * FROM starfleet"
-        val stmt = conn.createStatement()
-        val rs = stmt.executeQuery(q)
-        rs.metaData.columnCount shouldBe 6
-        rs.metaData.getColumnLabel(1) shouldBe "id"
-      }
-      // limits don't seem to work at present
+//      "support schemas with two fields" {
+//        val q = "SELECT * FROM starfleet"
+//        val stmt = conn.createStatement()
+//        val rs = stmt.executeQuery(q)
+//        rs.metaData.columnCount shouldBe 6
+//        rs.metaData.getColumnLabel(1) shouldBe "id"
+//      }
       "support limits"  {
         val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' limit 10"
         val stmt = conn.createStatement()

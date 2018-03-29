@@ -3,6 +3,7 @@ package com.landoop.jdbc4
 import com.landoop.rest.RestClient
 import com.landoop.rest.domain.Credentials
 import fi.iki.elonen.NanoHTTPD
+import io.kotlintest.Spec
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.WordSpec
@@ -18,7 +19,7 @@ class RestClientTest : WordSpec() {
 
   private val server = LoginServer()
 
-  override fun interceptSpec(process: () -> Unit) {
+  override fun interceptSpec(spec: Spec, process: () -> Unit) {
     server.makeSecure(NanoHTTPD.makeSSLSocketFactory("/keystore.jks", "password".toCharArray()), null)
     server.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
     process()

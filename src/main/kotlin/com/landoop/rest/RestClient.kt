@@ -5,10 +5,10 @@ import com.landoop.jdbc4.JacksonSupport
 import com.landoop.rest.domain.Credentials
 import com.landoop.rest.domain.InsertRecord
 import com.landoop.rest.domain.InsertResponse
-import com.landoop.rest.domain.SelectResponse
 import com.landoop.rest.domain.LoginResponse
 import com.landoop.rest.domain.Message
 import com.landoop.rest.domain.PreparedInsertResponse
+import com.landoop.rest.domain.StreamingSelectResult
 import com.landoop.rest.domain.Table
 import com.landoop.rest.domain.Topic
 import org.apache.http.HttpEntity
@@ -31,7 +31,7 @@ import java.net.URI
 import java.net.URL
 import java.net.URLEncoder
 import java.sql.SQLException
-import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.websocket.ClientEndpointConfig
 import javax.websocket.Endpoint
@@ -151,7 +151,6 @@ class RestClient(private val urls: List<String>,
 
     val configurator = object : ClientEndpointConfig.Configurator() {
       override fun beforeRequest(headers: MutableMap<String, MutableList<String>>) {
-        println("Setting header")
         headers[Constants.LensesTokenHeader] = mutableListOf(token)
       }
     }
@@ -267,52 +266,48 @@ class RestClient(private val urls: List<String>,
     return attemptAuthenticatedWithRetry(requestFn, responseFn)
   }
 
-  fun select(sql: String): SelectResponse {
+  fun select(sql: String): StreamingSelectResult {
 
     val url = "${urls[0]}/api/ws/jdbc/data?sql=$sql"
     val escaped = escape(url)
     val uri = URI.create(escaped.replace("https://", "ws://").replace("http://", "ws://"))
 
-    val latch = CountDownLatch(1)
-    val records = mutableListOf<String>()
-    var schema: String? = null
-    var error: Throwable? = null
+    val executor = Executors.newSingleThreadExecutor()
+    val result = StreamingSelectResult()
     val endpoint = object : Endpoint() {
 
       override fun onOpen(session: Session, config: EndpointConfig) {
-        try {
-          session.addMessageHandler(MessageHandler.Whole<String> { handleMessage(it) })
-        } catch (e: IOException) {
-          e.printStackTrace()
-        }
+        session.addMessageHandler(MessageHandler.Whole<String> {
+          executor.submit(messageHandler(it))
+        })
       }
 
-      fun handleMessage(message: String) {
-        println(message)
+      fun messageHandler(message: String): Runnable = Runnable {
         try {
           when (message.take(1)) {
           // records
-            "0" -> records.add(message.drop(1))
+            "0" -> result.addRecord(message.drop(1))
           // error case
             "1" -> throw SQLException(message.drop(1))
           // schema
-            "2" -> schema = message.drop(1)
+            "2" -> result.setSchema(message.drop(1))
           // all done
-            "3" -> latch.countDown()
+            "3" -> {
+              executor.submit({ result.complete() })
+              executor.shutdown()
+            }
           }
         } catch (t: Throwable) {
-          error = t
-          latch.countDown()
+          t.printStackTrace()
+          result.setError(t)
+          executor.submit({ result.complete() })
+          executor.shutdown()
         }
       }
     }
 
     attemptAuthenticatedWithRetry(endpoint, uri)
-    latch.await(1, TimeUnit.HOURS)
-
-    val t = error
-    if (t == null) return SelectResponse(records.toList(), schema)
-    else throw t
+    return result
   }
 
   fun prepareStatement(sql: String): PreparedInsertResponse {
