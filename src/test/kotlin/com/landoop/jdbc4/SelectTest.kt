@@ -68,7 +68,7 @@ class SelectTest : WordSpec(), ProducerSetup {
         while (rs.next()) {
           counter += 1
         }
-        (counter > 2000) shouldBe true
+        (counter > 500) shouldBe true
       }
       "throw SQL exception if the topic does not exist" {
         val q = "SELECT * FROM wobble"
@@ -92,22 +92,21 @@ class SelectTest : WordSpec(), ProducerSetup {
         rs.metaData.getColumnLabel(1) shouldBe "id"
       }
       // limits don't seem to work at present
-//      "support limits"  {
-//        val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' limit 10"
-//        val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
-//        val stmt = conn.createStatement()
-//        val rs = stmt.executeQuery(q)
-//        var counter = 0
-//        while (rs.next()) {
-//          counter += 1
-//        }
-//        counter shouldBe 10
-//      }
+      "support limits"  {
+        val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' limit 10"
+        val stmt = conn.createStatement()
+        val rs = stmt.executeQuery(q)
+        var counter = 0
+        while (rs.next()) {
+          counter += 1
+        }
+        counter shouldBe 10
+      }
       "return true for results" {
         conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='USD'") shouldBe true
       }
       "return false if no results" {
-        conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='wibble'") shouldBe false
+        conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='wibble' and _offset < 100000") shouldBe false
       }
     }
   }

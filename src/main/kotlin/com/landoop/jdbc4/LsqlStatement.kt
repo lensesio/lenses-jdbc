@@ -22,38 +22,35 @@ open class LsqlStatement(private val conn: Connection,
   override fun getMaxRows(): Int = 0
 
   override fun execute(sql: String): Boolean {
-    if (sql.toUpperCase().trim().startsWith("INSERT")) {
+    return if (sql.toUpperCase().trim().startsWith("INSERT")) {
       insert(sql)
-      return true
+      true
     } else {
-      return query(sql)
+      select(sql)
     }
   }
 
   private fun insert(sql: String): Boolean {
     val withSetKey = """SET _ktype='STRING'; $sql"""
-    val resp = client.insert(withSetKey)
-    return false
+    client.insert(withSetKey)
+    return true
   }
 
-  private fun query(sql: String): Boolean {
-    val data = client.query(sql)
+  private fun select(sql: String): Boolean {
+    val resp = client.select(sql)
 
     // if the reply had no results, then the schema will be null
-    return when (data.schema) {
-      null -> {
-        rs = RowResultSet.empty()
-        false
+    return if (resp.data.isEmpty()) {
+      rs = RowResultSet.empty()
+      false
+    } else {
+      val schema = Schema.Parser().parse(resp.schema)!!
+      val rows = resp.data.map {
+        val node = JacksonSupport.mapper.readTree(it)
+        JsonNodeRow(node)
       }
-      else -> {
-        val schema = Schema.Parser().parse(data.schema)!!
-        val rows = data.data.map {
-          val node = JacksonSupport.mapper.readTree(it)
-          JsonNodeRow(node)
-        }
-        rs = RowResultSet(this, schema, rows)
-        true
-      }
+      rs = RowResultSet(this, schema, rows)
+      true
     }
   }
 

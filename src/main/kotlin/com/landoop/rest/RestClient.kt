@@ -5,13 +5,12 @@ import com.landoop.jdbc4.JacksonSupport
 import com.landoop.rest.domain.Credentials
 import com.landoop.rest.domain.InsertRecord
 import com.landoop.rest.domain.InsertResponse
-import com.landoop.rest.domain.JdbcData
+import com.landoop.rest.domain.SelectResponse
 import com.landoop.rest.domain.LoginResponse
 import com.landoop.rest.domain.Message
 import com.landoop.rest.domain.PreparedInsertResponse
 import com.landoop.rest.domain.Table
 import com.landoop.rest.domain.Topic
-import org.apache.avro.Schema
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.client.config.RequestConfig
@@ -30,6 +29,7 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.URI
 import java.net.URL
+import java.net.URLEncoder
 import java.sql.SQLException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -220,7 +220,7 @@ class RestClient(private val urls: List<String>,
         u.protocol,
         u.authority,
         u.path,
-        u.query,
+        URLEncoder.encode(u.query, "UTF-8"),
         u.ref
     )
     return uri.toURL().toString().replace("%20", "+")
@@ -267,16 +267,16 @@ class RestClient(private val urls: List<String>,
     return attemptAuthenticatedWithRetry(requestFn, responseFn)
   }
 
-  fun select(sql: String): JdbcData {
+  fun select(sql: String): SelectResponse {
 
-    val url = "${urls[0]}/api/sql/data/ws?sql=$sql"
+    val url = "${urls[0]}/api/ws/jdbc/data?sql=$sql"
     val escaped = escape(url)
     val uri = URI.create(escaped.replace("https://", "ws://").replace("http://", "ws://"))
 
     val latch = CountDownLatch(1)
     val records = mutableListOf<String>()
     var schema: String? = null
-    var error: String? = null
+    var error: Throwable? = null
     val endpoint = object : Endpoint() {
 
       override fun onOpen(session: Session, config: EndpointConfig) {
@@ -288,21 +288,21 @@ class RestClient(private val urls: List<String>,
       }
 
       fun handleMessage(message: String) {
-        println("Message=" + message)
-        when (message.take(1)) {
-        // records
-          "0" -> {
+        println(message)
+        try {
+          when (message.take(1)) {
+          // records
+            "0" -> records.add(message.drop(1))
+          // error case
+            "1" -> throw SQLException(message.drop(1))
+          // schema
+            "2" -> schema = message.drop(1)
+          // all done
+            "3" -> latch.countDown()
           }
-        // error case
-          "2" -> {
-            error = message
-            latch.countDown()
-          }
-        // schema
-          "1" -> {
-          }
-        // all done
-          "3" -> latch.countDown()
+        } catch (t: Throwable) {
+          error = t
+          latch.countDown()
         }
       }
     }
@@ -310,8 +310,9 @@ class RestClient(private val urls: List<String>,
     attemptAuthenticatedWithRetry(endpoint, uri)
     latch.await(1, TimeUnit.HOURS)
 
-    if (error == null) return JdbcData(emptyList(), schema)
-    else throw SQLException(error)
+    val t = error
+    if (t == null) return SelectResponse(records.toList(), schema)
+    else throw t
   }
 
   fun prepareStatement(sql: String): PreparedInsertResponse {

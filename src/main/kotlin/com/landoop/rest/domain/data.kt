@@ -12,8 +12,7 @@ data class Message(
     val topic: String,
     val value: String)
 
-data class JdbcData(
-    val topic: String?,
+data class SelectResponse(
     val data: List<String>,
     val schema: String?
 )
