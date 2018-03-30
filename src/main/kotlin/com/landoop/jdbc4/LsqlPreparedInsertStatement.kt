@@ -25,9 +25,9 @@ import java.sql.Time
 import java.sql.Timestamp
 import java.util.*
 
-class LsqlPreparedStatement(conn: Connection,
-                            private val client: RestClient,
-                            sql: String) : LsqlStatement(conn, client), PreparedStatement, Logging {
+class LsqlPreparedInsertStatement(conn: Connection,
+                                  private val client: RestClient,
+                                  sql: String) : LsqlStatement(conn, client), PreparedStatement, Logging {
 
   // for a prepared statement we need to connect to the lenses server, as the parsing
   // of the SQL will take place on the server side

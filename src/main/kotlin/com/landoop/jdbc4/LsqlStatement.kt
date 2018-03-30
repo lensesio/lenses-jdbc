@@ -22,6 +22,11 @@ open class LsqlStatement(private val conn: Connection,
 
   override fun getMaxRows(): Int = 0
 
+  override fun executeQuery(sql: String): ResultSet {
+    select(sql)
+    return rs
+  }
+
   override fun execute(sql: String): Boolean {
     return if (sql.toUpperCase().trim().startsWith("INSERT")) {
       insert(sql)
@@ -47,10 +52,7 @@ open class LsqlStatement(private val conn: Connection,
     return result
   }
 
-  override fun executeQuery(sql: String): ResultSet {
-    select(sql)
-    return rs
-  }
+
 
   override fun getConnection(): Connection = conn
 

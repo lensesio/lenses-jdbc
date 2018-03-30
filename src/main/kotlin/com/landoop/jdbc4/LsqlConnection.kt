@@ -37,11 +37,9 @@ class LsqlConnection(private val uri: String,
 
   private val client = RestClient(urls, Credentials(user, password), weakSSL)
 
-
   override fun getHoldability(): Int = ResultSet.CLOSE_CURSORS_AT_COMMIT
 
-  override fun setNetworkTimeout(executor: Executor?, milliseconds: Int) {
-  }
+  override fun setNetworkTimeout(executor: Executor?, milliseconds: Int) {}
 
   override fun abort(executor: Executor?) {
     close()
@@ -61,8 +59,6 @@ class LsqlConnection(private val uri: String,
   override fun clearWarnings() {}
 
   override fun getCatalog(): String? = null
-
-
   override fun getSchema(): String? = null
 
   // timeout is ignored, and the default timeout of the client is used
@@ -89,7 +85,10 @@ class LsqlConnection(private val uri: String,
   override fun setClientInfo(properties: Properties?) = throw SQLFeatureNotSupportedException()
 
   override fun createStatement(): Statement = LsqlStatement(this, client)
-  override fun prepareStatement(sql: String?): PreparedStatement = LsqlPreparedStatement(this, client, sql!!)
+  override fun prepareStatement(sql: String): PreparedStatement {
+    return if (sql.trim().toUpperCase().startsWith("SELECT")) LsqlPreparedSelectStatement(this, client, sql)
+    else LsqlPreparedInsertStatement(this, client, sql)
+  }
 
   override fun getTypeMap(): MutableMap<String, Class<*>> = throw SQLFeatureNotSupportedException()
   override fun getMetaData(): DatabaseMetaData = LsqlDatabaseMetaData(this, client, uri, user)

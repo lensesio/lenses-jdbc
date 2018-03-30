@@ -53,6 +53,18 @@ class SelectTest : WordSpec(), ProducerSetup {
         rs.metaData.getColumnLabel(5) shouldBe "creditCardId"
         rs.metaData.getColumnLabel(6) shouldBe "merchantId"
       }
+      "support wildcard selection as a prepared statement" {
+        val sql = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
+        val stmt = conn.prepareStatement(sql)
+        val rs = stmt.executeQuery()
+        rs.metaData.columnCount shouldBe 6
+        rs.metaData.getColumnLabel(1) shouldBe "id"
+        rs.metaData.getColumnLabel(2) shouldBe "time"
+        rs.metaData.getColumnLabel(3) shouldBe "amount"
+        rs.metaData.getColumnLabel(4) shouldBe "currency"
+        rs.metaData.getColumnLabel(5) shouldBe "creditCardId"
+        rs.metaData.getColumnLabel(6) shouldBe "merchantId"
+      }
       "support projections" {
         val q = "SELECT merchantId, currency FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
         val stmt = conn.createStatement()
