@@ -270,9 +270,7 @@ class RestClient(private val urls: List<String>,
 
     // hacky fix for spark
     val r = "SELECT.*?FROM\\s+SELECT".toRegex()
-    val normalizedSql = if (sql.toUpperCase().matches(r)) {
-      sql.replaceFirst(r, "")
-    } else sql
+    val normalizedSql = sql.replaceFirst(r, "")
 
     logger.debug("Normalized query $normalizedSql")
 
