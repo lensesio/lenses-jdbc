@@ -19,22 +19,6 @@ buildscript {
         classpath "org.junit.platform:junit-platform-gradle-plugin:1.1.0"
     }
 }
-/*buildscript {
-    ext.kotlin_version = '1.1.3'
-    ext.jose_version = '0.6.0'
-    ext.kotlin_test = '2.0.3'
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}*/
-
-/*plugins {
-    id "org.jetbrains.kotlin.jvm" version "$kotlin_version"
-}*/
-
 
 group 'com.landoop'
 version '1.0'
@@ -83,37 +67,14 @@ publishing {
 }
 
 
-jar {
-    manifest {
-        /* attributes(
-                 //'Main-Class': 'com.landoop.license.ProgramKt'
-         )*/
-    }
-
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-}
 compileKotlin {
     kotlinOptions {
         jvmTarget = "1.8"
     }
 }
+
 compileTestKotlin {
     kotlinOptions {
         jvmTarget = "1.8"
-    }
-}
-
-run {
-
-}
-
-
-distributions {
-    main {
-        contents {
-            from('.') {
-
-            }
-        }
     }
 }
