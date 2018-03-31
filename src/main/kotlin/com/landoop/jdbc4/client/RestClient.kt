@@ -267,7 +267,7 @@ class RestClient(private val urls: List<String>,
 
   fun select(sql: String): StreamingSelectResult {
     logger.debug("Executing query $sql")
-    
+
     val url = "${urls[0]}/api/ws/jdbc/data?sql=$sql"
     val escaped = escape(url)
     val uri = URI.create(escaped.replace("https://", "ws://").replace("http://", "ws://"))
@@ -288,7 +288,11 @@ class RestClient(private val urls: List<String>,
           // records
             "0" -> result.addRecord(message.drop(1))
           // error case
-            "1" -> throw SQLException(message.drop(1))
+            "1" -> {
+              val e = SQLException(message.drop(1))
+              logger.error("Error in SQL reply", e)
+              throw e
+            }
           // schema
             "2" -> result.setSchema(message.drop(1))
           // all done
