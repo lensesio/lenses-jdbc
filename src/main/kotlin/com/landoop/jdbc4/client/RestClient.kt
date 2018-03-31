@@ -290,7 +290,8 @@ class RestClient(private val urls: List<String>,
           // error case
             "1" -> {
               val e = SQLException(message.drop(1))
-              logger.error("Error in SQL reply", e)
+              logger.error("Error from select protocol: $message")
+              logger.debug("Original query: $uri")
               throw e
             }
           // schema
