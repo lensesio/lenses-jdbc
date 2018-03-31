@@ -268,7 +268,15 @@ class RestClient(private val urls: List<String>,
   fun select(sql: String): StreamingSelectResult {
     logger.debug("Executing query $sql")
 
-    val url = "${urls[0]}/api/ws/jdbc/data?sql=$sql"
+    // hacky fix for spark
+    val r = "SELECT.*?FROM\\s+SELECT".toRegex()
+    val normalizedSql = if (sql.toUpperCase().matches(r)) {
+      sql.replaceFirst(r, "")
+    } else sql
+
+    logger.debug("Normalized query $normalizedSql")
+
+    val url = "${urls[0]}/api/ws/jdbc/data?sql=$normalizedSql"
     val escaped = escape(url)
     val uri = URI.create(escaped.replace("https://", "ws://").replace("http://", "ws://"))
 
