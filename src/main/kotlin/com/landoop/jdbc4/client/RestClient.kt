@@ -266,7 +266,8 @@ class RestClient(private val urls: List<String>,
   }
 
   fun select(sql: String): StreamingSelectResult {
-
+    logger.debug("Executing query $sql")
+    
     val url = "${urls[0]}/api/ws/jdbc/data?sql=$sql"
     val escaped = escape(url)
     val uri = URI.create(escaped.replace("https://", "ws://").replace("http://", "ws://"))

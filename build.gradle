@@ -5,7 +5,7 @@ buildscript {
     ext.joda_version = '2.9.9'
     ext.avro_version = '1.8.2'
     ext.httpclient_version = '4.5.3'
-    ext.jackson_version = '2.9.2'
+    ext.jackson_version = '2.6.7'
     ext.kafka_version = '0.11.0.2'
     repositories {
 
