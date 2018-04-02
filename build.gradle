@@ -44,6 +44,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile "org.apache.logging.log4j:log4j-core:$log4j_version"
     compile "org.apache.logging.log4j:log4j-api:$log4j_version"
     compile "joda-time:joda-time:$joda_version"
