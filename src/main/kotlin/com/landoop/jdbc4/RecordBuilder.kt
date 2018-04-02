@@ -30,7 +30,7 @@ class RecordBuilder(val info: PreparedInsertInfo) {
         is Float -> node.put(it.value.name, value)
         is Int -> node.put(it.value.name, value)
         is Double -> node.put(it.value.name, value)
-        is BigInteger -> node.put(it.value.name, value.toBigDecimal())
+        is BigInteger -> node.put(it.value.name, value.toDouble())
         is BigDecimal -> node.put(it.value.name, value)
         else -> throw SQLException("Unsupported value type $value")
       }
