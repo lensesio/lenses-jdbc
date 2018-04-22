@@ -19,17 +19,6 @@ Users of this library can:
 
 Documenation can be found [here](https:/lenses.stream/dev/jdbc/).
 
-## Fetures
-
-Users of this library can:
-
-Select from topics
-Insert into topics
-Use prepared statements
-Use batched inserts
-Fetch metadata around topics
-Fetch metadata around messages)
-
 ## Requirments
 
 1. java 1.8+
