@@ -18,19 +18,24 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.junit.platform:junit-platform-gradle-plugin:1.1.0"
         classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.3'
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.16"
     }
 }
 
 group 'com.landoop'
-version '1.0'
+version '0.0.1'
 
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java'
 apply plugin: "kotlin"
-apply plugin: 'application'
-apply plugin: 'distribution'
+// apply plugin: 'application'
+// apply plugin: 'distribution'
 apply plugin: 'org.junit.platform.gradle.plugin'
 apply plugin: 'maven-publish'
+apply plugin: 'signing'
+apply plugin: 'maven'
+apply plugin: 'org.jetbrains.dokka'
+
 
 repositories {
     mavenCentral()
@@ -71,7 +76,6 @@ publishing {
     }
 }
 
-
 compileKotlin {
     kotlinOptions {
         jvmTarget = "1.8"
@@ -84,7 +88,7 @@ compileTestKotlin {
     }
 }
 
-mainClassName = "com.landoop.jdbc.Driver"
+// mainClassName = "com.landoop.jdbc.Driver"
 
 jar {
     manifest {
@@ -93,8 +97,79 @@ jar {
 }
 
 shadowJar {
+    baseName = "${project.name}-${project.version}-all"
+    zip64 true
+    classifier = null
     manifest {
         attributes "Main-Class": "com.landoop.jdbc.Driver"
         relocate 'com.fasterxml', 'shadow.com.fasterxml'
+    }
+}
+
+
+task packageJavadoc(type: Jar, dependsOn: 'javadoc') {
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+}
+task packageSources(type: Jar, dependsOn: 'classes') {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+artifacts {
+    archives jar
+    archives packageJavadoc
+    archives packageSources
+}
+
+signing {
+    sign configurations.archives
+}
+
+ // OSSRH publication
+if (project.hasProperty('release')) {
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                // POM signature
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+                // Target repository
+                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                    authentication(userName: ossrhUsername, password: ossrhPassword)
+                }
+                pom.project {
+                    name project.name
+                    description project.description
+                    packaging 'jar'
+                    url 'https://github.com/landoop/lenses-jdbc'
+
+                    scm {
+                        connection 'scm:git:https://github.com/landoop/lenses-jdbc.git'
+                        developerConnection 'scm:git:git@github.com:landoop/lenses-jdbc.git'
+                        url 'https://github.com/landoop/lenses-jdbc.git'
+                    }
+
+                    licenses {
+                        license {
+                            name 'Apache License 2.0'
+                            url 'http://www.apache.org/licenses/LICENSE-2.0.html'
+                            distribution 'repo'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id = 'sksamuel'
+                            name = 'Stephen Samuel'
+                        }
+                        developer {
+                            id = 'stheppi'
+                            name = 'Stefan Bocutiu'
+                            email = 'stefan@landoop.com'
+                        }
+                    }
+                }
+            }
+        }
     }
 }

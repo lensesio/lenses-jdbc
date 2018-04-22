@@ -1,5 +1,5 @@
 [<img src="https://img.shields.io/badge/docs--orange.svg?"/>](http://lenses.stream/dev/jdbc/index.html)
-[<img src="https://img.shields.io/badge/latest%20release-1.0-blue.svg?label=latest%20release"/>](https://search.maven.org/#search%7Cga%7C1%7Ca%3A%22lenses-jdbc%22)
+[<img src="https://img.shields.io/badge/latest%20release-0.0.1-blue.svg?label=latest%20release"/>](https://search.maven.org/#search%7Cga%7C1%7Ca%3A%22lenses-jdbc%22)
 
 
 # LSQL JDBC Library
@@ -17,7 +17,7 @@ Users of this library can:
 
 ## Documentation
 
-Documenation can be found [here](https:/lenses.stream/dev/jdbc/).
+Documentation can be found [here](https:/lenses.stream/dev/jdbc/).
 
 ## Requirments
 
