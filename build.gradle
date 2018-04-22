@@ -97,7 +97,6 @@ jar {
 }
 
 shadowJar {
-    baseName = "${project.name}-${project.version}-all"
     zip64 true
     classifier = null
     manifest {
