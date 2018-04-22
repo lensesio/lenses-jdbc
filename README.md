@@ -17,7 +17,7 @@ Fetch metadata around messages
 
 ## Documentation
 
-Documenation can be found [here.](https:/lenses.stream/dev/jdbc/).
+Documenation can be found [here](https:/lenses.stream/dev/jdbc/).
 
 ## Fetures
 
