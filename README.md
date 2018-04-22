@@ -8,12 +8,12 @@ A JDBC 4.0 compliant driver for [Lenses](https://www.landoop.com/kafka-lenses/),
 
 Users of this library can:
 
-Select from topics
-Insert into topics
-Use prepared statements
-Use batched inserts
-Fetch metadata around topics
-Fetch metadata around messages
+* Select from topics
+* Insert into topics
+* Use prepared statements
+* Use batched inserts
+* Fetch metadata around topics
+* Fetch metadata around messages
 
 ## Documentation
 
