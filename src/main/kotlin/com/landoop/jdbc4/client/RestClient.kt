@@ -274,9 +274,9 @@ class RestClient(private val urls: List<String>,
 
     logger.debug("Normalized query $normalizedSql")
 
-    val url = "${urls[0]}/api/ws/jdbc/data?sql=$normalizedSql"
-    val escaped = escape(url)
-    val uri = URI.create(escaped.replace("https://", "ws://").replace("http://", "ws://"))
+    val escapedSql = escape(normalizedSql)
+    val url = "${urls[0]}/api/ws/jdbc/data?sql=$escapedSql"
+    val uri = URI.create(url.replace("https://", "ws://").replace("http://", "ws://"))
 
     val executor = Executors.newSingleThreadExecutor()
     val result = StreamingSelectResult()
@@ -323,10 +323,10 @@ class RestClient(private val urls: List<String>,
 
   fun prepareStatement(sql: String): PreparedInsertResponse {
     val requestFn: (String) -> HttpUriRequest = {
-      val endpoint = "$it/api/jdbc/insert/prepared?sql=$sql"
-      val escaped = escape(endpoint)
-      logger.debug("Executing query $escaped")
-      jsonGet(escaped)
+      val escapedSql = escape(sql)
+      val endpoint = "$it/api/jdbc/insert/prepared?sql=$escapedSql"
+      logger.debug("Executing query $endpoint")
+      jsonGet(endpoint)
     }
 
     val responseFn: (HttpResponse) -> PreparedInsertResponse = {
@@ -341,10 +341,10 @@ class RestClient(private val urls: List<String>,
   fun messages(sql: String): List<Message> {
 
     val requestFn: (String) -> HttpUriRequest = {
-      val endpoint = "$it/api/sql/data?sql=$sql"
-      val escaped = escape(endpoint)
-      logger.debug("Executing query $escaped")
-      jsonGet(escaped)
+      val escapedSql = escape(sql)
+      val endpoint = "$it/api/sql/data?sql=$escapedSql"
+      logger.debug("Executing query $endpoint")
+      jsonGet(endpoint)
     }
 
     val responseFn: (HttpResponse) -> List<Message> = {
