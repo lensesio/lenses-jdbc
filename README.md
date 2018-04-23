@@ -19,7 +19,7 @@ Users of this library can:
 
 Documentation can be found [here](https:/lenses.stream/dev/jdbc/).
 
-## Requirments
+## Requirements
 
 1. java 1.8+
 2. gradle 3.5+
