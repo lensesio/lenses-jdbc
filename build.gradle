@@ -23,7 +23,7 @@ buildscript {
 }
 
 group 'com.landoop'
-version '0.0.1'
+version '2.0.0'
 
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java'
