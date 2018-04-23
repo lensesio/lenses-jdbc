@@ -17,7 +17,7 @@ Users of this library can:
 
 ## Documentation
 
-Documentation can be found [here](https:/lenses.stream/dev/jdbc/).
+Documentation can be found [here](http://lenses.stream/dev/jdbc/index.html).
 
 ## Requirements
 
