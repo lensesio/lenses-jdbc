@@ -10,6 +10,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
 import org.apache.avro.Schema
+import java.io.Closeable
 
 
 interface ProducerSetup : Logging {
@@ -27,8 +28,7 @@ interface ProducerSetup : Logging {
   fun newTopicName() = "topic_" + UUID.randomUUID().toString().replace('-', '_')
 
   fun createTopic(topicName: String): String {
-
-    createAdmin().use {
+    createAdmin().use { it:AdminClient ->
       logger.debug("Creating topic $topicName")
       val result = it.createTopics(listOf(NewTopic(topicName, 1, 1)))
 
@@ -39,7 +39,7 @@ interface ProducerSetup : Logging {
       it.close(10, TimeUnit.SECONDS)
     }
 
-    fun topicInLenses(): Boolean = restClient().use {
+    fun topicInLenses(): Boolean = restClient().use { it :RestClient ->
       try {
         it.topic(topicName)
         true

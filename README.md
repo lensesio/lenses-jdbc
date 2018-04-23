@@ -40,3 +40,9 @@ For a fatJar:
 gradle shadowJar
 ```
 
+# Testing
+For testing it requires the Lenses Box to be running locally on http://localhost:3030
+
+```bash
+gradle clean test
+```

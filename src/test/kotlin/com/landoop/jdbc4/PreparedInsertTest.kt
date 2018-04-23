@@ -12,10 +12,9 @@ class PreparedInsertTest : WordSpec(), MovieData {
   init {
 
     LsqlDriver()
-//     populateMovies()
+    //populateMovies()
 
-    // val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:https://master.lensesui.dev.landoop.com", "write", "write1")
+    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 
     "JDBC Driver" should {
       "support prepared statements" {
