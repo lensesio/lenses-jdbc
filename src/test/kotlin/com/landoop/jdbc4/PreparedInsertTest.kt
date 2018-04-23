@@ -29,7 +29,9 @@ class PreparedInsertTest : WordSpec(), MovieData {
         stmt.execute() shouldBe true
       }
       "support nested parameters" {
-        val sql = "INSERT INTO elements (name, atomic.number, atomic.weight) values (?,?,?)"
+        val topic = newTopicName()
+        createTopic(topic)
+        val sql = "INSERT INTO `$topic`(name, `atomic`.`number`, `atomic`.`weight`) values (?,?,?)"
         val stmt = conn.prepareStatement(sql)
         stmt.setString(1, "Neodymium")
         stmt.setInt(2, 60)

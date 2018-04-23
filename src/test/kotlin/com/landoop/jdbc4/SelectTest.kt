@@ -76,7 +76,7 @@ class SelectTest : WordSpec(), ProducerSetup {
         rs.getString("merchantId") shouldNotBe null
       }
       "return all results without a limit"  {
-        val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
+        val q = "SET `max.time`=5000;SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         var counter = 0
@@ -115,7 +115,7 @@ class SelectTest : WordSpec(), ProducerSetup {
         conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='USD'") shouldBe true
       }
       "return false if no results" {
-        conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='wibble' and _offset < 100000") shouldBe false
+        conn.createStatement().execute("set `max.time`=5000;select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='wibble' and _offset < 100000") shouldBe false
       }
     }
   }

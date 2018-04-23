@@ -16,7 +16,12 @@ class RecordBuilder(val info: PreparedInsertInfo) {
   fun build(): InsertRecord {
     val root = JacksonSupport.mapper.createObjectNode()
     fun find(parents: List<String>): ObjectNode = parents.fold(root, { node, field ->
-      node.findParent(field) ?: node.putObject(field)
+      if(node.has(field)) {
+        node[field] as ObjectNode
+      }else
+       {
+        node.putObject(field)
+      }
     })
     // the key is not included in the value json
     info.fields.withIndex().filterNot { it.value.isKey }.forEach {
@@ -35,7 +40,11 @@ class RecordBuilder(val info: PreparedInsertInfo) {
         else -> throw SQLException("Unsupported value type $value")
       }
     }
-    val key = TextNode(info.fields.withIndex().filter { it.value.isKey }.map { values[it.index] }.firstOrNull()?.toString())
+    val keyValue = info.fields.withIndex()
+            .filter { it.value.isKey }
+            .map { values[it.index] }
+            .firstOrNull()?.toString()
+    val key = TextNode(keyValue)
     return InsertRecord(key, root)
   }
 
