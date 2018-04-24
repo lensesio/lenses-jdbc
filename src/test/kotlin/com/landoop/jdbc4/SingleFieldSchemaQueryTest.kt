@@ -34,27 +34,26 @@ class SingleFieldSchemaQueryTest : WordSpec(), ProducerSetup {
     LsqlDriver()
     populateCountries()
 
+    fun conn() = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
+
     "JDBC Driver" should {
       "support wildcard for fixed schemas" {
         val q = "SELECT * FROM $topic"
-        val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
-        val stmt = conn.createStatement()
+        val stmt = conn().createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 1
         rs.metaData.getColumnLabel(1) shouldBe "name"
       }
       "support projection for fixed schemas" {
         val q = "SELECT name FROM $topic"
-        val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
-        val stmt = conn.createStatement()
+        val stmt = conn().createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 1
         rs.metaData.getColumnLabel(1) shouldBe "name"
       }
       "return data for fixed schema" {
         val q = "SELECT * FROM $topic"
-        val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
-        val stmt = conn.createStatement()
+        val stmt = conn().createStatement()
         stmt.execute(q) shouldBe true
         val rs = stmt.resultSet
         rs.next()
