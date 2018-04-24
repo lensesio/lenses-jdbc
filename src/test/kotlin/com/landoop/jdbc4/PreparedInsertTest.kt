@@ -12,7 +12,6 @@ class PreparedInsertTest : WordSpec(), MovieData {
   init {
 
     LsqlDriver()
-    //populateMovies()
 
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 
@@ -37,7 +36,7 @@ class PreparedInsertTest : WordSpec(), MovieData {
         stmt.setInt(2, 60)
         stmt.setInt(3, 120)
         stmt.execute() shouldBe true
-      }
+      }.config(enabled = false)
       "throw an exception trying to set a parameter out of range" {
         val sql = "INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)"
         val stmt = conn.prepareStatement(sql)
