@@ -268,7 +268,7 @@ class RestClient(private val urls: List<String>,
 
     // hacky fix for spark
     val r = "SELECT.*?FROM\\s+SELECT".toRegex()
-    val normalizedSql = sql.replaceFirst(r, "SELECT")
+    val normalizedSql = sql.trim().replace("\n", "").replaceFirst(r, "SELECT")
 
     logger.debug("Normalized query $normalizedSql")
 
