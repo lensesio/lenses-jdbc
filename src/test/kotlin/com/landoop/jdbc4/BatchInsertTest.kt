@@ -33,6 +33,7 @@ class BatchInsertTest : WordSpec(), CCData {
         val result = stmt.executeBatch()
         result.size shouldBe batchSize
         result.toSet() shouldBe setOf(0)
+        stmt.clearBatch()
 
         // now we must check that our values have been inserted
         for (value in values) {

@@ -4,6 +4,7 @@ import com.landoop.jdbc4.client.domain.InsertField
 import com.landoop.jdbc4.client.domain.PreparedInsertInfo
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.WordSpec
+import org.apache.avro.Schema
 import org.apache.avro.SchemaBuilder
 import java.sql.DriverManager
 import java.sql.ParameterMetaData
@@ -144,7 +145,96 @@ class AvroSchemaParameterMetaDataTest : WordSpec(), LocationData {
 //        meta.parameterCount shouldBe 7
 //      }
       "detect fields for nested data" {
-        val stmt = conn.prepareStatement("INSERT INTO `users-mock-avro` (id, email, `address`.`street`, `address`.`streetnumber`, `address`.`postalcode`, `address`.`state`, `personal`.`firstname`, `personal`.`lastname`, `personal`.`birthday`, `personal`.`title`, `lastlogingeo`.`lat`, `lastlogingeo`.`lon`) values (?,?,?,?,?,?,?,?,?,?,?,?)")
+        val topic = "users-mock-avro-${System.currentTimeMillis()}"
+        val parser = Schema.Parser()
+        val schema = parser.parse("""
+            {
+              "type": "record",
+              "name": "userMockNestedData",
+              "namespace": "com.landoop.mock.usernested",
+              "doc": "Silly schema for testing nested data.",
+              "fields": [
+                {
+                  "name": "id",
+                  "type": "int"
+                },
+                {
+                  "name": "email",
+                  "type": "string"
+                },
+                {
+                  "name": "address",
+                  "type": {
+                    "type": "record",
+                    "name": "Address",
+                    "fields": [
+                      {
+                        "name": "street",
+                        "type": "string"
+                      },
+                      {
+                        "name": "streetnumber",
+                        "type": "int"
+                      },
+                      {
+                        "name": "postalcode",
+                        "type": "int"
+                      },
+                      {
+                        "name": "state",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "personal",
+                  "type": {
+                    "type": "record",
+                    "name": "Personal",
+                    "fields": [
+                      {
+                        "name": "firstname",
+                        "type": "string"
+                      },
+                      {
+                        "name": "lastname",
+                        "type": "string"
+                      },
+                      {
+                        "name": "birthday",
+                        "type": "string"
+                      },
+                      {
+                        "name": "title",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "lastlogingeo",
+                  "type": {
+                    "type": "record",
+                    "name": "Geopoint",
+                    "fields": [
+                      {
+                        "name": "lat",
+                        "type": "double"
+                      },
+                      {
+                        "name": "lon",
+                        "type": "double"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+        """.trimIndent())
+        registerValueSchema(topic, schema)
+        createTopic(topic)
+        val stmt = conn.prepareStatement("INSERT INTO `$topic` (id, email, `address`.`street`, `address`.`streetnumber`, `address`.`postalcode`, `address`.`state`, `personal`.`firstname`, `personal`.`lastname`, `personal`.`birthday`, `personal`.`title`, `lastlogingeo`.`lat`, `lastlogingeo`.`lon`) values (?,?,?,?,?,?,?,?,?,?,?,?)")
         val meta = stmt.parameterMetaData
         meta.parameterCount shouldBe 12
 

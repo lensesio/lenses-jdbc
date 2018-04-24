@@ -213,15 +213,7 @@ class RestClient(private val urls: List<String>,
   }
 
   private fun escape(url: String): String {
-    val u = URL(url)
-    val uri = URI(
-        u.protocol,
-        u.authority,
-        u.path,
-        URLEncoder.encode(u.query, "UTF-8"),
-        u.ref
-    )
-    return uri.toURL().toString().replace("%20", "+")
+    return URLEncoder.encode(url, "UTF-8").replace("%20", "+")
   }
 
   fun insert(sql: String): InsertResponse {
@@ -234,7 +226,13 @@ class RestClient(private val urls: List<String>,
     }
 
     val responseFn: (HttpResponse) -> InsertResponse = {
-      JacksonSupport.fromJson(it.entity.content)
+      InsertResponse(it.statusLine.statusCode.toString())
+      /*val json = it.entity.content.bufferedReader().use { it.readText() }
+      try{
+        JacksonSupport.fromJson(json)
+      }catch (t:Throwable){
+        InsertResponse(json)
+      }*/
     }
 
     return attemptAuthenticatedWithRetry(requestFn, responseFn)
