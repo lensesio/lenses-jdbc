@@ -38,6 +38,12 @@ class PreparedInsertTest : WordSpec(), MovieData {
         stmt.setInt(5, 211)
         stmt.setDouble(6, 8.3)
         stmt.execute() shouldBe true
+      }.config(enabled = false)
+      "throw an exception if incorrect number of placeholders" {
+        val sql = "INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?)"
+        shouldThrow<SQLException> {
+          conn.prepareStatement(sql)
+        }
       }
       "throw an exception trying to set a parameter out of range" {
         val sql = "INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)"
