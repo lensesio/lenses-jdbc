@@ -111,10 +111,6 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         merchantId[4] shouldBe java.sql.Types.BIGINT
         merchantId[5] shouldBe "LONG"
 
-        val inputs = columns.filter { it[2] == "bitcoin_transactions" }.first { it[3] == "inputs" }
-        inputs[4] shouldBe java.sql.Types.ARRAY
-        inputs[5] shouldBe "ARRAY"
-
         val blocked = columns.filter { it[2] == "cc_data" }.first { it[3] == "blocked" }
         blocked[4] shouldBe java.sql.Types.BOOLEAN
         blocked[5] shouldBe "BOOLEAN"
