@@ -1,8 +1,12 @@
 [<img src="https://img.shields.io/badge/docs--orange.svg?"/>](http://lenses.stream/dev/jdbc/index.html)
-[<img src="https://img.shields.io/badge/latest%20release-0.0.1-blue.svg?label=latest%20release"/>](https://search.maven.org/#search%7Cga%7C1%7Ca%3A%22lenses-jdbc%22)
-
+[<img src="https://img.shields.io/maven-central/v/com.landoop/lenses-jdbc.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22lenses-jdbc%22)
 
 # LSQL JDBC Library
+
+![alt text][logo]
+
+[logo]: https://github.com/Landoop/lenses-jdbc/blob/master/LSQL_JDBC.jpg "LENSES JDBC for Apache Kafka"
+
 
 A JDBC 4.0 compliant driver for [Lenses](https://www.landoop.com/kafka-lenses/), suitable for any application that uses the JDBC interface, to communicate with Apache Kafka via the Lenses platform.
 
