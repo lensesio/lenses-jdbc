@@ -213,7 +213,9 @@ class RestClient(private val urls: List<String>,
   }
 
   private fun escape(url: String): String {
-    return URLEncoder.encode(url, "UTF-8").replace("%20", "+")
+    //replace \n with ' '
+    //captures SELECT/INSERT statements
+    return URLEncoder.encode(url.trim().replace(System.lineSeparator(), " "), "UTF-8").replace("%20", "+")
   }
 
   fun insert(sql: String): InsertResponse {
@@ -268,7 +270,7 @@ class RestClient(private val urls: List<String>,
 
     // hacky fix for spark
     val r = "SELECT.*?FROM\\s+SELECT".toRegex()
-    val normalizedSql = sql.trim().replace("\n", "").replaceFirst(r, "SELECT")
+    val normalizedSql = sql.replaceFirst(r, "SELECT")
 
     logger.debug("Normalized query $normalizedSql")
 
