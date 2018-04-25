@@ -9,30 +9,6 @@ import java.sql.SQLException
 
 class SelectTest : WordSpec(), ProducerSetup {
 
-//  data class Starship(val name: String, val designation: String)
-//
-//  fun populateStarships() {
-//    val starships = listOf(
-//        Starship("USS Enterprise", "1701D"),
-//        Starship("USS Discovery", "1031")
-//    )
-//    val producer = KafkaProducer<String, String>(producerProps())
-//    for (starship in starships) {
-//      producer.send(ProducerRecord<String, String>("starfleet", starship.name, JacksonSupport.toJson(starship)))
-//    }
-//  }
-//
-//  fun populateCountries() {
-//    val countries = listOf(
-//        Country("Vanuatu"),
-//        Country("Comoros")
-//    )
-//    val producer = KafkaProducer<String, String>(producerProps())
-//    for (country in countries) {
-//      producer.send(ProducerRecord<String, String>("country", country.name, country.name))
-//    }
-//  }
-
   init {
 
     LsqlDriver()
@@ -75,8 +51,43 @@ class SelectTest : WordSpec(), ProducerSetup {
         rs.getString("currency") shouldNotBe null
         rs.getString("merchantId") shouldNotBe null
       }
+      "support projections with backticks" {
+        val q = "SELECT `merchantId`, currency FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
+        val stmt = conn.createStatement()
+        val rs = stmt.executeQuery(q)
+        rs.metaData.columnCount shouldBe 2
+        rs.metaData.getColumnLabel(1) shouldBe "merchantId"
+        rs.metaData.getColumnLabel(2) shouldBe "currency"
+        rs.next()
+        rs.getString("currency") shouldNotBe null
+        rs.getString("merchantId") shouldNotBe null
+      }
+      "support queries with white space" {
+        val q = "          SELECT `merchantId`, currency FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'      "
+        val stmt = conn.createStatement()
+        val rs = stmt.executeQuery(q)
+        rs.metaData.columnCount shouldBe 2
+        rs.metaData.getColumnLabel(1) shouldBe "merchantId"
+        rs.metaData.getColumnLabel(2) shouldBe "currency"
+        rs.next()
+        rs.getString("currency") shouldNotBe null
+        rs.getString("merchantId") shouldNotBe null
+      }
+      "support queries with new lines" {
+        val q = """          SELECT `merchantId`,
+          currency FROM `cc_payments` WHERE _vtype='AVRO'
+          AND _ktype='STRING'      """
+        val stmt = conn.createStatement()
+        val rs = stmt.executeQuery(q)
+        rs.metaData.columnCount shouldBe 2
+        rs.metaData.getColumnLabel(1) shouldBe "merchantId"
+        rs.metaData.getColumnLabel(2) shouldBe "currency"
+        rs.next()
+        rs.getString("currency") shouldNotBe null
+        rs.getString("merchantId") shouldNotBe null
+      }
       "return all results without a limit"  {
-        val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
+        val q = "SET `max.time`=5000;SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         var counter = 0
@@ -115,7 +126,7 @@ class SelectTest : WordSpec(), ProducerSetup {
         conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='USD'") shouldBe true
       }
       "return false if no results" {
-        conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='wibble' and _offset < 100000") shouldBe false
+        conn.createStatement().execute("set `max.time`=5000;select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='wibble' and _offset < 100000") shouldBe false
       }
     }
   }

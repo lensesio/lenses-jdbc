@@ -1,11 +1,10 @@
 package com.landoop.jdbc4
 
-import io.kotlintest.matchers.contain
-import io.kotlintest.matchers.containsAll
+import io.kotlintest.matchers.collections.shouldContain
+import io.kotlintest.matchers.collections.shouldContainAll
+import io.kotlintest.matchers.collections.shouldNotContain
 import io.kotlintest.matchers.gte
-import io.kotlintest.should
 import io.kotlintest.shouldBe
-import io.kotlintest.shouldNot
 import io.kotlintest.specs.WordSpec
 import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData
@@ -71,19 +70,19 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
       }
       "return all table names" {
         val tableNames = resultSetList(conn.metaData.getTables(null, null, null, null)).map { it[2].toString() }
-        tableNames should containsAll("cc_data", "cc_payments")
+        tableNames.shouldContainAll("cc_data", "cc_payments")
       }
       "support table types when listing tables" {
         val tableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("TABLE"))).map { it[2].toString() }
-        tableNames should contain("cc_data")
-        tableNames should contain("cc_payments")
-        tableNames shouldNot contain("__consumer_offsets")
-        tableNames shouldNot contain("_kafka_lenses_processors")
+        tableNames.shouldContain("cc_data")
+        tableNames.shouldContain("cc_payments")
+        tableNames.shouldNotContain("__consumer_offsets")
+        tableNames.shouldNotContain("_kafka_lenses_processors")
 
         val systemTableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("SYSTEM TABLE"))).map { it[2].toString() }
-        systemTableNames should containsAll("__consumer_offsets", "_schemas", "_kafka_lenses_processors")
-        systemTableNames shouldNot contain("cc_data")
-        systemTableNames shouldNot contain("cc_payments")
+        systemTableNames.shouldContainAll("__consumer_offsets", "_schemas", "_kafka_lenses_processors")
+        systemTableNames.shouldNotContain("cc_data")
+        systemTableNames.shouldNotContain("cc_payments")
       }
       "support table regex when listing tables" {
         // lets add some of our own tables and make sure they appear in the list of all
@@ -99,7 +98,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
 
         val tableNames = resultSetList(conn.metaData.getTables(null, null, "topicregex_d%", null)).map { it[2].toString() }
         tableNames.size shouldBe 3
-        tableNames should containsAll("topicregex_dibble", "topicregex_dobble", "topicregex_dubble")
+        tableNames.shouldContainAll("topicregex_dibble", "topicregex_dobble", "topicregex_dubble")
       }.config(enabled = false)
       "support listing columns with correct types" {
         val columns = resultSetList(conn.metaData.getColumns(null, null, null, null))
@@ -110,10 +109,6 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         val merchantId = columns.filter { it[2] == "cc_payments" }.first { it[3] == "merchantId" }
         merchantId[4] shouldBe java.sql.Types.BIGINT
         merchantId[5] shouldBe "LONG"
-
-        val inputs = columns.filter { it[2] == "bitcoin_transactions" }.first { it[3] == "inputs" }
-        inputs[4] shouldBe java.sql.Types.ARRAY
-        inputs[5] shouldBe "ARRAY"
 
         val blocked = columns.filter { it[2] == "cc_data" }.first { it[3] == "blocked" }
         blocked[4] shouldBe java.sql.Types.BOOLEAN

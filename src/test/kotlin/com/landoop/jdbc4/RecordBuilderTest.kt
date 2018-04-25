@@ -97,7 +97,7 @@ class RecordBuilderTest : WordSpec() {
         builder.put(2, "woo")
         builder.put(3, "foo")
         val (key, node) = builder.build()
-        key shouldBe "wibble"
+        key.asText() shouldBe "wibble"
         JacksonSupport.mapper.writeValueAsString(node) shouldBe """{"a":"woo","b":"foo"}"""
       }
       "build nested json structure" {
@@ -106,7 +106,7 @@ class RecordBuilderTest : WordSpec() {
         builder.put(2, "woo")
         builder.put(3, "foo")
         val (key, node) = builder.build()
-        key shouldBe "wibble"
+        key.asText() shouldBe "wibble"
         JacksonSupport.mapper.writeValueAsString(node) shouldBe """{"a":"woo","b":{"c":"foo"}}"""
       }
     }

@@ -10,8 +10,6 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
 import org.apache.avro.Schema
-import java.io.Closeable
-
 
 interface ProducerSetup : Logging {
 

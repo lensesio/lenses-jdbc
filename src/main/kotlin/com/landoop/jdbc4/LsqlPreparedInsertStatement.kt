@@ -104,7 +104,8 @@ class LsqlPreparedInsertStatement(conn: Connection,
     logger.debug("Executing batch of ${batch.size} records")
     client.executePreparedInsert(info.topic, info.keyType, info.valueType, batch.toList())
     // we should return an array of update counts, but we are only inserting, so we return an array of 0s
-    return IntArray(batch.size, { k -> 0 })
+    val size = batch.size
+    return IntArray(size, { _ -> 0 })
   }
 
   // -- methods which set values on the current record
