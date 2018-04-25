@@ -19,4 +19,4 @@ install:
 before_script:
   - sleep 30
 
-script: ./gradlew wrapper --gradle-version 4.6 clean test
+script: ./gradlew wrapper --gradle-version 4.6 clean test --stacktrace
