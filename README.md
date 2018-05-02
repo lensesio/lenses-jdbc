@@ -1,5 +1,6 @@
 [<img src="https://img.shields.io/badge/docs--orange.svg?"/>](http://lenses.stream/dev/jdbc/index.html)
 [<img src="https://img.shields.io/maven-central/v/com.landoop/lenses-jdbc.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22lenses-jdbc%22)
+[![Build Status](https://travis-ci.org/Landoop/lenses-jdbc.png?branch=master)](https://travis-ci.org/Landoop/lenses-jdbc)
 
 # LSQL JDBC Library
 
