@@ -84,7 +84,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         systemTableNames.shouldNotContain("cc_data")
         systemTableNames.shouldNotContain("cc_payments")
       }
-      "support table regex when listing tables" {
+      "!support table regex when listing tables" {
         // lets add some of our own tables and make sure they appear in the list of all
         val schema = SchemaBuilder.record("wibble").fields().requiredString("foo").endRecord()
         val producer = KafkaProducer<String, GenericData.Record>(producerProps())
@@ -99,7 +99,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         val tableNames = resultSetList(conn.metaData.getTables(null, null, "topicregex_d%", null)).map { it[2].toString() }
         tableNames.size shouldBe 3
         tableNames.shouldContainAll("topicregex_dibble", "topicregex_dobble", "topicregex_dubble")
-      }.config(enabled = false)
+      }
       "support listing columns with correct types" {
         val columns = resultSetList(conn.metaData.getColumns(null, null, null, null))
         val currency = columns.filter { it[2] == "cc_payments" }.first { it[3] == "currency" }
@@ -114,7 +114,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         blocked[4] shouldBe java.sql.Types.BOOLEAN
         blocked[5] shouldBe "BOOLEAN"
       }
-      "support listing columns with correct nullability" {
+      "!support listing columns with correct nullability" {
 
         val topic = createTopic()
 
@@ -154,7 +154,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         val optbool = columns.first { it[3] == "optbool" }
         optbool[10] shouldBe DatabaseMetaData.columnNullable
         optbool[17] shouldBe "YES"
-      }.config(enabled = false)
+      }
       "return versioning information" {
         conn.metaData.databaseMajorVersion shouldBe gte(1)
         conn.metaData.databaseMinorVersion shouldBe gte(1)
