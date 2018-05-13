@@ -28,7 +28,7 @@ class PreparedInsertTest : WordSpec(), MovieData {
         stmt.setBoolean(6, false)
         stmt.execute() shouldBe true
       }
-      "support nested parameters" {
+      "!support nested parameters" {
         val sql = "INSERT INTO `$topic`(name, `year`, director, `imdb`.`url`, `imdb`.`ranking`, `imdb`.`rating`) values (?,?,?,?,?,?)"
         val stmt = conn.prepareStatement(sql)
         stmt.setString(1, "Batman Begins")
@@ -38,7 +38,7 @@ class PreparedInsertTest : WordSpec(), MovieData {
         stmt.setInt(5, 211)
         stmt.setDouble(6, 8.3)
         stmt.execute() shouldBe true
-      }.config(enabled = false)
+      }
       "throw an exception if incorrect number of placeholders" {
         val sql = "INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?)"
         shouldThrow<SQLException> {
