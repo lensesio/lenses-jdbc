@@ -55,3 +55,7 @@ For testing it requires the Lenses Box to be running locally on http://localhost
 ```bash
 gradle clean test
 ```
+
+# License
+
+The project is licensed under the Apache 2 license.
