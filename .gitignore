@@ -13,3 +13,4 @@ pom.xml.versionsBackup
 .vscode
 bin/
 build/
+out/
