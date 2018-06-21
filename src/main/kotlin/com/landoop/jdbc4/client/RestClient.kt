@@ -74,7 +74,10 @@ class RestClient(private val urls: List<String>,
   // the token received the last time we attempted to authenticate
   internal var token: String = authenticate()
 
-  var isClosed: Boolean = true
+  // some connection pools, eg org.apache.commons.dbcp, will check that the connection is open
+  // before they hand it over to be used. Since a rest client is always stateless, we can just
+  // return true here as there's nothing to close.
+  var isClosed: Boolean = false
     private set
 
   override fun close() {
