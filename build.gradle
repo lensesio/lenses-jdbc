@@ -49,7 +49,7 @@ dependencies {
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    compile "org.slf4j:slf4j-parent:$slf4j_version"
+    compile "org.slf4j:slf4j-api:$slf4j_version"
     compile "joda-time:joda-time:$joda_version"
     compile "org.apache.httpcomponents:httpclient:$httpclient_version"
     compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
