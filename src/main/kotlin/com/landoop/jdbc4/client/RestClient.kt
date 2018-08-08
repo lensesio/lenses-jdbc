@@ -5,7 +5,6 @@ import com.landoop.jdbc4.JacksonSupport
 import com.landoop.jdbc4.client.domain.Credentials
 import com.landoop.jdbc4.client.domain.InsertRecord
 import com.landoop.jdbc4.client.domain.InsertResponse
-import com.landoop.jdbc4.client.domain.LoginResponse
 import com.landoop.jdbc4.client.domain.Message
 import com.landoop.jdbc4.client.domain.PreparedInsertResponse
 import com.landoop.jdbc4.client.domain.StreamingSelectResult
@@ -23,6 +22,7 @@ import org.apache.http.conn.ssl.TrustSelfSignedStrategy
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.ssl.SSLContextBuilder
+import org.apache.http.util.EntityUtils
 import org.glassfish.tyrus.client.ClientManager
 import org.glassfish.tyrus.client.ClientProperties
 import org.slf4j.LoggerFactory
@@ -172,7 +172,7 @@ class RestClient(private val urls: List<String>,
     }
 
     val responseFn: (HttpResponse) -> String = {
-      val token = JacksonSupport.fromJson<LoginResponse>(it.entity.content).token
+      val token = EntityUtils.toString(it.entity)
       logger.debug("Authentication token: $token")
       token
     }
@@ -307,14 +307,14 @@ class RestClient(private val urls: List<String>,
             "2" -> result.setSchema(message.drop(1))
           // all done
             "3" -> {
-              executor.submit({ result.endStream() })
+              executor.submit { result.endStream() }
               executor.shutdown()
             }
           }
         } catch (t: Throwable) {
           t.printStackTrace()
           result.setError(t)
-          executor.submit({ result.endStream() })
+          executor.submit { result.endStream() }
           executor.shutdown()
         }
       }
@@ -364,8 +364,6 @@ class RestClient(private val urls: List<String>,
   }
 
   companion object RestClient {
-
-    private val HttpHeaderKey = Constants.LensesTokenHeader
 
     fun <T> jsonEntity(t: T): HttpEntity {
       val entity = StringEntity(JacksonSupport.toJson(t))
