@@ -38,21 +38,21 @@ class SingleFieldSchemaQueryTest : WordSpec(), ProducerSetup {
 
     "JDBC Driver" should {
       "support wildcard for fixed schemas" {
-        val q = "SELECT * FROM $topic"
+        val q = "SELECT * FROM $topic WHERE _ktype=STRING and _vtype=AVRO"
         val stmt = conn().createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 1
         rs.metaData.getColumnLabel(1) shouldBe "name"
       }
       "support projection for fixed schemas" {
-        val q = "SELECT name FROM $topic"
+        val q = "SELECT name FROM $topic  WHERE _ktype=STRING and _vtype=AVRO"
         val stmt = conn().createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 1
         rs.metaData.getColumnLabel(1) shouldBe "name"
       }
       "return data for fixed schema" {
-        val q = "SELECT * FROM $topic"
+        val q = "SELECT * FROM $topic  WHERE _ktype=STRING and _vtype=AVRO"
         val stmt = conn().createStatement()
         stmt.execute(q) shouldBe true
         val rs = stmt.resultSet

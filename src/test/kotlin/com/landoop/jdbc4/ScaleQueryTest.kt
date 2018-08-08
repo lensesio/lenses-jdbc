@@ -36,7 +36,7 @@ class ScaleQueryTest : WordSpec(), ProducerSetup {
     LsqlDriver()
     populateEquities()
 
-    val q = "SELECT * FROM $topic"
+    val q = "SELECT * FROM $topic WHERE _ktype=STRING AND _vtype=AVRO"
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
     val stmt = conn.createStatement()
 

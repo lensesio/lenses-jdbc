@@ -27,7 +27,7 @@ class BatchNestedInsertStressTest : WordSpec(), LocationData {
         createTopic(topic)
 
 
-        val sql = "SET _ktype='STRING';INSERT INTO `$topic` (id, address.street, address.number, address.zip,address.state, geo.lat, geo.lon) values (?,?,?,?,?,?,?)"
+        val sql = "SET _ktype='STRING'; SET _vtype='AVRO';INSERT INTO `$topic` (id, address.street, address.number, address.zip,address.state, geo.lat, geo.lon) values (?,?,?,?,?,?,?)"
         val stmt = conn.prepareStatement(sql)
 
         locations.asList().chunked(batchSize).forEach { batch ->

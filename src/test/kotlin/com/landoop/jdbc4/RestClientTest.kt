@@ -14,7 +14,7 @@ class RestClientTest : WordSpec() {
 
   class LoginServer : NanoHTTPD(61864) {
     override fun serve(session: IHTTPSession): Response {
-      return newFixedLengthResponse("""{"success":true, "token": "wibble"}""".trimIndent())
+      return newFixedLengthResponse("""wibble""".trimIndent())
     }
   }
 
