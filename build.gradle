@@ -1,8 +1,8 @@
 buildscript {
-    ext.kotlin_version = '1.2.41'
+    ext.kotlin_version = '1.2.60'
     ext.kotlin_test = '3.1.5'
     ext.log4j_version = '2.9.1'
-    ext.slf4j_version = '2.9.1'
+    ext.slf4j_version = '1.7.7'
     ext.joda_version = '2.9.9'
     ext.avro_version = '1.8.2'
     ext.httpclient_version = '4.5.3'
@@ -140,6 +140,12 @@ task packageSources(type: Jar, dependsOn: 'classes') {
     classifier = 'sources'
 }
 
+task copyToLib(type: Copy) {
+    into "$buildDir/libs"
+    from configurations.runtime
+}
+
+build.dependsOn(copyToLib)
 
 artifacts {
     archives jar
@@ -152,7 +158,7 @@ signing {
     sign configurations.archives
 }
 
- // OSSRH publication
+// OSSRH publication
 if (project.hasProperty('release')) {
     uploadArchives {
         repositories {
