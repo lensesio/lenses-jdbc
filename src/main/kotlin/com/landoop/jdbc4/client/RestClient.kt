@@ -172,7 +172,7 @@ class RestClient(private val urls: List<String>,
     }
 
     val responseFn: (HttpResponse) -> String = {
-      val token = JacksonSupport.fromJson<LoginResponse>(it.entity.content).token
+      val token =  it.entity.content.bufferedReader().use { it.readText() }
       logger.debug("Authentication token: $token")
       token
     }
