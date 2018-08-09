@@ -140,14 +140,12 @@ task packageSources(type: Jar, dependsOn: 'classes') {
     classifier = 'sources'
 }
 
-/*
 task copyToLib(type: Copy) {
     into "$buildDir/libs"
     from configurations.runtime
 }
 
 build.dependsOn(copyToLib)
-*/
 
 artifacts {
     archives jar
