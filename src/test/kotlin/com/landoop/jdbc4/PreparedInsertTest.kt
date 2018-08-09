@@ -18,7 +18,7 @@ class PreparedInsertTest : WordSpec(), MovieData {
 
     "JDBC Driver" should {
       "support prepared statements" {
-        val sql = "INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)"
+        val sql = "SET _ktype='STRING';INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)"
         val stmt = conn.prepareStatement(sql)
         stmt.setString(1, "sammy")
         stmt.setString(2, "4191005000501123")

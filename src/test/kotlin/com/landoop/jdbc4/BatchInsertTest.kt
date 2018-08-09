@@ -17,7 +17,7 @@ class BatchInsertTest : WordSpec(), CCData {
 
         val batchSize = 20
         val values = Array(batchSize, { _ -> generateCC() })
-        val sql = "INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)"
+        val sql = "SET _ktype='STRING'; SET _vtype='AVRO';INSERT INTO cc_data (customerFirstName, number, currency, customerLastName, country, blocked) values (?,?,?,?,?,?)"
         val stmt = conn.prepareStatement(sql)
 
         for (value in values) {

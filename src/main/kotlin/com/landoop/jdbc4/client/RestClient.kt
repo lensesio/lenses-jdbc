@@ -2,14 +2,7 @@ package com.landoop.jdbc4.client
 
 import com.landoop.jdbc4.Constants
 import com.landoop.jdbc4.JacksonSupport
-import com.landoop.jdbc4.client.domain.Credentials
-import com.landoop.jdbc4.client.domain.InsertRecord
-import com.landoop.jdbc4.client.domain.InsertResponse
-import com.landoop.jdbc4.client.domain.Message
-import com.landoop.jdbc4.client.domain.PreparedInsertResponse
-import com.landoop.jdbc4.client.domain.StreamingSelectResult
-import com.landoop.jdbc4.client.domain.Table
-import com.landoop.jdbc4.client.domain.Topic
+import com.landoop.jdbc4.client.domain.*
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.client.config.RequestConfig
@@ -28,15 +21,10 @@ import org.glassfish.tyrus.client.ClientProperties
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.URI
-import java.net.URL
 import java.net.URLEncoder
 import java.sql.SQLException
 import java.util.concurrent.Executors
-import javax.websocket.ClientEndpointConfig
-import javax.websocket.Endpoint
-import javax.websocket.EndpointConfig
-import javax.websocket.MessageHandler
-import javax.websocket.Session
+import javax.websocket.*
 
 class RestClient(private val urls: List<String>,
                  private val credentials: Credentials,
@@ -168,7 +156,7 @@ class RestClient(private val urls: List<String>,
       val entity = jsonEntity(credentials)
       val endpoint = "$it/api/login"
       logger.debug("Authenticating at $endpoint")
-      jsonPost(endpoint, entity)
+      jsonPostWithTextPlain(endpoint, entity)
     }
 
     val responseFn: (HttpResponse) -> String = {
@@ -392,6 +380,14 @@ class RestClient(private val urls: List<String>,
       return HttpPost(endpoint).apply {
         this.entity = entity
         this.setHeader("Accept", "application/json")
+        this.setHeader("Content-type", "application/json")
+      }
+    }
+
+    fun jsonPostWithTextPlain(endpoint: String, entity: HttpEntity): HttpPost {
+      return HttpPost(endpoint).apply {
+        this.entity = entity
+        this.setHeader("Accept", "text/plain")
         this.setHeader("Content-type", "application/json")
       }
     }
