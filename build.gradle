@@ -59,7 +59,7 @@ dependencies {
     compile "org.apache.avro:avro:$avro_version"
     compile 'org.glassfish.tyrus:tyrus-client:1.13.1'
     compile 'org.glassfish.tyrus:tyrus-core:1.13.1'
-    compile 'org.glassfish.tyrus:tyrus-container-grizzly-client:1.13.1'
+    compile 'org.glassfish.tyrus:tyrus-container-grizzly-client:1.15'
 
     testCompile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j_version"
     testCompile "io.kotlintest:kotlintest-runner-junit5:$kotlin_test"
