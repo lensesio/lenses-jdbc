@@ -57,7 +57,7 @@ dependencies {
     compile "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
     compile "org.apache.avro:avro:$avro_version"
-    compile 'org.glassfish.tyrus:tyrus-client:1.13.1'
+    compile 'org.glassfish.tyrus:tyrus-client:1.15'
     compile 'org.glassfish.tyrus:tyrus-core:1.13.1'
     compile 'org.glassfish.tyrus:tyrus-container-grizzly-client:1.13.1'
 
