@@ -3,7 +3,7 @@ buildscript {
     ext.kotlin_test = '3.1.5'
     ext.log4j_version = '2.9.1'
     ext.slf4j_version = '1.7.25'
-    ext.joda_version = '2.9.9'
+    ext.joda_version = '2.10.1'
     ext.avro_version = '1.8.2'
     ext.httpclient_version = '4.5.6'
     ext.jackson_version = '2.9.5'
