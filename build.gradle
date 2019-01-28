@@ -7,7 +7,7 @@ buildscript {
     ext.avro_version = '1.8.2'
     ext.httpclient_version = '4.5.6'
     ext.jackson_version = '2.9.8'
-    ext.kafka_version = '0.11.0.2'
+    ext.kafka_version = '2.1.0'
     repositories {
         maven {
             url "https://plugins.gradle.org/m2/"
