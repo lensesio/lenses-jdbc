@@ -12,7 +12,7 @@ object Versions : Logging {
     }
   }
 
-  private fun loadOrDefault(key: String, default: Int): Int {
+  private fun loadOrDefault(key: String): Int {
     val version = properties.getProperty(key)
     return if (version == null) {
       logger.warn("Can not retrieve version information for this build.", null)
@@ -22,8 +22,8 @@ object Versions : Logging {
     }
   }
 
-  fun driverMajorVersion(): Int = loadOrDefault("driver.major", -1)
-  fun driverMinorVersion(): Int = loadOrDefault("driver.minor", -1)
-  fun databaseMajorVersion(): Int = loadOrDefault("lenses.major", -1)
-  fun databaseMinorVersion(): Int = loadOrDefault("lenses.major", -1)
+  fun driverMajorVersion(): Int = loadOrDefault("driver.major")
+  fun driverMinorVersion(): Int = loadOrDefault("driver.minor")
+  fun databaseMajorVersion(): Int = loadOrDefault("lenses.major")
+  fun databaseMinorVersion(): Int = loadOrDefault("lenses.major")
 }

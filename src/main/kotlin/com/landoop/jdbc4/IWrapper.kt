@@ -8,7 +8,7 @@ interface IWrapper {
     try {
       return iface.cast(this)
     } catch (cce: ClassCastException) {
-      throw SQLException("Unable to unwrap instance as " + iface.toString())
+      throw SQLException("Unable to unwrap instance as $iface")
     }
   }
 }

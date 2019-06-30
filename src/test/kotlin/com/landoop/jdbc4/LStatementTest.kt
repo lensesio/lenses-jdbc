@@ -6,7 +6,7 @@ import java.sql.DriverManager
 import java.sql.SQLFeatureNotSupportedException
 import java.sql.Statement
 
-class LsqlStatementTest : WordSpec() {
+class LStatementTest : WordSpec() {
   init {
     LsqlDriver()
 

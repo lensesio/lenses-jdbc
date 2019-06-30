@@ -2,6 +2,9 @@ package com.landoop.jdbc4
 
 import com.landoop.jdbc4.client.RestClient
 import com.landoop.jdbc4.client.domain.Credentials
+import com.landoop.jdbc4.statements.InsertPreparedStatement
+import com.landoop.jdbc4.statements.LStatement
+import com.landoop.jdbc4.statements.SelectPreparedStatement
 import java.sql.Blob
 import java.sql.CallableStatement
 import java.sql.Clob
@@ -20,8 +23,8 @@ import java.sql.Struct
 import java.util.*
 import java.util.concurrent.Executor
 
-class LsqlConnection(private val uri: String,
-                     props: Properties) : Connection, AutoCloseable, Logging, IWrapper {
+class LConnection(private val uri: String,
+                  props: Properties) : Connection, AutoCloseable, Logging, IWrapper {
 
   private val user = props.getProperty("user") ?: throw SQLException("URI must specify username")
   private val password = props.getProperty("password", null) ?: throw SQLException("URI must specify password")
@@ -84,10 +87,12 @@ class LsqlConnection(private val uri: String,
   override fun setClientInfo(name: String?, value: String?) = throw SQLFeatureNotSupportedException()
   override fun setClientInfo(properties: Properties?) = throw SQLFeatureNotSupportedException()
 
-  override fun createStatement(): Statement = LsqlStatement(this, client)
+  override fun createStatement(): Statement = LStatement(this, client)
   override fun prepareStatement(sql: String): PreparedStatement {
-    return if (sql.trim().toUpperCase().startsWith("SELECT")) LsqlPreparedSelectStatement(this, client, sql)
-    else LsqlPreparedInsertStatement(this, client, sql)
+    return if (sql.trim().toUpperCase().startsWith("SELECT")) SelectPreparedStatement(this,
+        client,
+        sql)
+    else InsertPreparedStatement(this, client, sql)
   }
 
   override fun getTypeMap(): MutableMap<String, Class<*>> = throw SQLFeatureNotSupportedException()

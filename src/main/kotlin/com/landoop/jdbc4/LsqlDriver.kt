@@ -66,7 +66,7 @@ class LsqlDriver : Driver, Logging, IWrapper {
         if (props != null) {
           props.putAll(urlProps)
         }
-        LsqlConnection(baseUrl, props ?: Properties())
+        LConnection(baseUrl, props ?: Properties())
       }
     }
   }
