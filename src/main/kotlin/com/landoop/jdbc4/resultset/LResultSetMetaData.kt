@@ -1,13 +1,16 @@
-package com.landoop.jdbc4
+package com.landoop.jdbc4.resultset
 
+import com.landoop.jdbc4.AvroSchemas
+import com.landoop.jdbc4.IWrapper
+import com.landoop.jdbc4.isNullable
 import org.apache.avro.LogicalTypes
 import org.apache.avro.Schema
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
 import java.sql.SQLException
 
-class LsqlResultSetMetaData(private val schema: Schema,
-                            private val rs: ResultSet) : ResultSetMetaData, IWrapper {
+class LResultSetMetaData(private val schema: Schema,
+                         private val rs: ResultSet) : ResultSetMetaData, IWrapper {
 
   override fun getTableName(column: Int): String = schema.name
 

@@ -1,5 +1,6 @@
 package com.landoop.jdbc4
 
+import com.landoop.jdbc4.resultset.LResultSetMetaData
 import org.apache.avro.Schema
 import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData
@@ -49,7 +50,9 @@ class RowResultSet(
 
   override fun getConcurrency(): Int = ResultSet.CONCUR_READ_ONLY
 
-  override fun meta(): LsqlResultSetMetaData = LsqlResultSetMetaData(schema, this)
+  override fun meta(): LResultSetMetaData = LResultSetMetaData(
+      schema,
+      this)
 
   // == methods which mutate or query the resultset fetch parameters ==
 

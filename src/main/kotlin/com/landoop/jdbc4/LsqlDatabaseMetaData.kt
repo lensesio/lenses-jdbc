@@ -118,7 +118,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
                           columnNamePattern: String?): ResultSet {
 
     fun fieldToRow(table: Table, field: Schema.Field, pos: Int): Row {
-      val array = arrayOf(
+      val array: Array<Any?> = arrayOf(
           null,
           null,
           table.name,
@@ -144,7 +144,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
           "NO", // IS_AUTOINCREMENT
           "" // IS_GENERATEDCOLUMN
       )
-      assert(array.size == Schemas.Columns.fields.size, { "Array has ${array.size} but should have ${Schemas.Columns.fields.size}" })
+      assert(array.size == Schemas.Columns.fields.size) { "Array has ${array.size} but should have ${Schemas.Columns.fields.size}" }
       return ArrayRow(array)
     }
 
@@ -247,7 +247,7 @@ class LsqlDatabaseMetaData(private val conn: Connection,
 
   override fun getTypeInfo(): ResultSet {
     val rows = TypeInfo.all.map {
-      val array = arrayOf(
+      val array: Array<Any?> = arrayOf(
           it.name,
           it.dataType,
           it.precision,
@@ -522,10 +522,10 @@ class LsqlDatabaseMetaData(private val conn: Connection,
   override fun getDatabaseMajorVersion(): Int = Versions.databaseMajorVersion()
   override fun getDriverMinorVersion(): Int = Versions.driverMinorVersion()
   override fun getDriverMajorVersion(): Int = Versions.driverMajorVersion()
-  override fun getDriverVersion(): String = driverMajorVersion.toString() + "." + driverMinorVersion
+  override fun getDriverVersion(): String = "$driverMajorVersion.$driverMinorVersion"
   override fun getJDBCMinorVersion(): Int = 0
   override fun getJDBCMajorVersion(): Int = 4
   override fun getDatabaseProductName(): String = Constants.ProductName
   override fun getDriverName(): String = Constants.DriverName
-  override fun getDatabaseProductVersion(): String = databaseMajorVersion.toString() + "." + databaseMinorVersion
+  override fun getDatabaseProductVersion(): String = "$databaseMajorVersion.$databaseMinorVersion"
 }

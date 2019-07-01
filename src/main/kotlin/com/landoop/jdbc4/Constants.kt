@@ -1,3 +1,5 @@
+@file:Suppress("MayBeConstant")
+
 package com.landoop.jdbc4
 
 object Constants {

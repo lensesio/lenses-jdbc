@@ -1,5 +1,6 @@
 package com.landoop.jdbc4
 
+import com.landoop.jdbc4.resultset.LResultSetMetaData
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.WordSpec
 import org.apache.avro.LogicalTypes
@@ -11,7 +12,7 @@ import java.nio.ByteBuffer
 import java.sql.ResultSetMetaData
 import java.util.*
 
-class LsqlResultSetMetaDataTest : WordSpec() {
+class LResultSetMetaDataTest : WordSpec() {
   init {
     "LsqlResultSetMetaDataTest" should {
       "find column for a label" {
@@ -19,7 +20,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
         record.put("b", "wobble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.indexForLabel("a") shouldBe 1
         meta.indexForLabel("b") shouldBe 2
       }
@@ -28,7 +30,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         val record = GenericData.Record(schema)
         record.put("a", 1L)
         record.put("b", 2)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.isSigned(1) shouldBe true
         meta.isSigned(2) shouldBe true
       }
@@ -37,7 +40,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
         record.put("b", true)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.isSigned(1) shouldBe false
         meta.isSigned(2) shouldBe false
       }
@@ -45,56 +49,64 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         val schema = SchemaBuilder.record("foo").fields().requiredString("a").endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.isReadOnly(1) shouldBe true
       }
       "is not writable" {
         val schema = SchemaBuilder.record("foo").fields().requiredString("a").endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.isWritable(1) shouldBe false
       }
       "is not auto increment" {
         val schema = SchemaBuilder.record("foo").fields().requiredString("a").endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.isAutoIncrement(1) shouldBe false
       }
       "is case sensitive" {
         val schema = SchemaBuilder.record("foo").fields().requiredString("a").endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.isCaseSensitive(1) shouldBe true
       }
       "is searchable" {
         val schema = SchemaBuilder.record("foo").fields().requiredString("a").endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.isSearchable(1) shouldBe true
       }
       "is not currency" {
         val schema = SchemaBuilder.record("foo").fields().requiredString("a").endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.isCurrency(1) shouldBe false
       }
       "is not definitely writable" {
         val schema = SchemaBuilder.record("foo").fields().requiredString("a").endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.isDefinitelyWritable(1) shouldBe false
       }
       "return correct name for index" {
         val schema = SchemaBuilder.record("foo").fields().requiredString("a").endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnName(1) shouldBe "a"
       }
       "return correct column count" {
@@ -102,7 +114,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
         record.put("b", null)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.columnCount shouldBe 2
       }
       "specify nullability" {
@@ -110,7 +123,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
         record.put("b", null)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.isNullable(1) shouldBe ResultSetMetaData.columnNullableUnknown
         meta.isNullable(2) shouldBe ResultSetMetaData.columnNullable
       }
@@ -126,7 +140,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         record.put("b", 123)
         record.put("c", 1.4F)
         record.put("d", 123.34)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnType(1) shouldBe java.sql.Types.BIGINT
         meta.getColumnType(2) shouldBe java.sql.Types.INTEGER
         meta.getColumnType(3) shouldBe java.sql.Types.FLOAT
@@ -142,7 +157,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         record.put("a", "wibble")
         record.put("b", true)
         record.put("c", null)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnType(1) shouldBe java.sql.Types.VARCHAR
         meta.getColumnType(2) shouldBe java.sql.Types.BOOLEAN
         meta.getColumnType(3) shouldBe java.sql.Types.BINARY
@@ -157,7 +173,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
 
         val record = GenericData.Record(schema)
         record.put("a", ByteBuffer.wrap(BigDecimal(123).unscaledValue().toByteArray()))
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnType(1) shouldBe java.sql.Types.DECIMAL
       }
       "return correct java sql type for optionals/unions" {
@@ -170,7 +187,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         record.put("a", "wibble")
         record.put("b", true)
         record.put("c", null)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnType(1) shouldBe java.sql.Types.VARCHAR
         meta.getColumnType(2) shouldBe java.sql.Types.BOOLEAN
         meta.getColumnType(3) shouldBe java.sql.Types.BINARY
@@ -185,7 +203,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
 
         val record = GenericData.Record(schema)
         record.put("a", Date())
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnType(1) shouldBe java.sql.Types.DATE
       }
       "return correct java sql type for logical time" {
@@ -198,7 +217,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
 
         val record = GenericData.Record(schema)
         record.put("a", java.sql.Time(123123123L))
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnType(1) shouldBe java.sql.Types.TIME
       }
       "return correct java sql type for logical timestamp" {
@@ -211,7 +231,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
 
         val record = GenericData.Record(schema)
         record.put("a", ByteBuffer.wrap(BigDecimal(123).unscaledValue().toByteArray()))
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnType(1) shouldBe java.sql.Types.TIMESTAMP
       }
       "return correct java sql type for logical UUID" {
@@ -225,7 +246,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
 
         val record = GenericData.Record(schema)
         record.put("a", ByteBuffer.wrap(BigDecimal(123).unscaledValue().toByteArray()))
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnType(1) shouldBe java.sql.Types.VARCHAR
       }
       "return the JVM classname for a String" {
@@ -234,7 +256,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnClassName(1) shouldBe String::class.java.canonicalName
       }
       "return the JVM classname for a boolean" {
@@ -243,7 +266,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", true)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnClassName(1) shouldBe "java.lang.Boolean"
       }
       "return the JVM classname for a int" {
@@ -252,7 +276,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", 123)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnClassName(1) shouldBe "java.lang.Integer"
       }
       "return the JVM classname for a long" {
@@ -261,7 +286,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", 123L)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnClassName(1) shouldBe "java.lang.Long"
       }
       "return the JVM classname for a float" {
@@ -270,7 +296,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", 12.34F)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnClassName(1) shouldBe "java.lang.Float"
       }
       "return the JVM classname for a double" {
@@ -279,7 +306,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", 12.34)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnClassName(1) shouldBe "java.lang.Double"
       }
       "return the JVM classname for a bytes type" {
@@ -288,7 +316,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", ByteBuffer.wrap(byteArrayOf(1, 2, 3)))
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnClassName(1) shouldBe ByteArray(1).javaClass.canonicalName
       }
       "return the JVM classname for an enum type" {
@@ -297,7 +326,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "a")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnClassName(1) shouldBe String::class.java.canonicalName
       }
       "return the avro name for a string" {
@@ -306,7 +336,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnTypeName(1) shouldBe Schema.Type.STRING.name
       }
       "return the avro name for a double" {
@@ -315,7 +346,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", 12.34)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnTypeName(1) shouldBe Schema.Type.DOUBLE.name
       }
       "return the avro name for a float" {
@@ -324,7 +356,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", 12.34F)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnTypeName(1) shouldBe Schema.Type.FLOAT.name
       }
       "return the avro name for a boolean" {
@@ -333,7 +366,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", true)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnTypeName(1) shouldBe Schema.Type.BOOLEAN.name
       }
       "return the avro name for a long" {
@@ -342,7 +376,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", 123L)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnTypeName(1) shouldBe Schema.Type.LONG.name
       }
       "return the avro name for an int" {
@@ -351,7 +386,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
             .endRecord()
         val record = GenericData.Record(schema)
         record.put("a", 123)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getColumnTypeName(1) shouldBe Schema.Type.INT.name
       }
       "return the correct field for a given label" {
@@ -359,7 +395,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
         record.put("b", true)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.fieldForLabel("a") shouldBe schema.fields[0]
         meta.fieldForLabel("b") shouldBe schema.fields[1]
       }
@@ -368,7 +405,8 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
         record.put("b", true)
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.indexForLabel("a") shouldBe 1
         meta.indexForLabel("b") shouldBe 2
       }
@@ -376,21 +414,24 @@ class LsqlResultSetMetaDataTest : WordSpec() {
         val schema = SchemaBuilder.record("foo").fields().requiredString("a").endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getCatalogName(1) shouldBe ""
       }
       "use empty string for schema name" {
         val schema = SchemaBuilder.record("foo").fields().requiredString("a").endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getSchemaName(1) shouldBe ""
       }
       "use the schema name as the table name" {
         val schema = SchemaBuilder.record("foo").fields().requiredString("a").endRecord()
         val record = GenericData.Record(schema)
         record.put("a", "wibble")
-        val meta = LsqlResultSetMetaData(schema, RowResultSet.fromRecords(schema, listOf(record)))
+        val meta = LResultSetMetaData(schema,
+            RowResultSet.fromRecords(schema, listOf(record)))
         meta.getTableName(1) shouldBe "foo"
       }
     }

@@ -17,8 +17,7 @@ import java.util.*
 abstract class ConvertingRow : Row {
 
   override fun getByte(index: Int): Byte {
-    val value = getObject(index)
-    return when (value) {
+    return when (val value = getObject(index)) {
       is Int -> value.toByte()
       is Long -> value.toByte()
       is String -> value.toByte()
@@ -27,16 +26,14 @@ abstract class ConvertingRow : Row {
   }
 
   override fun charStream(index: Int): Reader {
-    val value = getObject(index)
-    return when (value) {
+    return when (val value = getObject(index)) {
       is String -> StringReader(value)
       else -> throw SQLException("Unable to convert $value to Reader")
     }
   }
 
   override fun getFloat(index: Int): Float {
-    val value = getObject(index)
-    return when (value) {
+    return when (val value = getObject(index)) {
       is Double -> value.toFloat()
       is Float -> value
       is String -> value.toFloat()
@@ -45,8 +42,7 @@ abstract class ConvertingRow : Row {
   }
 
   override fun getBoolean(index: Int): Boolean {
-    val value = getObject(index)
-    return when (value) {
+    return when (val value = getObject(index)) {
       is Boolean -> value
       is String -> value == "true"
       else -> throw SQLException("Unable to convert $value to boolean")
@@ -54,8 +50,7 @@ abstract class ConvertingRow : Row {
   }
 
   override fun getBigDecimal(index: Int, scale: Int): BigDecimal {
-    val value = getObject(index)
-    return when (value) {
+    return when (val value = getObject(index)) {
       is Long -> BigDecimal.valueOf(value, scale)
       is Int -> BigDecimal.valueOf(value.toLong(), scale)
       is String -> BigDecimal(value)
@@ -64,8 +59,7 @@ abstract class ConvertingRow : Row {
   }
 
   override fun getBigDecimal(index: Int): BigDecimal {
-    val value = getObject(index)
-    return when (value) {
+    return when (val value = getObject(index)) {
       is Long -> BigDecimal.valueOf(value)
       is Int -> BigDecimal.valueOf(value.toLong())
       is Double -> BigDecimal.valueOf(value)
@@ -77,8 +71,7 @@ abstract class ConvertingRow : Row {
 
   override fun getTime(index: Int): Time = getTime(index, null)
   override fun getTime(index: Int, cal: Calendar?): Time {
-    val value = getObject(index)
-    val instant = when (value) {
+    val instant = when (val value = getObject(index)) {
       is Int -> Instant.ofEpochMilli(value.toLong())
       is Long -> Instant.ofEpochMilli(value)
       is String -> Instant.ofEpochMilli(value.toLong())
@@ -90,8 +83,7 @@ abstract class ConvertingRow : Row {
 
   override fun getDate(index: Int): java.sql.Date = getDate(index, null)
   override fun getDate(index: Int, cal: Calendar?): java.sql.Date {
-    val value = getObject(index)
-    val instant = when (value) {
+    val instant = when (val value = getObject(index)) {
       is Int -> Instant.ofEpochMilli(value.toLong())
       is Long -> Instant.ofEpochMilli(value)
       is String -> Instant.ofEpochMilli(value.toLong())
@@ -103,8 +95,7 @@ abstract class ConvertingRow : Row {
 
   override fun getTimestamp(index: Int): Timestamp = getTimestamp(index, null)
   override fun getTimestamp(index: Int, cal: Calendar?): Timestamp {
-    val value = getObject(index)
-    val instant = when (value) {
+    val instant = when (val value = getObject(index)) {
       is Int -> Instant.ofEpochMilli(value.toLong())
       is Long -> Instant.ofEpochMilli(value)
       is String -> Instant.ofEpochMilli(value.toLong())
@@ -115,16 +106,14 @@ abstract class ConvertingRow : Row {
   }
 
   override fun getBytes(index: Int): ByteArray {
-    val value = getObject(index)
-    return when (value) {
+    return when (val value = getObject(index)) {
       is ByteArray -> value
       else -> throw SQLException("Unable to convert $value to byte[]")
     }
   }
 
   override fun getDouble(index: Int): Double {
-    val value = getObject(index)
-    return when (value) {
+    return when (val value = getObject(index)) {
       is Double -> value
       is Float -> value.toDouble()
       is Int -> value.toDouble()
@@ -140,8 +129,7 @@ abstract class ConvertingRow : Row {
   }
 
   override fun getLong(index: Int): Long {
-    val value = getObject(index)
-    return when (value) {
+    return when (val value = getObject(index)) {
       is Int -> value.toLong()
       is Long -> value
       is String -> value.toLong()
@@ -150,8 +138,7 @@ abstract class ConvertingRow : Row {
   }
 
   override fun getInt(index: Int): Int {
-    val value = getObject(index)
-    return when (value) {
+    return when (val value = getObject(index)) {
       is Int -> value
       is Long -> value.toInt()
       is String -> value.toInt()
@@ -160,8 +147,7 @@ abstract class ConvertingRow : Row {
   }
 
   override fun getShort(index: Int): Short {
-    val value = getObject(index)
-    return when (value) {
+    return when (val value = getObject(index)) {
       is Int -> value.toShort()
       is Long -> value.toShort()
       is String -> value.toShort()

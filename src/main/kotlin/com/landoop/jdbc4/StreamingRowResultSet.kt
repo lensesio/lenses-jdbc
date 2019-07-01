@@ -1,6 +1,7 @@
 package com.landoop.jdbc4
 
 import com.landoop.jdbc4.client.domain.StreamingSelectResult
+import com.landoop.jdbc4.resultset.LResultSetMetaData
 import org.apache.avro.Schema
 import java.sql.ResultSet
 import java.sql.SQLException
@@ -28,12 +29,12 @@ class StreamingRowResultSet(
 
   override fun currentRow(): Row = row ?: throw SQLException("No rows have been fetched; invoke next()")
 
-  override fun meta(): LsqlResultSetMetaData {
+  override fun meta(): LResultSetMetaData {
     // the call to schema will block until we have the schema
     val schemaString = result.getSchema()
         ?: throw SQLException("No records were retrieved, cannot get metadata on empty resultset")
     val schema = Schema.Parser().parse(schemaString)
-    return LsqlResultSetMetaData(schema, this)
+    return LResultSetMetaData(schema, this)
   }
 
   override fun getRow(): Int = cursor

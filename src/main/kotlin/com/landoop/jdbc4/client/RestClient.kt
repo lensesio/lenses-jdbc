@@ -3,6 +3,16 @@ package com.landoop.jdbc4.client
 import com.landoop.jdbc4.Constants
 import com.landoop.jdbc4.JacksonSupport
 import com.landoop.jdbc4.client.domain.*
+import io.ktor.client.HttpClient
+import io.ktor.client.features.websocket.WebSockets
+import io.ktor.client.features.websocket.ws
+import io.ktor.client.request.get
+import io.ktor.http.HttpMethod
+import io.ktor.http.cio.websocket.Frame
+import io.ktor.http.cio.websocket.readBytes
+import io.ktor.http.cio.websocket.readText
+import io.ktor.util.KtorExperimentalAPI
+import kotlinx.coroutines.channels.Channel
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.client.config.RequestConfig
@@ -57,6 +67,11 @@ class RestClient(private val urls: List<String>,
     if (weakSSL)
       it.setSSLSocketFactory(connectionFactory)
     it.build()
+  }
+
+  @UseExperimental(KtorExperimentalAPI::class)
+  private val ktorClient = HttpClient {
+    install(WebSockets)
   }
 
   // the token received the last time we attempted to authenticate
@@ -209,6 +224,17 @@ class RestClient(private val urls: List<String>,
     return URLEncoder.encode(url.trim().replace(System.lineSeparator(), " "), "UTF-8").replace("%20", "+")
   }
 
+  enum class QueryType {
+    Insert, Select
+  }
+
+  data class ParseResponse(val type: QueryType)
+
+  suspend fun parse(sql: String): ParseResponse {
+    val url = urls[0].removeSuffix("/") + "/api/jdbc/v2/parse?sql=$sql"
+    return ktorClient.get(url)
+  }
+
   fun insert(sql: String): InsertResponse {
     val requestFn: (String) -> HttpUriRequest = {
       val endpoint = "$it/api/jdbc/insert"
@@ -349,6 +375,23 @@ class RestClient(private val urls: List<String>,
   fun isValid(): Boolean {
     token = authenticate()
     return true
+  }
+
+  suspend fun query(sql: String, f: (Channel<Frame>) -> Unit): Unit {
+    ktorClient.ws(
+        method = HttpMethod.Get,
+        host = "127.0.0.1",
+        port = 8080,
+        path = "/api/sql/execute?sql=$sql"
+    ) {
+      // this: DefaultClientWebSocketSession
+      // Receive frame.
+      val frame = incoming.receive()
+      when (frame) {
+        is Frame.Text -> println(frame.readText())
+        is Frame.Binary -> println(frame.readBytes())
+      }
+    }
   }
 
   companion object RestClient {

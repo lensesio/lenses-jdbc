@@ -1,5 +1,6 @@
 package com.landoop.jdbc4
 
+import com.landoop.jdbc4.resultset.LResultSetMetaData
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigDecimal
@@ -42,7 +43,7 @@ abstract class BaseResultSet(val stmt: Statement?) : ResultSet, IWrapper {
     return t
   }
 
-  abstract fun meta(): LsqlResultSetMetaData
+  abstract fun meta(): LResultSetMetaData
 
   override fun getMetaData(): ResultSetMetaData  = meta()
 
