@@ -3,8 +3,7 @@ buildscript {
     ext.kotlin_test = '3.3.3'
     ext.log4j_version = '2.11.2'
     ext.slf4j_version = '1.7.25'
-    ext.joda_version = '2.10.1'
-    ext.avro_version = '1.8.2'
+    ext.avro_version = '1.9.0'
     ext.httpclient_version = '4.5.7'
     ext.jackson_version = '2.9.9'
     ext.kafka_version = '0.11.0.2'
@@ -51,7 +50,6 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile "org.slf4j:slf4j-api:$slf4j_version"
-    compile "joda-time:joda-time:$joda_version"
     compile "org.apache.httpcomponents:httpclient:$httpclient_version"
     compile "com.fasterxml.jackson.core:jackson-core:$jackson_version"
     compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
