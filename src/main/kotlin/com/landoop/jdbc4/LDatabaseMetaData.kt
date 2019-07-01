@@ -2,6 +2,9 @@ package com.landoop.jdbc4
 
 import com.landoop.jdbc4.client.RestClient
 import com.landoop.jdbc4.client.domain.Table
+import com.landoop.jdbc4.row.ArrayRow
+import com.landoop.jdbc4.row.Row
+import com.landoop.jdbc4.util.Logging
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecordBuilder
 import java.sql.Connection
@@ -9,10 +12,10 @@ import java.sql.DatabaseMetaData
 import java.sql.ResultSet
 import java.sql.RowIdLifetime
 
-class LsqlDatabaseMetaData(private val conn: Connection,
-                           private val client: RestClient,
-                           private val uri: String,
-                           private val user: String) : DatabaseMetaData, Logging, IWrapper {
+class LDatabaseMetaData(private val conn: Connection,
+                        private val client: RestClient,
+                        private val uri: String,
+                        private val user: String) : DatabaseMetaData, Logging, IWrapper {
 
   companion object {
     const val TABLE_NAME = "TABLE"

@@ -1,4 +1,4 @@
-package com.landoop.jdbc4
+package com.landoop.jdbc4.row
 
 import java.io.Reader
 import java.io.StringReader

@@ -8,7 +8,7 @@ class PrecisionQueryTest : WordSpec(), EquitiesData {
 
   init {
 
-    LsqlDriver()
+    LDriver()
     val topic = try {
       populateEquities()
     } catch (e: Throwable) {

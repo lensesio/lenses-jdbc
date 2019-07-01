@@ -31,7 +31,7 @@ class SingleFieldSchemaQueryTest : WordSpec(), ProducerSetup {
 
   init {
 
-    LsqlDriver()
+    LDriver()
     populateCountries()
 
     fun conn() = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")

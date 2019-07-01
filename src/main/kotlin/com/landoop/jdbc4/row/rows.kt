@@ -1,4 +1,4 @@
-package com.landoop.jdbc4
+package com.landoop.jdbc4.row
 
 import com.fasterxml.jackson.databind.JsonNode
 import org.apache.avro.generic.GenericData

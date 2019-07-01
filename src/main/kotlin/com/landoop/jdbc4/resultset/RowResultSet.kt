@@ -1,6 +1,6 @@
 package com.landoop.jdbc4.resultset
 
-import com.landoop.jdbc4.Row
+import com.landoop.jdbc4.row.Row
 import java.io.Reader
 import java.math.BigDecimal
 import java.sql.Date

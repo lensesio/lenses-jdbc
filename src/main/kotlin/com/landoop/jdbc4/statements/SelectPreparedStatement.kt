@@ -1,7 +1,7 @@
 package com.landoop.jdbc4.statements
 
-import com.landoop.jdbc4.EmptyResultSetMetaData
-import com.landoop.jdbc4.Logging
+import com.landoop.jdbc4.resultset.EmptyResultSetMetaData
+import com.landoop.jdbc4.util.Logging
 import com.landoop.jdbc4.RowResultSet
 import com.landoop.jdbc4.StreamingRowResultSet
 import com.landoop.jdbc4.client.RestClient

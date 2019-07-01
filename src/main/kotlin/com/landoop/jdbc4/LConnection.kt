@@ -5,6 +5,7 @@ import com.landoop.jdbc4.client.domain.Credentials
 import com.landoop.jdbc4.statements.InsertPreparedStatement
 import com.landoop.jdbc4.statements.LStatement
 import com.landoop.jdbc4.statements.SelectPreparedStatement
+import com.landoop.jdbc4.util.Logging
 import java.sql.Blob
 import java.sql.CallableStatement
 import java.sql.Clob
@@ -96,7 +97,7 @@ class LConnection(private val uri: String,
   }
 
   override fun getTypeMap(): MutableMap<String, Class<*>> = throw SQLFeatureNotSupportedException()
-  override fun getMetaData(): DatabaseMetaData = LsqlDatabaseMetaData(this, client, uri, user)
+  override fun getMetaData(): DatabaseMetaData = LDatabaseMetaData(this, client, uri, user)
 
   override fun setSchema(schema: String?) {
     // javadoc requests noop for non-supported

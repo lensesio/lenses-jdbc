@@ -1,5 +1,6 @@
 package com.landoop.jdbc4
 
+import com.landoop.jdbc4.util.Logging
 import java.sql.Connection
 import java.sql.Driver
 import java.sql.DriverManager
@@ -9,12 +10,12 @@ import java.sql.SQLFeatureNotSupportedException
 import java.util.*
 import java.util.logging.Logger
 
-class LsqlDriver : Driver, Logging, IWrapper {
+class LDriver : Driver, Logging, IWrapper {
 
   companion object : Logging {
     init {
       logger.debug("Registering LSQL JDBC Driver with DriverManager")
-      DriverManager.registerDriver(LsqlDriver())
+      DriverManager.registerDriver(LDriver())
     }
   }
 

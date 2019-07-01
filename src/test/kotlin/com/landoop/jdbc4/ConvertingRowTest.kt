@@ -1,5 +1,6 @@
 package com.landoop.jdbc4
 
+import com.landoop.jdbc4.row.ArrayRow
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.WordSpec
 import java.math.BigDecimal

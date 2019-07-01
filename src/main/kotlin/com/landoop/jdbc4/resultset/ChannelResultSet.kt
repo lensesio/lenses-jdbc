@@ -1,6 +1,6 @@
 package com.landoop.jdbc4.resultset
 
-import com.landoop.jdbc4.Row
+import com.landoop.jdbc4.row.Row
 import kotlinx.coroutines.channels.Channel
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
@@ -33,7 +33,7 @@ class ChannelResultSet(private val stmt: Statement,
 
   override fun getMetaData(): ResultSetMetaData = meta()
 
-  override var currentRow: Row = empty
+  override var currentRow: Row = EmptyRow
   override val cursor: Int = TODO()
 
   override fun meta(): LResultSetMetaData = TODO()

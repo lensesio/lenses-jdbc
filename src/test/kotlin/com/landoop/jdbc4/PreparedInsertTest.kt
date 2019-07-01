@@ -11,7 +11,7 @@ class PreparedInsertTest : WordSpec(), MovieData {
 
   init {
 
-    LsqlDriver()
+    LDriver()
     val topic = populateMovies()
 
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")

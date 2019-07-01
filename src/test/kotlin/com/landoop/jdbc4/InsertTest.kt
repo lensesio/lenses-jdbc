@@ -7,7 +7,7 @@ import java.sql.DriverManager
 class InsertTest : WordSpec(), CCData {
   init {
 
-    LsqlDriver()
+    LDriver()
 
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 

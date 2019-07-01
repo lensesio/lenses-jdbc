@@ -1,5 +1,6 @@
 package com.landoop.jdbc4
 
+import com.landoop.jdbc4.util.Logging
 import java.util.*
 
 object Versions : Logging {

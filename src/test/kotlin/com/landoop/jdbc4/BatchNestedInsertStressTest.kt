@@ -10,7 +10,7 @@ class BatchNestedInsertStressTest : WordSpec(), LocationData {
   override val random: Random = Random()
 
   init {
-    com.landoop.jdbc4.LsqlDriver()
+    com.landoop.jdbc4.LDriver()
 
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 

@@ -2,6 +2,8 @@ package com.landoop.jdbc4
 
 import com.landoop.jdbc4.client.domain.StreamingSelectResult
 import com.landoop.jdbc4.resultset.LResultSetMetaData
+import com.landoop.jdbc4.row.JsonNodeRow
+import com.landoop.jdbc4.row.Row
 import org.apache.avro.Schema
 import java.sql.ResultSet
 import java.sql.SQLException

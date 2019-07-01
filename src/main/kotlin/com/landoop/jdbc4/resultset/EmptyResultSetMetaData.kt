@@ -1,5 +1,6 @@
-package com.landoop.jdbc4
+package com.landoop.jdbc4.resultset
 
+import com.landoop.jdbc4.IWrapper
 import java.sql.ResultSetMetaData
 
 object EmptyResultSetMetaData : ResultSetMetaData, IWrapper {

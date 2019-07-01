@@ -8,7 +8,7 @@ import java.sql.Statement
 
 class LStatementTest : WordSpec() {
   init {
-    LsqlDriver()
+    LDriver()
 
     "LsqlStatement" should {
       "throw exception for execute with auto generated columns" {

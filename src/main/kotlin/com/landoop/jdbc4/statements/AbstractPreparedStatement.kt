@@ -1,7 +1,7 @@
 package com.landoop.jdbc4.statements
 
 import com.landoop.jdbc4.IWrapper
-import com.landoop.jdbc4.Logging
+import com.landoop.jdbc4.util.Logging
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigDecimal

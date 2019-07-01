@@ -1,6 +1,7 @@
 package com.landoop.jdbc4
 
 import com.landoop.jdbc4.resultset.LResultSetMetaData
+import com.landoop.jdbc4.row.Row
 import java.io.InputStream
 import java.io.Reader
 import java.math.BigDecimal

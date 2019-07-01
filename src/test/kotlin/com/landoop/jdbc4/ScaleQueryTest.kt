@@ -33,7 +33,7 @@ class ScaleQueryTest : WordSpec(), ProducerSetup {
 
   init {
 
-    LsqlDriver()
+    LDriver()
     populateEquities()
 
     val q = "SELECT * FROM $topic WHERE _ktype=STRING AND _vtype=AVRO"

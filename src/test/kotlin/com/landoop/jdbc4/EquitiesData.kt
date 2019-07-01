@@ -1,5 +1,6 @@
 package com.landoop.jdbc4
 
+import com.landoop.jdbc4.util.Logging
 import org.apache.avro.LogicalTypes
 import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData

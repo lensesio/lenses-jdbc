@@ -1,7 +1,6 @@
 package com.landoop.jdbc4
 
 import org.apache.avro.Schema
-import java.sql.Time
 
 data class TypeInfo(
     val name: String,
