@@ -1,6 +1,6 @@
 package com.landoop.jdbc4
 
-import com.landoop.jdbc4.client.RestClient
+import com.landoop.jdbc4.client.LensesClient
 import com.landoop.jdbc4.client.domain.Table
 import com.landoop.jdbc4.row.ArrayRow
 import com.landoop.jdbc4.row.Row
@@ -13,7 +13,7 @@ import java.sql.ResultSet
 import java.sql.RowIdLifetime
 
 class LDatabaseMetaData(private val conn: Connection,
-                        private val client: RestClient,
+                        private val client: LensesClient,
                         private val uri: String,
                         private val user: String) : DatabaseMetaData, Logging, IWrapper {
 
@@ -57,7 +57,6 @@ class LDatabaseMetaData(private val conn: Connection,
 
   override fun supportsCatalogsInTableDefinitions(): Boolean = false
 
-
   override fun supportsResultSetConcurrency(type: Int, concurrency: Int): Boolean {
     return ResultSet.TYPE_FORWARD_ONLY == type && ResultSet.CONCUR_READ_ONLY == concurrency
   }
@@ -79,6 +78,8 @@ class LDatabaseMetaData(private val conn: Connection,
 
   private fun fetchTables(tableNamePattern: String?,
                           types: Array<out String>?): List<Table> {
+
+    val resp = client.execute("SHOW TABLES")
 
     val tables = client.tables()
 
@@ -132,14 +133,14 @@ class LDatabaseMetaData(private val conn: Connection,
           0,
           field.schema().scale(), // DECIMAL_DIGITS
           10, // NUM_PREC_RADIX
-          if (field.schema().isNullable()) DatabaseMetaData.columnNullable else DatabaseMetaData.columnNoNulls,
+          if (field.schema().isNullable) DatabaseMetaData.columnNullable else DatabaseMetaData.columnNoNulls,
           null, // REMARKS
           null, // COLUMN_DEF unused
           null, // SQL_DATA_TYPE unused
           null, // SQL_DATETIME_SUB unused
           0, // CHAR_OCTET_LENGTH
           pos + 1, // ORDINAL_POSITION
-          if (field.schema().isNullable()) "YES" else "NO", // IS_NULLABLE
+          if (field.schema().isNullable) "YES" else "NO", // IS_NULLABLE
           null, // SCOPE_CATALOG
           null, // SCOPE_SCHEMA
           null, // SCOPE_TABLE

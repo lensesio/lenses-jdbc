@@ -61,6 +61,10 @@ dependencies {
     compile 'org.glassfish.tyrus:tyrus-container-grizzly-client:1.15'
     compile "io.ktor:ktor-client-core:$ktorVersion"
     compile "io.ktor:ktor-client-cio:$ktorVersion"
+    compile "io.ktor:ktor-client-jackson:$ktorVersion"
+    compile "io.ktor:ktor-client-websockets:$ktorVersion"
+
+    implementation 'io.arrow-kt:arrow-core-data:0.9.0'
 
     testCompile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j_version"
     testCompile "io.kotlintest:kotlintest-runner-junit5:$kotlin_test"
