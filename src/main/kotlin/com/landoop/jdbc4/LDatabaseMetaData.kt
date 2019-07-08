@@ -1,16 +1,20 @@
 package com.landoop.jdbc4
 
+import arrow.core.getOrHandle
 import com.landoop.jdbc4.client.LensesClient
 import com.landoop.jdbc4.client.domain.Table
+import com.landoop.jdbc4.resultset.filter
 import com.landoop.jdbc4.row.ArrayRow
 import com.landoop.jdbc4.row.Row
 import com.landoop.jdbc4.util.Logging
+import kotlinx.coroutines.runBlocking
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecordBuilder
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.ResultSet
 import java.sql.RowIdLifetime
+import java.sql.SQLException
 
 class LDatabaseMetaData(private val conn: Connection,
                         private val client: LensesClient,
@@ -21,13 +25,10 @@ class LDatabaseMetaData(private val conn: Connection,
     const val TABLE_NAME = "TABLE"
     const val SYSTEM_TABLE_NAME = "SYSTEM TABLE"
     val TABLE_TYPES = listOf(TABLE_NAME, SYSTEM_TABLE_NAME)
-    val SYSTEM_TABLES = listOf(
-        "__consumer_offsets",
-        "_kafka_lenses_.*",
-        "_schemas"
-    )
   }
 
+  override fun getUserName(): String = user
+  override fun getURL(): String = uri
 
   override fun supportsGetGeneratedKeys(): Boolean = false
   override fun supportsCoreSQLGrammar(): Boolean = false
@@ -68,52 +69,31 @@ class LDatabaseMetaData(private val conn: Connection,
   override fun supportsResultSetType(type: Int): Boolean = ResultSet.TYPE_FORWARD_ONLY == type
   override fun supportsSchemasInIndexDefinitions(): Boolean = false
 
+  private suspend fun fetchTables(tableNamePattern: String?,
+                                  types: Array<out String>?): ResultSet {
 
-  private fun tableType(tableName: String): String {
-    return when (SYSTEM_TABLES.any { it.toRegex().matches(tableName) }) {
-      true -> SYSTEM_TABLE_NAME
-      false -> TABLE_NAME
-    }
-  }
-
-  private fun fetchTables(tableNamePattern: String?,
-                          types: Array<out String>?): List<Table> {
-
-    val resp = client.execute("SHOW TABLES")
-
-    val tables = client.tables()
-
-    val topicsFilteredByTableName: List<Table> = when (tableNamePattern) {
-      null -> tables.toList()
-      else -> tables.filter { it.name.matches(tableNamePattern.replace("%", ".*").toRegex()) }
+    val tableNameFilter: (ResultSet) -> Boolean = {
+      when (tableNamePattern) {
+        null -> true
+        else -> it.getString(3).matches(tableNamePattern.replace("%", ".*").toRegex())
+      }
     }
 
-    return when (types) {
-      null -> topicsFilteredByTableName
-      else -> topicsFilteredByTableName.filter { types.contains(tableType(it.name)) }
+    val typeFilter: (ResultSet) -> Boolean = {
+      types == null || types.isEmpty() || types.contains(it.getString(4))
     }
+
+    return client.execute("SHOW TABLES", ShowTablesMapper)
+        .getOrHandle { throw SQLException("Error retrieving tables: $it") }
+        .filter(tableNameFilter)
+        .filter(typeFilter)
   }
 
   override fun getTables(catalog: String?,
                          schemaPattern: String?,
                          tableNamePattern: String?,
-                         types: Array<out String>?): ResultSet {
-
-    val rows = fetchTables(tableNamePattern, types).map {
-      val array = arrayOf<Any?>(
-          null,
-          null,
-          it.name,
-          tableType(it.name),
-          null,
-          null,
-          null,
-          null
-      )
-      ArrayRow(array)
-    }
-
-    return RowResultSet(null, Schemas.Tables, rows)
+                         types: Array<out String>?): ResultSet = runBlocking {
+    fetchTables(tableNamePattern, types)
   }
 
   override fun getColumns(catalog: String?,
@@ -152,19 +132,21 @@ class LDatabaseMetaData(private val conn: Connection,
       return ArrayRow(array)
     }
 
-    val rows: List<Row> = fetchTables(tableNamePattern, null).flatMap { topic ->
-      when (topic.valueSchema) {
-        null, "" -> emptyList()
-        else -> {
-          val schema = Schema.Parser().parse(topic.valueSchema)!!
-          when (schema.type) {
-            Schema.Type.RECORD -> schema.fields.withIndex().map { (k, field) -> fieldToRow(topic, field, k) }
-            else -> emptyList()
-          }
-        }
-      }
-    }
-    return RowResultSet(null, Schemas.Columns, rows)
+//    val rows: List<Row> = fetchTables(tableNamePattern, null).flatMap { topic ->
+//      when (topic.valueSchema) {
+//        null, "" -> emptyList()
+//        else -> {
+//          val schema = Schema.Parser().parse(topic.valueSchema)!!
+//          when (schema.type) {
+//            Schema.Type.RECORD -> schema.fields.withIndex().map { (k, field) -> fieldToRow(topic, field, k) }
+//            else -> emptyList()
+//          }
+//        }
+//      }
+//    }
+//    return RowResultSet(null, Schemas.Columns, rows)
+
+    TODO()
   }
 
   override fun supportsMultipleResultSets(): Boolean = true
@@ -223,7 +205,6 @@ class LDatabaseMetaData(private val conn: Connection,
     return RowResultSet.fromRecords(Schemas.TableTypes, records)
   }
 
-  override fun getURL(): String = uri
 
   override fun supportsNamedParameters(): Boolean = false
 
@@ -338,7 +319,6 @@ class LDatabaseMetaData(private val conn: Connection,
   override fun supportsSchemasInProcedureCalls(): Boolean = false
   override fun supportsCatalogsInProcedureCalls(): Boolean = false
 
-  override fun getUserName(): String = user
 
   override fun getBestRowIdentifier(catalog: String?, schema: String?, table: String?, scope: Int, nullable: Boolean): ResultSet {
     return RowResultSet.empty()

@@ -12,7 +12,8 @@ import java.time.ZoneId
 import java.util.*
 
 /**
- * An implementation of Row that will attempt to convert its values to the required data type.
+ * An implementation of [Row] that will attempt to convert its values
+ * to the required data type.
  */
 abstract class ConvertingRow : Row {
 

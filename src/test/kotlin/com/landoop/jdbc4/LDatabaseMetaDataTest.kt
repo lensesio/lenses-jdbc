@@ -14,33 +14,33 @@ import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.DriverManager
 
-class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
+class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
 
   init {
 
     LDriver()
 
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
+    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
 
     "LsqlDatabaseMetaDataTest" should {
-      "declare support for multiple result sets" {
+      "!declare support for multiple result sets" {
         conn.metaData.supportsMultipleResultSets() shouldBe true
         conn.metaData.supportsMultipleOpenResults() shouldBe false
         conn.metaData.supportsMultipleTransactions() shouldBe false
       }
-      "declare support for joins" {
+      "!declare support for joins" {
         conn.metaData.supportsFullOuterJoins() shouldBe false
         conn.metaData.supportsLimitedOuterJoins() shouldBe false
         conn.metaData.supportsOuterJoins() shouldBe false
       }
-      "declare support for subqueries" {
+      "!declare support for subqueries" {
         conn.metaData.supportsSubqueriesInIns() shouldBe true
         conn.metaData.supportsCorrelatedSubqueries() shouldBe false
         conn.metaData.supportsSubqueriesInComparisons() shouldBe false
         conn.metaData.supportsSubqueriesInExists() shouldBe false
         conn.metaData.supportsSubqueriesInQuantifieds() shouldBe false
       }
-      "declare support for transactions" {
+      "!declare support for transactions" {
         conn.metaData.supportsTransactions() shouldBe false
         conn.metaData.supportsMultipleTransactions() shouldBe false
         conn.metaData.dataDefinitionIgnoredInTransactions() shouldBe false
@@ -51,7 +51,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         conn.metaData.supportsDataDefinitionAndDataManipulationTransactions() shouldBe false
         conn.metaData.supportsDataManipulationTransactionsOnly() shouldBe false
       }
-      "return type info" {
+      "!return type info" {
 
         val string = resultSetList(conn.metaData.typeInfo).first { it[0] == "STRING" }
         string[1] shouldBe java.sql.Types.VARCHAR
@@ -65,14 +65,14 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         long[3] shouldBe null
         long[4] shouldBe null
       }
-      "return compatible table types" {
+      "!return compatible table types" {
         resultSetList(conn.metaData.tableTypes).map { it[0] } shouldBe listOf("TABLE", "SYSTEM TABLE")
       }
       "return all table names" {
         val tableNames = resultSetList(conn.metaData.getTables(null, null, null, null)).map { it[2].toString() }
         tableNames.shouldContainAll("cc_data", "cc_payments")
       }
-      "support table types when listing tables" {
+      "!support table types when listing tables" {
         val tableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("TABLE"))).map { it[2].toString() }
         tableNames.shouldContain("cc_data")
         tableNames.shouldContain("cc_payments")
@@ -100,7 +100,7 @@ class LsqlDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         tableNames.size shouldBe 3
         tableNames.shouldContainAll("topicregex_dibble", "topicregex_dobble", "topicregex_dubble")
       }
-      "support listing columns with correct types" {
+      "!support listing columns with correct types" {
         val columns = resultSetList(conn.metaData.getColumns(null, null, null, null))
         val currency = columns.filter { it[2] == "cc_payments" }.first { it[3] == "currency" }
         currency[4] shouldBe java.sql.Types.VARCHAR

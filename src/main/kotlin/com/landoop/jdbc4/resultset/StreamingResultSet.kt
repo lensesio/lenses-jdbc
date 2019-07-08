@@ -11,7 +11,8 @@ import java.sql.SQLFeatureNotSupportedException
  */
 interface StreamingResultSet : ResultSet {
 
-  val cursor: Int
+  // returns the current row offset, the first row is 0
+  val offset: Int
 
   override fun absolute(row: Int): Boolean = throw SQLFeatureNotSupportedException()
   override fun relative(rows: Int): Boolean = throw SQLFeatureNotSupportedException()
@@ -34,7 +35,7 @@ interface StreamingResultSet : ResultSet {
   override fun getType(): Int = ResultSet.TYPE_FORWARD_ONLY
 
   override fun isLast(): Boolean = false
-  override fun isFirst(): Boolean = cursor == 0
-  override fun isBeforeFirst(): Boolean = cursor < 0
+  override fun isFirst(): Boolean = offset == 0
+  override fun isBeforeFirst(): Boolean = offset < 0
   override fun isAfterLast(): Boolean = false
 }

@@ -64,9 +64,7 @@ class LDriver : Driver, Logging, IWrapper {
         null
       } else {
         val (baseUrl, urlProps) = parseUrl(url)
-        if (props != null) {
-          props.putAll(urlProps)
-        }
+        props?.putAll(urlProps)
         LConnection(baseUrl, props ?: Properties())
       }
     }

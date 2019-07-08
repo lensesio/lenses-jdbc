@@ -5,6 +5,10 @@ import org.apache.avro.generic.GenericData
 import java.math.BigDecimal
 import java.sql.SQLException
 
+/**
+ * An implementation of [Row] that uses a static list of values
+ * provided at construction time.
+ */
 class ArrayRow(private val array: Array<Any?>) : ConvertingRow() {
   override fun getObject(index: Int): Any? = array[index - 1]
 }

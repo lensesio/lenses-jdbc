@@ -1,5 +1,6 @@
 package com.landoop.jdbc4
 
+import com.landoop.jdbc4.client.LensesClient
 import com.landoop.jdbc4.client.RestClient
 import com.landoop.jdbc4.client.domain.Credentials
 import com.landoop.jdbc4.statements.InsertPreparedStatement
@@ -39,7 +40,8 @@ class LConnection(private val uri: String,
     logger.debug("Connection will use urls $this")
   }
 
-  private val client = RestClient(urls, Credentials(user, password), weakSSL)
+  private val oldclient = RestClient(urls, Credentials(user, password), weakSSL)
+  private val client = LensesClient(urls.first(), Credentials(user, password), weakSSL)
 
   override fun getHoldability(): Int = ResultSet.CLOSE_CURSORS_AT_COMMIT
 
@@ -66,13 +68,13 @@ class LConnection(private val uri: String,
   override fun getSchema(): String? = null
 
   // timeout is ignored, and the default timeout of the client is used
-  override fun isValid(timeout: Int): Boolean = client.isValid()
+  override fun isValid(timeout: Int): Boolean = oldclient.isValid()
 
   override fun close() {
-    client.close()
+    oldclient.close()
   }
 
-  override fun isClosed(): Boolean = client.isClosed
+  override fun isClosed(): Boolean = oldclient.isClosed
 
   override fun createArrayOf(typeName: String?, elements: Array<out Any>?): java.sql.Array =
       throw SQLFeatureNotSupportedException()
@@ -88,12 +90,12 @@ class LConnection(private val uri: String,
   override fun setClientInfo(name: String?, value: String?) = throw SQLFeatureNotSupportedException()
   override fun setClientInfo(properties: Properties?) = throw SQLFeatureNotSupportedException()
 
-  override fun createStatement(): Statement = LStatement(this, client)
+  override fun createStatement(): Statement = LStatement(this, oldclient)
   override fun prepareStatement(sql: String): PreparedStatement {
     return if (sql.trim().toUpperCase().startsWith("SELECT")) SelectPreparedStatement(this,
-        client,
+        oldclient,
         sql)
-    else InsertPreparedStatement(this, client, sql)
+    else InsertPreparedStatement(this, oldclient, sql)
   }
 
   override fun getTypeMap(): MutableMap<String, Class<*>> = throw SQLFeatureNotSupportedException()
@@ -103,7 +105,7 @@ class LConnection(private val uri: String,
     // javadoc requests noop for non-supported
   }
 
-  override fun getNetworkTimeout(): Int = client.connectionRequestTimeout()
+  override fun getNetworkTimeout(): Int = oldclient.connectionRequestTimeout()
 
   override fun setTypeMap(map: MutableMap<String, Class<*>>?) = throw SQLFeatureNotSupportedException()
 
