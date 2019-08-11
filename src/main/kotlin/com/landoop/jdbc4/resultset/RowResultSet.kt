@@ -23,7 +23,7 @@ abstract class RowResultSet : AbstractResultSet {
   private var lastValue: Any? = null
 
   // returns the meta data for the current row
-  abstract fun meta(): LResultSetMetaData
+  protected abstract fun meta(): AvroSchemaResultSetMetaData
 
   override fun findColumn(label: String): Int = meta().indexForLabel(label)
 
@@ -38,27 +38,26 @@ abstract class RowResultSet : AbstractResultSet {
   override fun getDate(index: Int): Date? = trackObject(currentRow().getDate(index))
   override fun getDate(label: String): Date? = trackObject(getDate(meta().indexForLabel(label)))
   override fun getDate(index: Int, cal: Calendar?): Date? = trackObject(currentRow().getDate(index, cal))
-  override fun getDate(label: String, cal: Calendar?): Date? = trackObject(currentRow().getDate(meta().indexForLabel(
-      label), cal))
+  override fun getDate(label: String, cal: Calendar?): Date? =
+      trackObject(currentRow().getDate(meta().indexForLabel(label), cal))
 
   override fun getBoolean(index: Int): Boolean = trackObject(currentRow().getBoolean(index))
   override fun getBoolean(label: String): Boolean = trackObject(currentRow().getBoolean(meta().indexForLabel(label)))
-  override fun getBigDecimal(index: Int, scale: Int): BigDecimal? = trackObject(currentRow().getBigDecimal(index,
-      scale))
+  override fun getBigDecimal(index: Int, scale: Int): BigDecimal? =
+      trackObject(currentRow().getBigDecimal(index, scale))
 
-  override fun getBigDecimal(label: String,
-                             scale: Int): BigDecimal? = trackObject(currentRow().getBigDecimal(meta().indexForLabel(
-      label), scale))
+  override fun getBigDecimal(label: String, scale: Int): BigDecimal? =
+      trackObject(currentRow().getBigDecimal(meta().indexForLabel(label), scale))
 
   override fun getBigDecimal(index: Int): BigDecimal? = trackObject(currentRow().getBigDecimal(index))
-  override fun getBigDecimal(label: String): BigDecimal? = trackObject(currentRow().getBigDecimal(meta().indexForLabel(
-      label)))
+  override fun getBigDecimal(label: String): BigDecimal? =
+      trackObject(currentRow().getBigDecimal(meta().indexForLabel(label)))
 
   override fun getTime(index: Int): Time? = trackObject(currentRow().getTime(index))
   override fun getTime(label: String): Time? = trackObject(currentRow().getTime(meta().indexForLabel(label)))
   override fun getTime(index: Int, cal: Calendar): Time? = trackObject(currentRow().getTime(index, cal))
-  override fun getTime(label: String, cal: Calendar): Time? = trackObject(currentRow().getTime(meta().indexForLabel(
-      label), cal))
+  override fun getTime(label: String, cal: Calendar): Time? =
+      trackObject(currentRow().getTime(meta().indexForLabel(label), cal))
 
   override fun getByte(index: Int): Byte = trackObject(currentRow().getByte(index))
   override fun getByte(label: String): Byte = trackObject(currentRow().getByte(meta().indexForLabel(label)))
@@ -75,13 +74,12 @@ abstract class RowResultSet : AbstractResultSet {
   override fun getShort(index: Int): Short = trackObject(currentRow().getShort(index))
   override fun getShort(label: String): Short = trackObject(currentRow().getShort(meta().indexForLabel(label)))
   override fun getTimestamp(index: Int): Timestamp? = trackObject(currentRow().getTimestamp(index))
-  override fun getTimestamp(label: String): Timestamp? = trackObject(currentRow().getTimestamp(meta().indexForLabel(
-      label)))
+  override fun getTimestamp(label: String): Timestamp? =
+      trackObject(currentRow().getTimestamp(meta().indexForLabel(label)))
 
   override fun getTimestamp(index: Int, cal: Calendar): Timestamp? = trackObject(currentRow().getTimestamp(index, cal))
-  override fun getTimestamp(label: String,
-                            cal: Calendar): Timestamp? = trackObject(currentRow().getTimestamp(meta().indexForLabel(
-      label), cal))
+  override fun getTimestamp(label: String, cal: Calendar): Timestamp? =
+      trackObject(currentRow().getTimestamp(meta().indexForLabel(label), cal))
 
   override fun getBytes(index: Int): ByteArray? = trackObject(currentRow().getBytes(index))
   override fun getBytes(label: String): ByteArray? = trackObject(currentRow().getBytes(meta().indexForLabel(label)))

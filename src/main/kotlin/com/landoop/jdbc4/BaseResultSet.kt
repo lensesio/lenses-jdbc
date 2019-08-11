@@ -1,6 +1,6 @@
 package com.landoop.jdbc4
 
-import com.landoop.jdbc4.resultset.LResultSetMetaData
+import com.landoop.jdbc4.resultset.AvroSchemaResultSetMetaData
 import com.landoop.jdbc4.row.Row
 import java.io.InputStream
 import java.io.Reader
@@ -44,7 +44,7 @@ abstract class BaseResultSet(val stmt: Statement?) : ResultSet, IWrapper {
     return t
   }
 
-  abstract fun meta(): LResultSetMetaData
+  abstract fun meta(): AvroSchemaResultSetMetaData
 
   override fun getMetaData(): ResultSetMetaData  = meta()
 

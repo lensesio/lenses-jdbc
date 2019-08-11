@@ -2,20 +2,17 @@ package com.landoop.jdbc4.resultset
 
 import com.landoop.jdbc4.AvroSchemas
 import com.landoop.jdbc4.IWrapper
-import com.landoop.jdbc4.isNullable
 import org.apache.avro.LogicalTypes
 import org.apache.avro.Schema
-import java.sql.ResultSet
 import java.sql.ResultSetMetaData
 import java.sql.SQLException
 
-class LResultSetMetaData(private val schema: Schema,
-                         private val rs: ResultSet) : ResultSetMetaData, IWrapper {
+class AvroSchemaResultSetMetaData(private val schema: Schema) : ResultSetMetaData, IWrapper {
 
   override fun getTableName(column: Int): String = schema.name
 
   override fun isNullable(column: Int): Int {
-    return when (schemaForIndex(column).isNullable()) {
+    return when (schemaForIndex(column).isNullable) {
       true -> ResultSetMetaData.columnNullable
       false -> ResultSetMetaData.columnNullableUnknown
     }
@@ -46,8 +43,7 @@ class LResultSetMetaData(private val schema: Schema,
   override fun getScale(column: Int): Int {
     return when (typeForIndex(column)) {
       Schema.Type.BYTES -> {
-        val logicalType = schemaForIndex(column).logicalType
-        when (logicalType) {
+        when (val logicalType = schemaForIndex(column).logicalType) {
           is LogicalTypes.Decimal -> logicalType.scale
           else -> 0
         }

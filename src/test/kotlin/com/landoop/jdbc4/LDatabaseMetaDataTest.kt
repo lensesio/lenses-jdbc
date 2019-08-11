@@ -23,24 +23,24 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
 
     "LsqlDatabaseMetaDataTest" should {
-      "!declare support for multiple result sets" {
+      "declare support for multiple result sets" {
         conn.metaData.supportsMultipleResultSets() shouldBe true
         conn.metaData.supportsMultipleOpenResults() shouldBe false
         conn.metaData.supportsMultipleTransactions() shouldBe false
       }
-      "!declare support for joins" {
+      "declare support for joins" {
         conn.metaData.supportsFullOuterJoins() shouldBe false
         conn.metaData.supportsLimitedOuterJoins() shouldBe false
         conn.metaData.supportsOuterJoins() shouldBe false
       }
-      "!declare support for subqueries" {
+      "declare support for subqueries" {
         conn.metaData.supportsSubqueriesInIns() shouldBe true
         conn.metaData.supportsCorrelatedSubqueries() shouldBe false
         conn.metaData.supportsSubqueriesInComparisons() shouldBe false
         conn.metaData.supportsSubqueriesInExists() shouldBe false
         conn.metaData.supportsSubqueriesInQuantifieds() shouldBe false
       }
-      "!declare support for transactions" {
+      "declare support for transactions" {
         conn.metaData.supportsTransactions() shouldBe false
         conn.metaData.supportsMultipleTransactions() shouldBe false
         conn.metaData.dataDefinitionIgnoredInTransactions() shouldBe false
@@ -51,7 +51,7 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         conn.metaData.supportsDataDefinitionAndDataManipulationTransactions() shouldBe false
         conn.metaData.supportsDataManipulationTransactionsOnly() shouldBe false
       }
-      "!return type info" {
+      "return type info" {
 
         val string = resultSetList(conn.metaData.typeInfo).first { it[0] == "STRING" }
         string[1] shouldBe java.sql.Types.VARCHAR
@@ -65,24 +65,24 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         long[3] shouldBe null
         long[4] shouldBe null
       }
-      "!return compatible table types" {
-        resultSetList(conn.metaData.tableTypes).map { it[0] } shouldBe listOf("TABLE", "SYSTEM TABLE")
+      "return table types" {
+        resultSetList(conn.metaData.tableTypes).map { it[0] } shouldBe listOf("SYSTEM", "USER")
       }
       "return all table names" {
-        val tableNames = resultSetList(conn.metaData.getTables(null, null, null, null)).map { it[2].toString() }
-        tableNames.shouldContainAll("cc_data", "cc_payments")
+        val tableNames = resultSetList(conn.metaData.getTables(null, null, null, null)).map { it[2] }
+        tableNames.shouldContainAll("flights", "nyc_yellow_taxi_trip_data")
       }
       "!support table types when listing tables" {
-        val tableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("TABLE"))).map { it[2].toString() }
-        tableNames.shouldContain("cc_data")
-        tableNames.shouldContain("cc_payments")
+        val tableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("USER"))).map { it[2].toString() }
+        tableNames.shouldContain("flights")
+        tableNames.shouldContain("nyc_yellow_taxi_trip_data")
         tableNames.shouldNotContain("__consumer_offsets")
-        tableNames.shouldNotContain("_kafka_lenses_processors")
+        tableNames.shouldContain("_kafka_lenses_processors")
 
-        val systemTableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("SYSTEM TABLE"))).map { it[2].toString() }
+        val systemTableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("SYSTEM"))).map { it[2].toString() }
         systemTableNames.shouldContainAll("__consumer_offsets", "_schemas", "_kafka_lenses_processors")
-        systemTableNames.shouldNotContain("cc_data")
-        systemTableNames.shouldNotContain("cc_payments")
+        systemTableNames.shouldNotContain("flights")
+        systemTableNames.shouldNotContain("nyc_yellow_taxi_trip_data")
       }
       "!support table regex when listing tables" {
         // lets add some of our own tables and make sure they appear in the list of all

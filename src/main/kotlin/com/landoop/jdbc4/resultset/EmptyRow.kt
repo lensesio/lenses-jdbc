@@ -59,14 +59,8 @@ object EmptyRow : Row {
     TODO()
   }
 
-  override fun getTime(index: Int): Time? {
-    TODO()
-  }
-
-  override fun getTime(index: Int, cal: Calendar?): Time? {
-    TODO()
-  }
-
+  override fun getTime(index: Int): Time? = null
+  override fun getTime(index: Int, cal: Calendar?): Time? = null
   override fun getLong(index: Int): Long {
     TODO()
   }

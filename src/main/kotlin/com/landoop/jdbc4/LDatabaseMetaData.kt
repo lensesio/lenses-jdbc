@@ -3,13 +3,14 @@ package com.landoop.jdbc4
 import arrow.core.getOrHandle
 import com.landoop.jdbc4.client.LensesClient
 import com.landoop.jdbc4.client.domain.Table
+import com.landoop.jdbc4.resultset.ListResultSet
 import com.landoop.jdbc4.resultset.filter
 import com.landoop.jdbc4.row.ArrayRow
 import com.landoop.jdbc4.row.Row
 import com.landoop.jdbc4.util.Logging
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecordBuilder
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.ResultSet
@@ -20,12 +21,6 @@ class LDatabaseMetaData(private val conn: Connection,
                         private val client: LensesClient,
                         private val uri: String,
                         private val user: String) : DatabaseMetaData, Logging, IWrapper {
-
-  companion object {
-    const val TABLE_NAME = "TABLE"
-    const val SYSTEM_TABLE_NAME = "SYSTEM TABLE"
-    val TABLE_TYPES = listOf(TABLE_NAME, SYSTEM_TABLE_NAME)
-  }
 
   override fun getUserName(): String = user
   override fun getURL(): String = uri
@@ -69,6 +64,7 @@ class LDatabaseMetaData(private val conn: Connection,
   override fun supportsResultSetType(type: Int): Boolean = ResultSet.TYPE_FORWARD_ONLY == type
   override fun supportsSchemasInIndexDefinitions(): Boolean = false
 
+  @ObsoleteCoroutinesApi
   private suspend fun fetchTables(tableNamePattern: String?,
                                   types: Array<out String>?): ResultSet {
 
@@ -196,15 +192,10 @@ class LDatabaseMetaData(private val conn: Connection,
 
   override fun supportsOpenCursorsAcrossRollback(): Boolean = false
 
-  override fun getTableTypes(): ResultSet {
-    val records = TABLE_TYPES.map {
-      GenericRecordBuilder(Schemas.TableTypes)
-          .set("TABLE_TYPE", it)
-          .build()
-    }
-    return RowResultSet.fromRecords(Schemas.TableTypes, records)
+  override fun getTableTypes(): ResultSet = runBlocking {
+    client.execute("SHOW TABLE TYPES", ShowTableTypesMapper)
+        .getOrHandle { throw SQLException("Error retrieving table types: $it") }
   }
-
 
   override fun supportsNamedParameters(): Boolean = false
 
@@ -253,7 +244,7 @@ class LDatabaseMetaData(private val conn: Connection,
           10)
       ArrayRow(array)
     }
-    return RowResultSet(null, Schemas.TypeInfo, rows)
+    return ListResultSet(null, Schemas.TypeInfo, rows)
   }
 
   override fun getVersionColumns(catalog: String?,

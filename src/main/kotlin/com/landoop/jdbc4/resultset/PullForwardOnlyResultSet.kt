@@ -6,13 +6,10 @@ import java.sql.SQLFeatureNotSupportedException
 
 /**
  * Partial implementation of [ResultSet] for such result sets that are
- * streaming based. Streaming means that the cursor cannot be manipulated by
+ * pull-based forward moving only. This means that the cursor cannot be manipulated by
  * the user of this resultset, other than invoking next to move along the stream.
  */
-interface StreamingResultSet : ResultSet {
-
-  // returns the current row offset, the first row is 0
-  val offset: Int
+interface PullForwardOnlyResultSet : ResultSet {
 
   override fun absolute(row: Int): Boolean = throw SQLFeatureNotSupportedException()
   override fun relative(rows: Int): Boolean = throw SQLFeatureNotSupportedException()
@@ -35,7 +32,7 @@ interface StreamingResultSet : ResultSet {
   override fun getType(): Int = ResultSet.TYPE_FORWARD_ONLY
 
   override fun isLast(): Boolean = false
-  override fun isFirst(): Boolean = offset == 0
-  override fun isBeforeFirst(): Boolean = offset < 0
+  override fun isFirst(): Boolean = row == 1
+  override fun isBeforeFirst(): Boolean = row < 1
   override fun isAfterLast(): Boolean = false
 }
