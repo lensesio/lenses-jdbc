@@ -17,3 +17,5 @@ fun resultSetList(rs: ResultSet): List<List<Any?>> {
   }
   return results.toList()
 }
+
+fun ResultSet.toList() = resultSetList(this)

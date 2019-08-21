@@ -27,6 +27,7 @@ import io.ktor.util.KtorExperimentalAPI
 import io.lenses.jdbc4.client.domain.Credentials
 import io.lenses.jdbc4.resultset.RowResultSet
 import io.lenses.jdbc4.resultset.WebSocketResultSet
+import io.lenses.jdbc4.resultset.WebsocketConnection
 import io.lenses.jdbc4.row.ListRow
 import io.lenses.jdbc4.row.Row
 import io.lenses.jdbc4.util.Logging
@@ -46,11 +47,6 @@ import java.net.URLEncoder
 import java.sql.SQLException
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
-import javax.websocket.ClientEndpointConfig
-import javax.websocket.Endpoint
-import javax.websocket.EndpointConfig
-import javax.websocket.MessageHandler
-import javax.websocket.Session
 
 data class Token(val value: String)
 
@@ -167,24 +163,19 @@ class LensesClient(private val url: String,
     val endpoint = "$url/api/ws/v3/jdbc/execute?sql=$escapedSql"
     return withAuthenticatedWebsocket(endpoint).flatMap {
       // we always need the first row to generate the schema
-      frameToSchema(it.take()).map { schema ->
+      frameToSchema(it.queue.take()).map { schema ->
         WebSocketResultSet(null, schema, it, frameToRow, f)
       }
-      //it.incoming.receiveOrNull().rightIfNotNull { JdbcError.NoData }
-      //  .flatMap(frameToSchema)
-      //.map { schema ->
-      //WebSocketResultSet(null, schema, it, frameToRow, f)
-      //}
     }
   }
 
-  private suspend fun withAuthenticatedWebsocket(url: String): Either<JdbcError, BlockingQueue<String>> {
+  private suspend fun withAuthenticatedWebsocket(url: String): Either<JdbcError, WebsocketConnection> {
     return authenticate().flatMap { token ->
       val uri = URI.create(url.replace("https://", "ws://").replace("http://", "ws://"))
       val headers = WebSocketHttpHeaders()
       headers.add(LensesTokenHeader, token.value)
       val wsclient = StandardWebSocketClient()
-      val queue = LinkedBlockingQueue<String>(20)
+      val queue = LinkedBlockingQueue<String>(200)
       val handler = object : WebSocketHandler {
         override fun handleTransportError(session: org.springframework.web.socket.WebSocketSession,
                                           exception: Throwable) {
@@ -193,10 +184,12 @@ class LensesClient(private val url: String,
 
         override fun afterConnectionClosed(session: org.springframework.web.socket.WebSocketSession,
                                            closeStatus: CloseStatus) {
+          logger.debug("Connection closed $closeStatus")
         }
 
         override fun handleMessage(session: org.springframework.web.socket.WebSocketSession,
                                    message: WebSocketMessage<*>) {
+          logger.debug("Handling message in thread ${Thread.currentThread().id}")
           when (message) {
             is TextMessage -> queue.put(message.payload)
             else -> {
@@ -213,31 +206,14 @@ class LensesClient(private val url: String,
         override fun supportsPartialMessages(): Boolean = false
       }
       logger.debug("Connecting to websocket at $uri")
-      wsclient.doHandshake(handler, headers, uri)
+      val sess = wsclient.doHandshake(handler, headers, uri).get()
 
-      val endpoint = object : Endpoint() {
-
-        override fun onOpen(session: Session, config: EndpointConfig) {
-          session.addMessageHandler(MessageHandler.Whole<String> { message ->
-            queue.add(message)
-          })
-        }
+      val conn = object : WebsocketConnection {
+        override val queue = queue
+        override fun close() = sess.close()
+        override fun isClosed(): Boolean = !sess.isOpen
       }
-
-      val configurator = object : ClientEndpointConfig.Configurator() {
-        override fun beforeRequest(headers: MutableMap<String, MutableList<String>>) {
-          headers[io.lenses.jdbc4.Constants.LensesTokenHeader] = mutableListOf(token.value)
-        }
-      }
-
-      val config: ClientEndpointConfig = ClientEndpointConfig.Builder.create().configurator(configurator).build()
-      //    wssclient.connectToServer(endpoint, config, uri)
-
-      queue.right()
-//      return client.webSocketSession(HttpMethod.Get, url.host, url.port, url.encodedPath) {
-//        header(LensesTokenHeader, token.value)
-//        url.parameters.flattenForEach { key, value -> parameter(key, value) }
-//      }.right()
+      conn.right()
     }
   }
 

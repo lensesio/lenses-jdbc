@@ -1,9 +1,11 @@
-package io.lenses.jdbc4
+package io.lenses.jdbc4.queries
 
 import io.kotlintest.assertSoftly
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.WordSpec
+import io.lenses.jdbc4.LDriver
+import io.lenses.jdbc4.ProducerSetup
 import java.sql.DriverManager
 import java.sql.SQLException
 
@@ -11,14 +13,14 @@ class SelectTest : WordSpec(), ProducerSetup {
 
   init {
 
-    io.lenses.jdbc4.LDriver()
+    LDriver()
 
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
 
     "JDBC Driver" should {
       "throw error for unknown table" {
         shouldThrow<SQLException> {
-          val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
+          val q = "SELECT * FROM `qweqweqwe` WHERE _vtype='AVRO' AND _ktype='STRING'"
           val stmt = conn.createStatement()
           stmt.executeQuery(q)
         }
