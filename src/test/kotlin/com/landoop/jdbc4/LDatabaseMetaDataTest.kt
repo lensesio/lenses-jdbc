@@ -72,7 +72,7 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         val tableNames = resultSetList(conn.metaData.getTables(null, null, null, null)).map { it[2] }
         tableNames.shouldContainAll("flights", "nyc_yellow_taxi_trip_data")
       }
-      "!support table types when listing tables" {
+      "support table types when listing tables" {
         val tableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("USER"))).map { it[2].toString() }
         tableNames.shouldContain("flights")
         tableNames.shouldContain("nyc_yellow_taxi_trip_data")
@@ -84,7 +84,7 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         systemTableNames.shouldNotContain("flights")
         systemTableNames.shouldNotContain("nyc_yellow_taxi_trip_data")
       }
-      "!support table regex when listing tables" {
+      "support table regex when listing tables" {
         // lets add some of our own tables and make sure they appear in the list of all
         val schema = SchemaBuilder.record("wibble").fields().requiredString("foo").endRecord()
         val producer = KafkaProducer<String, GenericData.Record>(producerProps())
@@ -100,7 +100,7 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         tableNames.size shouldBe 3
         tableNames.shouldContainAll("topicregex_dibble", "topicregex_dobble", "topicregex_dubble")
       }
-      "!support listing columns with correct types" {
+      "support listing columns with correct types" {
         val columns = resultSetList(conn.metaData.getColumns(null, null, null, null))
         val currency = columns.filter { it[2] == "cc_payments" }.first { it[3] == "currency" }
         currency[4] shouldBe java.sql.Types.VARCHAR
@@ -114,7 +114,7 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         blocked[4] shouldBe java.sql.Types.BOOLEAN
         blocked[5] shouldBe "BOOLEAN"
       }
-      "!support listing columns with correct nullability" {
+      "support listing columns with correct nullability" {
 
         val topic = createTopic()
 

@@ -5,6 +5,7 @@ import java.io.Reader
 import java.math.BigDecimal
 import java.sql.Date
 import java.sql.ResultSet
+import java.sql.ResultSetMetaData
 import java.sql.Time
 import java.sql.Timestamp
 import java.util.*
@@ -23,7 +24,7 @@ abstract class RowResultSet : AbstractResultSet {
   private var lastValue: Any? = null
 
   // returns the meta data for the current row
-  protected abstract fun meta(): AvroSchemaResultSetMetaData
+  protected abstract fun meta(): ResultSetMetaData
 
   override fun findColumn(label: String): Int = meta().indexForLabel(label)
 

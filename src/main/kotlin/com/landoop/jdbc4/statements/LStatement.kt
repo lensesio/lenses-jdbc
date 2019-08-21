@@ -1,9 +1,8 @@
 package com.landoop.jdbc4.statements
 
-import com.landoop.jdbc4.RowResultSet
-import com.landoop.jdbc4.StreamingRowResultSet
 import com.landoop.jdbc4.client.RestClient
 import com.landoop.jdbc4.client.domain.StreamingSelectResult
+import com.landoop.jdbc4.resultset.emptyResultSet
 import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.SQLFeatureNotSupportedException
@@ -16,7 +15,7 @@ open class LStatement(private val conn: Connection,
     OfflineStatement {
 
   // the last resultset retrieved by this statement
-  private var rs: ResultSet = RowResultSet.empty()
+  private var rs: ResultSet = emptyResultSet
 
   /**
    * Executes the given SQL statement, which returns a single
@@ -44,7 +43,7 @@ open class LStatement(private val conn: Connection,
       // in this execute method we must block until we are completed
       // or we receive a record, otherwise we don't know if we can return true or false
       val result = select(sql)
-      rs = StreamingRowResultSet(this, result)
+      // todo  rs = StreamingRowResultSet(this, result)
       result.hasData(1, TimeUnit.DAYS)
     }
   }
@@ -57,7 +56,7 @@ open class LStatement(private val conn: Connection,
 
   private fun select(sql: String): StreamingSelectResult {
     val result = client.select(sql)
-    rs = StreamingRowResultSet(this, result)
+    // todo   rs = StreamingRowResultSet(this, result)
     return result
   }
 

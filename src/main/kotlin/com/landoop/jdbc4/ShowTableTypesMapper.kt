@@ -1,6 +1,6 @@
 package com.landoop.jdbc4
 
-import com.landoop.jdbc4.row.ArrayRow
+import com.landoop.jdbc4.row.ListRow
 import com.landoop.jdbc4.row.Row
 
 /**
@@ -12,5 +12,5 @@ import com.landoop.jdbc4.row.Row
  *  </OL>
  */
 object ShowTableTypesMapper : (Row) -> Row {
-  override fun invoke(row: Row): Row = ArrayRow(arrayOf(row.getString(1)))
+  override fun invoke(row: Row): Row = ListRow(listOf(row.getString(1)))
 }

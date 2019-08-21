@@ -1,5 +1,6 @@
 package com.landoop.jdbc4
 
+import com.landoop.jdbc4.resultset.ListResultSet
 import com.landoop.jdbc4.row.RecordRow
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
@@ -9,13 +10,13 @@ import org.apache.avro.generic.GenericRecordBuilder
 import java.sql.ResultSet
 import java.sql.SQLFeatureNotSupportedException
 
-class RowResultSetTest : WordSpec() {
+class ListResultSetTest : WordSpec() {
   init {
-    "LsqlResultSet" should {
+    "ListResultSet" should {
       "support findColumn as 1-indexed" {
         val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").optionalString("goo").endRecord()
         val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()))
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         rs.next()
         rs.findColumn("foo") shouldBe 1
         rs.findColumn("goo") shouldBe 2
@@ -26,7 +27,7 @@ class RowResultSetTest : WordSpec() {
             RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()),
             RecordRow(GenericRecordBuilder(schema).set("foo", "boo").build())
         )
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         rs.next()
         rs.getString(1) shouldBe "woo"
         rs.next()
@@ -38,7 +39,7 @@ class RowResultSetTest : WordSpec() {
             RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()),
             RecordRow(GenericRecordBuilder(schema).set("foo", "boo").build())
         )
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         rs.last()
         rs.getString(1) shouldBe "boo"
         rs.previous()
@@ -47,7 +48,7 @@ class RowResultSetTest : WordSpec() {
       "support by label lookup" {
         val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").optionalString("goo").endRecord()
         val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()))
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         rs.next()
         rs.getString("foo") shouldBe "woo"
         rs.getString("goo") shouldBe null
@@ -55,7 +56,7 @@ class RowResultSetTest : WordSpec() {
       "getString of null should return null" {
         val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
         val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", null).build()))
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         rs.next()
         rs.getString("foo") shouldBe null
       }
@@ -66,7 +67,7 @@ class RowResultSetTest : WordSpec() {
             RecordRow(GenericRecordBuilder(schema).set("foo", "goo").build()),
             RecordRow(GenericRecordBuilder(schema).set("foo", "boo").build())
         )
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         rs.absolute(3)
         rs.getString(1) shouldBe "boo"
         rs.absolute(1)
@@ -79,7 +80,7 @@ class RowResultSetTest : WordSpec() {
             RecordRow(GenericRecordBuilder(schema).set("foo", "boo").build()),
             RecordRow(GenericRecordBuilder(schema).set("foo", "goo").build())
         )
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         // -1 is defined as the last result
         rs.absolute(-1)
         rs.getString(1) shouldBe "goo"
@@ -97,7 +98,7 @@ class RowResultSetTest : WordSpec() {
             RecordRow(GenericRecordBuilder(schema).set("foo", "boo").build()),
             RecordRow(GenericRecordBuilder(schema).set("foo", "goo").build())
         )
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         // adding 2 should move us onto the second result
         rs.relative(2)
         rs.getString(1) shouldBe "boo"
@@ -111,7 +112,7 @@ class RowResultSetTest : WordSpec() {
             RecordRow(GenericRecordBuilder(schema).set("foo", "boo").build()),
             RecordRow(GenericRecordBuilder(schema).set("foo", "goo").build())
         )
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         rs.isFirst shouldBe false
         rs.next()
         rs.isFirst shouldBe true
@@ -127,7 +128,7 @@ class RowResultSetTest : WordSpec() {
             RecordRow(GenericRecordBuilder(schema).set("foo", "boo").build()),
             RecordRow(GenericRecordBuilder(schema).set("foo", "goo").build())
         )
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         rs.isLast shouldBe false
         rs.last()
         rs.isLast shouldBe true
@@ -141,7 +142,7 @@ class RowResultSetTest : WordSpec() {
             RecordRow(GenericRecordBuilder(schema).set("foo", "boo").build()),
             RecordRow(GenericRecordBuilder(schema).set("foo", "goo").build())
         )
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         rs.isAfterLast shouldBe false
         rs.last()
         rs.isAfterLast shouldBe false
@@ -154,7 +155,7 @@ class RowResultSetTest : WordSpec() {
             RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()),
             RecordRow(GenericRecordBuilder(schema).set("foo", null).build())
         )
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         // should start as before first
         rs.isBeforeFirst shouldBe true
         // move on past the marker
@@ -167,22 +168,22 @@ class RowResultSetTest : WordSpec() {
       "return READ ONLY for concurrency" {
         val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
         val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()))
-        RowResultSet(null, schema, records).concurrency shouldBe ResultSet.CONCUR_READ_ONLY
+        ListResultSet(null, schema, records).concurrency shouldBe ResultSet.CONCUR_READ_ONLY
       }
       "return true for isClosed" {
         val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
         val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()))
-        RowResultSet(null, schema, records).isClosed shouldBe true
+        ListResultSet(null, schema, records).isClosed shouldBe true
       }
       "return TYPE_SCROLL_INSENSITIVE for type" {
         val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
         val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()))
-        RowResultSet(null, schema, records).type shouldBe ResultSet.TYPE_SCROLL_INSENSITIVE
+        ListResultSet(null, schema, records).type shouldBe ResultSet.TYPE_SCROLL_INSENSITIVE
       }
       "return -1 for fetch size" {
         val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
         val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()))
-        RowResultSet(null, schema, records).fetchSize shouldBe -1
+        ListResultSet(null, schema, records).fetchSize shouldBe -1
       }
 //      "return the statement used to create the resultset" {
 //        val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
@@ -202,7 +203,7 @@ class RowResultSetTest : WordSpec() {
             RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()),
             RecordRow(GenericRecordBuilder(schema).set("foo", null).build())
         )
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
         rs.next()
         rs.getString("foo") shouldBe "woo"
         rs.wasNull() shouldBe false
@@ -214,7 +215,7 @@ class RowResultSetTest : WordSpec() {
       "throw SQLFeatureNotSupportedException for deletion methods" {
         val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
         val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()))
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
 
         shouldThrow<SQLFeatureNotSupportedException> {
           rs.deleteRow()
@@ -227,7 +228,7 @@ class RowResultSetTest : WordSpec() {
       "throw SQLFeatureNotSupportedException for update methods" {
         val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
         val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()))
-        val rs = RowResultSet(null, schema, records)
+        val rs = ListResultSet(null, schema, records)
 
         shouldThrow<SQLFeatureNotSupportedException> {
           rs.rowUpdated()

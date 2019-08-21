@@ -9,6 +9,8 @@ import java.sql.Time
 import java.sql.Timestamp
 import java.util.*
 
+val emptyResultSet = ListResultSet(null, null, emptyList())
+
 object EmptyRow : Row {
 
   override fun getObject(index: Int): Any? {

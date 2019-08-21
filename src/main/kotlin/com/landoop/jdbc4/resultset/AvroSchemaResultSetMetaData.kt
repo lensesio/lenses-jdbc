@@ -168,3 +168,8 @@ class AvroSchemaResultSetMetaData(private val schema: Schema) : ResultSetMetaDat
     return schema.fields.find { it.name() == label } ?: throw SQLException("Unknown column $label")
   }
 }
+
+fun ResultSetMetaData.indexForLabel(label: String): Int = when (this) {
+  is AvroSchemaResultSetMetaData -> this.indexForLabel(label)
+  else -> throw UnsupportedOperationException()
+}

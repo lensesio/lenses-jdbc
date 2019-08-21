@@ -38,6 +38,8 @@ interface Row {
 
   fun getDouble(index: Int): Double
 
+//  fun indexOf(alias: String): Int
+//  fun getString(alias: String): String? = getString(indexOf(alias))
   fun getString(index: Int): String?
 
   fun getShort(index: Int): Short
