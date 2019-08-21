@@ -65,7 +65,7 @@ class AvroSchemaResultSetMetaData(private val schema: Schema) : ResultSetMetaDat
 
   override fun getColumnType(column: Int): Int {
     val schema = schemaForIndex(column)
-    return io.lenses.jdbc4.AvroSchemas.sqlType(schema)
+    return AvroSchemas.sqlType(schema)
   }
 
   override fun isCurrency(column: Int): Boolean = false
