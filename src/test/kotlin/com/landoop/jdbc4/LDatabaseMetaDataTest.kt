@@ -1,5 +1,6 @@
 package com.landoop.jdbc4
 
+import com.landoop.jdbc4.resultset.resultSetList
 import io.kotlintest.matchers.collections.shouldContain
 import io.kotlintest.matchers.collections.shouldContainAll
 import io.kotlintest.matchers.collections.shouldNotContain
@@ -73,13 +74,19 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         tableNames.shouldContainAll("flights", "nyc_yellow_taxi_trip_data")
       }
       "support table types when listing tables" {
-        val tableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("USER"))).map { it[2].toString() }
+        val tableNames = resultSetList(conn.metaData.getTables(null,
+            null,
+            null,
+            arrayOf("USER"))).map { it[2].toString() }
         tableNames.shouldContain("flights")
         tableNames.shouldContain("nyc_yellow_taxi_trip_data")
         tableNames.shouldNotContain("__consumer_offsets")
         tableNames.shouldContain("_kafka_lenses_processors")
 
-        val systemTableNames = resultSetList(conn.metaData.getTables(null, null, null, arrayOf("SYSTEM"))).map { it[2].toString() }
+        val systemTableNames = resultSetList(conn.metaData.getTables(null,
+            null,
+            null,
+            arrayOf("SYSTEM"))).map { it[2].toString() }
         systemTableNames.shouldContainAll("__consumer_offsets", "_schemas", "_kafka_lenses_processors")
         systemTableNames.shouldNotContain("flights")
         systemTableNames.shouldNotContain("nyc_yellow_taxi_trip_data")
@@ -96,7 +103,10 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         producer.send(ProducerRecord<String, GenericData.Record>("topicregex_dubble", "key1", record))
         producer.close()
 
-        val tableNames = resultSetList(conn.metaData.getTables(null, null, "topicregex_d%", null)).map { it[2].toString() }
+        val tableNames = resultSetList(conn.metaData.getTables(null,
+            null,
+            "topicregex_d%",
+            null)).map { it[2].toString() }
         tableNames.size shouldBe 3
         tableNames.shouldContainAll("topicregex_dibble", "topicregex_dobble", "topicregex_dubble")
       }

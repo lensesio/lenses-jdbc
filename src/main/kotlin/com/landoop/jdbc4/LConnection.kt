@@ -71,10 +71,10 @@ class LConnection(private val uri: String,
   override fun isValid(timeout: Int): Boolean = oldclient.isValid()
 
   override fun close() {
-    oldclient.close()
+    client.close()
   }
 
-  override fun isClosed(): Boolean = oldclient.isClosed
+  override fun isClosed(): Boolean = client.isClosed()
 
   override fun createArrayOf(typeName: String?, elements: Array<out Any>?): java.sql.Array =
       throw SQLFeatureNotSupportedException()
@@ -90,7 +90,7 @@ class LConnection(private val uri: String,
   override fun setClientInfo(name: String?, value: String?) = throw SQLFeatureNotSupportedException()
   override fun setClientInfo(properties: Properties?) = throw SQLFeatureNotSupportedException()
 
-  override fun createStatement(): Statement = LStatement(this, oldclient)
+  override fun createStatement(): Statement = LStatement(this, client)
   override fun prepareStatement(sql: String): PreparedStatement {
     return if (sql.trim().toUpperCase().startsWith("SELECT")) SelectPreparedStatement(this,
         oldclient,

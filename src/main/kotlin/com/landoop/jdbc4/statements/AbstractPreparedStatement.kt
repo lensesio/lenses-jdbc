@@ -121,14 +121,6 @@ interface AbstractPreparedStatement : PreparedStatement,
 
 }
 
-interface ReadOnlyStatement : Statement {
-
-  // -- batch methods are not supported on read only statements
-
-  override fun clearBatch() = unsupported()
-  override fun executeBatch(): IntArray = unsupported()
-}
-
 interface ReadOnlyPreparedStatement : PreparedStatement {
   override fun addBatch() = unsupported()
   override fun clearBatch() = unsupported()

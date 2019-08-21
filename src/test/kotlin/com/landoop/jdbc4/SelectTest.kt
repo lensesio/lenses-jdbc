@@ -13,7 +13,7 @@ class SelectTest : WordSpec(), ProducerSetup {
 
     LDriver()
 
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
+    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
 
     "JDBC Driver" should {
       "support wildcard selection" {

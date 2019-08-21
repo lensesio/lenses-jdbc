@@ -1,4 +1,4 @@
-package com.landoop.jdbc4
+package com.landoop.jdbc4.resultset
 
 import java.sql.ResultSet
 

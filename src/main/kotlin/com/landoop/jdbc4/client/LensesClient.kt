@@ -115,6 +115,8 @@ class LensesClient(private val url: String,
     isClosed = true
   }
 
+  fun isClosed(): Boolean = isClosed
+
   // attempts to authenticate, and returns the auth token if successful
   private suspend fun authenticate(): Either<JdbcError, Token> {
 
