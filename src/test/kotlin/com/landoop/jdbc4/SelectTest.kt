@@ -1,7 +1,7 @@
 package com.landoop.jdbc4
 
+import io.kotlintest.assertSoftly
 import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.WordSpec
 import java.sql.DriverManager
@@ -16,117 +16,116 @@ class SelectTest : WordSpec(), ProducerSetup {
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
 
     "JDBC Driver" should {
+      "throw error for unknown table" {
+        shouldThrow<SQLException> {
+          val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
+          val stmt = conn.createStatement()
+          stmt.executeQuery(q)
+        }
+      }
       "support wildcard selection" {
-        val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
+        val q = "SELECT * FROM `nyc_yellow_taxi_trip_data`"
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
-        rs.metaData.columnCount shouldBe 6
-        rs.metaData.getColumnLabel(1) shouldBe "id"
-        rs.metaData.getColumnLabel(2) shouldBe "time"
-        rs.metaData.getColumnLabel(3) shouldBe "amount"
-        rs.metaData.getColumnLabel(4) shouldBe "currency"
-        rs.metaData.getColumnLabel(5) shouldBe "creditCardId"
-        rs.metaData.getColumnLabel(6) shouldBe "merchantId"
-      }
-      "support wildcard selection as a prepared statement" {
-        val sql = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
-        val stmt = conn.prepareStatement(sql)
-        val rs = stmt.executeQuery()
-        rs.metaData.columnCount shouldBe 6
-        rs.metaData.getColumnLabel(1) shouldBe "id"
-        rs.metaData.getColumnLabel(2) shouldBe "time"
-        rs.metaData.getColumnLabel(3) shouldBe "amount"
-        rs.metaData.getColumnLabel(4) shouldBe "currency"
-        rs.metaData.getColumnLabel(5) shouldBe "creditCardId"
-        rs.metaData.getColumnLabel(6) shouldBe "merchantId"
+        rs.metaData.columnCount shouldBe 19
+        List(19) { rs.metaData.getColumnLabel(it + 1) }.toSet() shouldBe
+            setOf("VendorID",
+                "tpep_pickup_datetime",
+                "tpep_dropoff_datetime",
+                "passenger_count",
+                "trip_distance",
+                "pickup_longitude",
+                "pickup_latitude",
+                "RateCodeID",
+                "store_and_fwd_flag",
+                "dropoff_longitude",
+                "dropoff_latitude",
+                "payment_type",
+                "fare_amount",
+                "extra",
+                "mta_tax",
+                "improvement_surcharge",
+                "tip_amount",
+                "tolls_amount",
+                "total_amount")
       }
       "support projections" {
-        val q = "SELECT merchantId, currency FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
+        val q = "SELECT trip_distance, creditCardId FROM `nyc_yellow_taxi_trip_data`"
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 2
-        rs.metaData.getColumnLabel(1) shouldBe "merchantId"
-        rs.metaData.getColumnLabel(2) shouldBe "currency"
-        rs.next()
-        rs.getString("currency") shouldNotBe null
-        rs.getString("merchantId") shouldNotBe null
+        assertSoftly {
+          rs.metaData.getColumnLabel(1) shouldBe "trip_distance"
+          rs.metaData.getColumnLabel(2) shouldBe "creditCardId"
+        }
       }
       "support projections with backticks" {
-        val q = "SELECT `merchantId`, currency FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
+        val q = "SELECT `trip_distance`, `creditCardId` FROM `nyc_yellow_taxi_trip_data`"
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 2
-        rs.metaData.getColumnLabel(1) shouldBe "merchantId"
-        rs.metaData.getColumnLabel(2) shouldBe "currency"
-        rs.next()
-        rs.getString("currency") shouldNotBe null
-        rs.getString("merchantId") shouldNotBe null
+        assertSoftly {
+          rs.metaData.getColumnLabel(1) shouldBe "trip_distance"
+          rs.metaData.getColumnLabel(2) shouldBe "creditCardId"
+        }
       }
       "support queries with white space" {
-        val q = "          SELECT `merchantId`, currency FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'      "
+        val q = "SELECT         `trip_distance`, `creditCardId`         FROM `nyc_yellow_taxi_trip_data`"
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 2
-        rs.metaData.getColumnLabel(1) shouldBe "merchantId"
-        rs.metaData.getColumnLabel(2) shouldBe "currency"
-        rs.next()
-        rs.getString("currency") shouldNotBe null
-        rs.getString("merchantId") shouldNotBe null
+        assertSoftly {
+          rs.metaData.getColumnLabel(1) shouldBe "trip_distance"
+          rs.metaData.getColumnLabel(2) shouldBe "creditCardId"
+        }
       }
       "support queries with new lines" {
-        val q = """          SELECT `merchantId`,
-          currency FROM `cc_payments` WHERE _vtype='AVRO'
-          AND _ktype='STRING'      """
+        val q = "SELECT         `trip_distance`, \n" +
+            "`creditCardId`       \n" +
+            "  FROM `nyc_yellow_taxi_trip_data`"
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 2
-        rs.metaData.getColumnLabel(1) shouldBe "merchantId"
-        rs.metaData.getColumnLabel(2) shouldBe "currency"
-        rs.next()
-        rs.getString("currency") shouldNotBe null
-        rs.getString("merchantId") shouldNotBe null
-      }
-      "return all results without a limit"  {
-        val q = "SET `max.time`=5000;SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING'"
-        val stmt = conn.createStatement()
-        val rs = stmt.executeQuery(q)
-        var counter = 0
-        while (rs.next()) {
-          counter += 1
-          rs.getString("currency") shouldNotBe null
-        }
-        (counter > 500) shouldBe true
-      }
-      "throw SQL exception if the topic does not exist" {
-        val q = "SELECT * FROM dribble_dobble"
-        val stmt = conn.createStatement()
-        val rs = stmt.executeQuery(q)
-        shouldThrow<SQLException> {
-          rs.next()
+        assertSoftly {
+          rs.metaData.getColumnLabel(1) shouldBe "trip_distance"
+          rs.metaData.getColumnLabel(2) shouldBe "creditCardId"
         }
       }
-//      "support schemas with two fields" {
-//        val q = "SELECT * FROM starfleet"
-//        val stmt = conn.createStatement()
-//        val rs = stmt.executeQuery(q)
-//        rs.metaData.columnCount shouldBe 6
-//        rs.metaData.getColumnLabel(1) shouldBe "id"
-//      }
       "support limits"  {
-        val q = "SELECT * FROM `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' limit 10"
+        val q = "SELECT trip_distance, creditCardId FROM `nyc_yellow_taxi_trip_data` limit 43"
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
+        rs.metaData.columnCount shouldBe 2
+        assertSoftly {
+          rs.metaData.getColumnLabel(1) shouldBe "trip_distance"
+          rs.metaData.getColumnLabel(2) shouldBe "creditCardId"
+        }
         var counter = 0
         while (rs.next()) {
           counter += 1
         }
-        counter shouldBe 10
+        counter shouldBe 43
       }
-      "return true for results" {
-        conn.createStatement().execute("select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='USD'") shouldBe true
+      "support where" {
+        val q = "SELECT trip_distance FROM `nyc_yellow_taxi_trip_data` where trip_distance > 2"
+        val stmt = conn.createStatement()
+        val rs = stmt.executeQuery(q)
+        rs.metaData.columnCount shouldBe 1
+        assertSoftly {
+          rs.metaData.getColumnLabel(1) shouldBe "trip_distance"
+        }
       }
-      "return false if no results" {
-        conn.createStatement().execute("set `max.time`=5000;select * from `cc_payments` WHERE _vtype='AVRO' AND _ktype='STRING' AND currency='wibble' and _offset < 100000") shouldBe false
+      "support where with backticks" {
+        val q = "SELECT `trip_distance` FROM `nyc_yellow_taxi_trip_data` where `trip_distance` > 2"
+        val stmt = conn.createStatement()
+        val rs = stmt.executeQuery(q)
+        rs.metaData.columnCount shouldBe 1
+        assertSoftly {
+          rs.metaData.getColumnLabel(1) shouldBe "trip_distance"
+        }
+      }
+      "return true for valid query" {
+        conn.createStatement().execute("SELECT trip_distance, creditCardId FROM `nyc_yellow_taxi_trip_data` limit 43") shouldBe true
       }
     }
   }

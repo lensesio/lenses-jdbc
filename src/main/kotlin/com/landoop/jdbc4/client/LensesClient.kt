@@ -6,9 +6,9 @@ import arrow.core.Try
 import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
-import arrow.core.rightIfNotNull
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.TextNode
+import com.landoop.jdbc4.Constants
 import com.landoop.jdbc4.JacksonSupport
 import com.landoop.jdbc4.client.domain.Credentials
 import com.landoop.jdbc4.resultset.RowResultSet
@@ -21,33 +21,44 @@ import io.ktor.client.features.compression.ContentEncoding
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.websocket.WebSockets
-import io.ktor.client.features.websocket.webSocketSession
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.accept
 import io.ktor.client.request.header
-import io.ktor.client.request.parameter
 import io.ktor.client.request.request
 import io.ktor.client.response.HttpResponse
 import io.ktor.client.response.readText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.Url
-import io.ktor.http.cio.websocket.Frame
-import io.ktor.http.cio.websocket.WebSocketSession
 import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
-import io.ktor.util.flattenForEach
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.apache.avro.Schema
+import org.glassfish.tyrus.client.ClientManager
+import org.glassfish.tyrus.client.ClientProperties
+import org.springframework.web.socket.CloseStatus
+import org.springframework.web.socket.TextMessage
+import org.springframework.web.socket.WebSocketHandler
+import org.springframework.web.socket.WebSocketHttpHeaders
+import org.springframework.web.socket.WebSocketMessage
+import org.springframework.web.socket.client.standard.StandardWebSocketClient
 import java.math.BigDecimal
+import java.net.URI
 import java.net.URLEncoder
 import java.sql.SQLException
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
+import javax.websocket.ClientEndpointConfig
+import javax.websocket.Endpoint
+import javax.websocket.EndpointConfig
+import javax.websocket.MessageHandler
+import javax.websocket.Session
 
 data class Token(val value: String)
 
 sealed class JdbcError {
   data class AuthenticationFailure(val message: String) : JdbcError()
+  data class InitialError(val message: String) : JdbcError()
   object ExecutionError : JdbcError()
   object NoData : JdbcError()
   data class ParseError(val t: Throwable) : JdbcError()
@@ -62,17 +73,25 @@ class LensesClient(private val url: String,
     const val LensesTokenHeader = "X-Kafka-Lenses-Token"
   }
 
-  private val frameToSchema: (Frame) -> Either<JdbcError, Schema> = { frame ->
-    val node = JacksonSupport.mapper.readTree(frame.data)
-    val json = when (val valueSchema = node["data"]["valueSchema"]) {
-      is TextNode -> valueSchema.asText()
-      else -> JacksonSupport.mapper.writeValueAsString(valueSchema)
+  private val frameToSchema: (String) -> Either<JdbcError, Schema> = { msg ->
+
+    fun parseSchema(node: JsonNode): Either<JdbcError, Schema> = Try {
+      val json = when (val valueSchema = node["data"]["valueSchema"]) {
+        is TextNode -> valueSchema.asText()
+        else -> JacksonSupport.mapper.writeValueAsString(valueSchema)
+      }
+      Schema.Parser().parse(json)
+    }.toEither { JdbcError.ParseError(it) }
+
+    val node = JacksonSupport.mapper.readTree(msg)
+    when (node["type"].textValue()) {
+      "SCHEMA" -> parseSchema(node)
+      else -> JdbcError.InitialError(node["data"]?.toString() ?: "unknown error").left()
     }
-    Schema.Parser().parse(json).right()
   }
 
-  private val frameToRecord: (Frame) -> Either<JdbcError.ParseError, Row> = { frame ->
-    Try { JacksonSupport.mapper.readTree(frame.data) }
+  private val frameToRecord: (String) -> Either<JdbcError.ParseError, Row> = { msg ->
+    Try { JacksonSupport.mapper.readTree(msg) }
         .toEither { JdbcError.ParseError(it) }
         .map { node ->
           val data = node["data"]
@@ -84,16 +103,20 @@ class LensesClient(private val url: String,
         }
   }
 
-  private val frameToRow: (Frame) -> Either<JdbcError.ParseError, Row?> = { frame ->
-    Try { JacksonSupport.mapper.readTree(frame.data) }
+  private val frameToRow: (String) -> Either<JdbcError.ParseError, Row?> = { msg ->
+    Try { JacksonSupport.mapper.readTree(msg) }
         .toEither { JdbcError.ParseError(it) }
         .flatMap { node ->
           when (val type = node["type"].textValue()) {
-            "RECORD" -> frameToRecord(frame)
+            "RECORD" -> frameToRecord(msg)
             "END" -> Right(null)
             else -> throw UnsupportedOperationException("Unsupported row type $type")
           }
         }
+  }
+
+  private val wssclient = ClientManager.createClient().apply {
+    this.properties[ClientProperties.REDIRECT_ENABLED] = true
   }
 
   @UseExperimental(KtorExperimentalAPI::class)
@@ -146,21 +169,77 @@ class LensesClient(private val url: String,
     val endpoint = "$url/api/ws/v3/jdbc/execute?sql=$escapedSql"
     return withAuthenticatedWebsocket(endpoint).flatMap {
       // we always need the first row to generate the schema
-      it.incoming.receiveOrNull().rightIfNotNull { JdbcError.NoData }
-          .flatMap(frameToSchema)
-          .map { schema ->
-            WebSocketResultSet(null, schema, it, frameToRow, f)
-          }
+      frameToSchema(it.take()).map { schema ->
+        WebSocketResultSet(null, schema, it, frameToRow, f)
+      }
+      //it.incoming.receiveOrNull().rightIfNotNull { JdbcError.NoData }
+      //  .flatMap(frameToSchema)
+      //.map { schema ->
+      //WebSocketResultSet(null, schema, it, frameToRow, f)
+      //}
     }
   }
 
-  private suspend fun withAuthenticatedWebsocket(endpoint: String): Either<JdbcError, WebSocketSession> {
+  private suspend fun withAuthenticatedWebsocket(url: String): Either<JdbcError, BlockingQueue<String>> {
     return authenticate().flatMap { token ->
-      val url = Url(endpoint)
-      return client.webSocketSession(HttpMethod.Get, url.host, url.port, url.encodedPath) {
-        header(LensesTokenHeader, token.value)
-        url.parameters.flattenForEach { key, value -> parameter(key, value) }
-      }.right()
+      val uri = URI.create(url.replace("https://", "ws://").replace("http://", "ws://"))
+      val headers = WebSocketHttpHeaders()
+      headers.add(LensesTokenHeader, token.value)
+      val wsclient = StandardWebSocketClient()
+      val queue = LinkedBlockingQueue<String>(20)
+      val handler = object : WebSocketHandler {
+        override fun handleTransportError(session: org.springframework.web.socket.WebSocketSession,
+                                          exception: Throwable) {
+          logger.error("Websocket error", exception)
+        }
+
+        override fun afterConnectionClosed(session: org.springframework.web.socket.WebSocketSession,
+                                           closeStatus: CloseStatus) {
+        }
+
+        override fun handleMessage(session: org.springframework.web.socket.WebSocketSession,
+                                   message: WebSocketMessage<*>) {
+          when (message) {
+            is TextMessage -> queue.put(message.payload)
+            else -> {
+              logger.error("Unsupported message type $message")
+              throw java.lang.UnsupportedOperationException("Unsupported message type $message")
+            }
+          }
+        }
+
+        override fun afterConnectionEstablished(session: org.springframework.web.socket.WebSocketSession) {
+          logger.debug("Connection established")
+        }
+
+        override fun supportsPartialMessages(): Boolean = false
+      }
+      logger.debug("Connecting to websocket at $uri")
+      wsclient.doHandshake(handler, headers, uri)
+
+      val endpoint = object : Endpoint() {
+
+        override fun onOpen(session: Session, config: EndpointConfig) {
+          session.addMessageHandler(MessageHandler.Whole<String> { message ->
+            queue.add(message)
+          })
+        }
+      }
+
+      val configurator = object : ClientEndpointConfig.Configurator() {
+        override fun beforeRequest(headers: MutableMap<String, MutableList<String>>) {
+          headers[Constants.LensesTokenHeader] = mutableListOf(token.value)
+        }
+      }
+
+      val config: ClientEndpointConfig = ClientEndpointConfig.Builder.create().configurator(configurator).build()
+      //    wssclient.connectToServer(endpoint, config, uri)
+
+      queue.right()
+//      return client.webSocketSession(HttpMethod.Get, url.host, url.port, url.encodedPath) {
+//        header(LensesTokenHeader, token.value)
+//        url.parameters.flattenForEach { key, value -> parameter(key, value) }
+//      }.right()
     }
   }
 

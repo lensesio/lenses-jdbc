@@ -377,23 +377,6 @@ class RestClient(private val urls: List<String>,
     return true
   }
 
-  suspend fun query(sql: String, f: (Channel<Frame>) -> Unit): Unit {
-    ktorClient.ws(
-        method = HttpMethod.Get,
-        host = "127.0.0.1",
-        port = 8080,
-        path = "/api/sql/execute?sql=$sql"
-    ) {
-      // this: DefaultClientWebSocketSession
-      // Receive frame.
-      val frame = incoming.receive()
-      when (frame) {
-        is Frame.Text -> println(frame.readText())
-        is Frame.Binary -> println(frame.readBytes())
-      }
-    }
-  }
-
   companion object RestClient {
 
     fun <T> jsonEntity(t: T): HttpEntity {
