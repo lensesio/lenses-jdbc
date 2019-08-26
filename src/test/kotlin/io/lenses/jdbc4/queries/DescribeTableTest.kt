@@ -13,23 +13,34 @@ class DescribeTableTest : FunSpec(), ProducerSetup {
     LDriver()
     val conn = conn()
 
-    test("DESCRIBE TABLE foo schema") {
-      val q = "DESCRIBE TABLE nyc_yellow_taxi_trip_data"
+    test("DESCRIBE TABLE with primitive for key/value") {
+      val topic=newTopicName()
+      conn.createStatement().executeUpdate("""
+        CREATE TABLE $topic(_key string, value string) format(string, string)
+      """.trimIndent())
+
+      val q = "DESCRIBE TABLE $topic"
       val stmt = conn.createStatement()
       val rs = stmt.executeQuery(q)
       rs.metaData.columnCount shouldBe 2
       List(2) { rs.metaData.getColumnLabel(it + 1) } shouldBe listOf("key", "value")
     }
 
-    test("DESCRIBE TABLE foo data") {
-      val q = "DESCRIBE TABLE nyc_yellow_taxi_trip_data"
+    test("DESCRIBE TABLE for Avro stored value") {
+      val topic = newTopicName()
+      conn.createStatement().executeQuery("""
+        CREATE TABLE $topic (_key int, id int, name string, quantity int, price double) 
+        FORMAT(INT, Avro);
+      """.trimIndent())
+      val q = "DESCRIBE TABLE $topic"
       val stmt = conn.createStatement()
       val rs = stmt.executeQuery(q).toList()
-      rs.shouldContain(listOf("_value.pickup_longitude", "double"))
-      rs.shouldContain(listOf("_value.pickup_latitude", "double"))
-      rs.shouldContain(listOf("_value.RateCodeID", "int"))
+      rs.shouldContain(listOf("_value.id", "int"))
+      rs.shouldContain(listOf("_value.name", "string"))
+      rs.shouldContain(listOf("_value.quantity", "int"))
+      rs.shouldContain(listOf("_value.price", "double"))
       rs.shouldContain(listOf("Value", "AVRO"))
-      rs.shouldContain(listOf("Key", "BYTES"))
+      rs.shouldContain(listOf("Key", "INT"))
     }
   }
 }

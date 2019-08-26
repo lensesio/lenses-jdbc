@@ -12,7 +12,7 @@ class CreateTableTest : FunSpec() {
 
     LDriver()
 
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
+    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin")
 
     test("CREATE TABLE foo") {
 
