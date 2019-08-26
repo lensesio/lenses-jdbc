@@ -9,7 +9,7 @@ import java.sql.Time
 import java.sql.Timestamp
 import java.util.*
 
-val emptyResultSet = ListResultSet(null, null, emptyList())
+val emptyResultSet: RowResultSet = ListResultSet(null, null, emptyList())
 
 object EmptyRow : Row {
 

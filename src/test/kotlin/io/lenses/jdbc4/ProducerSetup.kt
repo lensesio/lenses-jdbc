@@ -1,21 +1,34 @@
 package io.lenses.jdbc4
 
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
-import io.lenses.jdbc4.client.RestClient
-import io.lenses.jdbc4.client.domain.Credentials
+import io.lenses.jdbc4.client.LensesClient
+import io.lenses.jdbc4.client.Credentials
+import io.lenses.jdbc4.resultset.toList
 import io.lenses.jdbc4.util.Logging
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericData
 import org.apache.kafka.clients.admin.AdminClient
+import org.apache.kafka.clients.admin.Config
+import org.apache.kafka.clients.admin.ConfigEntry
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.common.config.ConfigResource
+import org.apache.kafka.common.config.TopicConfig
+import java.sql.Connection
+import java.sql.DriverManager
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 interface ProducerSetup : Logging {
 
+  fun conn(): Connection {
+    LDriver()
+    return DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
+  }
+
   fun schemaClient() = CachedSchemaRegistryClient("http://127.0.0.1:8081", 1000)
-  fun restClient() = RestClient(listOf("http://localhost:3030"), Credentials("admin", "admin"), true)
+  fun lensesClient() = LensesClient("http://localhost:24015",
+      Credentials("admin", "admin999"), false)
 
   fun registerValueSchema(topic: String, schema: Schema) {
     val client = schemaClient()
@@ -26,30 +39,23 @@ interface ProducerSetup : Logging {
 
   fun newTopicName() = "topic_" + UUID.randomUUID().toString().replace('-', '_')
 
-  fun createTopic(topicName: String): String {
-    createAdmin().use { it:AdminClient ->
-      logger.debug("Creating topic $topicName")
-      val result = it.createTopics(listOf(NewTopic(topicName, 1, 1)))
+  fun createTopic(topicName: String, compactMode: String = TopicConfig.CLEANUP_POLICY_COMPACT): String {
+    createAdmin().use {
 
-      logger.debug("Waiting on result")
-      result.all().get(10, TimeUnit.SECONDS)
+      logger.debug("Creating topic $topicName")
+      it.createTopics(listOf(NewTopic(topicName, 1, 1))).all().get(10, TimeUnit.SECONDS)
+
+      it.alterConfigs(mapOf(
+          ConfigResource(ConfigResource.Type.TOPIC, topicName) to Config(
+              listOf(ConfigEntry(TopicConfig.CLEANUP_POLICY_CONFIG, compactMode))
+          )
+      )).all().get()
 
       logger.debug("Closing admin client")
       it.close(10, TimeUnit.SECONDS)
     }
 
-//    fun topicInLenses(): Boolean = restClient().use { it :RestClient ->
-//      try {
-//        it.topic(topicName)
-//        true
-//      } catch (e: Exception) {
-//        false
-//      }
-//    }
-
-//    while (!topicInLenses()) {
-//      Thread.sleep(3000)
-//    }
+    conn().metaData.getTables(null, null, null, null).toList().map { it[2] }.contains(topicName)
 
     return topicName
   }

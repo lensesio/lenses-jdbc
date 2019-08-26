@@ -1,4 +1,4 @@
-package io.lenses.jdbc4
+package io.lenses.jdbc4.resultset
 
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.WordSpec

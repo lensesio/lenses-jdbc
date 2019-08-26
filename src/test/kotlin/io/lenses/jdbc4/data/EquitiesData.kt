@@ -1,5 +1,6 @@
-package io.lenses.jdbc4
+package io.lenses.jdbc4.data
 
+import io.lenses.jdbc4.ProducerSetup
 import io.lenses.jdbc4.util.Logging
 import org.apache.avro.LogicalTypes
 import org.apache.avro.SchemaBuilder
@@ -23,7 +24,12 @@ interface EquitiesData : ProducerSetup, Logging {
     val topic = createTopic()
     val equities = listOf(
         Equity("goog", "Alphabet", BigDecimal(99.11), 12455235, "Tech", 2.3),
-        Equity("bpop", "Banco Popular", BigDecimal(15.34), 5634643, "Financials", 4.4),
+        Equity("bpop",
+            "Banco Popular",
+            BigDecimal(15.34),
+            5634643,
+            "Financials",
+            4.4),
         Equity("aapl", "Apple", BigDecimal(13.03), 82346, "Tech", null)
     )
 

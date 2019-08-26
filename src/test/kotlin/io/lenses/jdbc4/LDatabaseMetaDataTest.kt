@@ -7,13 +7,14 @@ import io.kotlintest.matchers.gte
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.WordSpec
 import io.lenses.jdbc4.resultset.resultSetList
+import io.lenses.jdbc4.resultset.toList
+import kotlinx.coroutines.delay
 import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
 import java.sql.Connection
 import java.sql.DatabaseMetaData
-import java.sql.DriverManager
 
 class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
 
@@ -21,7 +22,7 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
 
     LDriver()
 
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
+    val conn = conn()
 
     "LsqlDatabaseMetaDataTest" should {
       "declare support for multiple result sets" {
@@ -78,17 +79,14 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
             null,
             null,
             arrayOf("USER"))).map { it[2].toString() }
-        tableNames.shouldContain("flights")
         tableNames.shouldContain("nyc_yellow_taxi_trip_data")
         tableNames.shouldNotContain("__consumer_offsets")
-        tableNames.shouldContain("_kafka_lenses_processors")
 
         val systemTableNames = resultSetList(conn.metaData.getTables(null,
             null,
             null,
             arrayOf("SYSTEM"))).map { it[2].toString() }
-        systemTableNames.shouldContainAll("__consumer_offsets", "_schemas", "_kafka_lenses_processors")
-        systemTableNames.shouldNotContain("flights")
+        systemTableNames.shouldContain("__consumer_offsets")
         systemTableNames.shouldNotContain("nyc_yellow_taxi_trip_data")
       }
       "support table regex when listing tables" {
@@ -111,59 +109,44 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         tableNames.shouldContainAll("topicregex_dibble", "topicregex_dobble", "topicregex_dubble")
       }
       "support listing columns with correct types" {
-        val columns = resultSetList(conn.metaData.getColumns(null, null, null, null))
-        val currency = columns.filter { it[2] == "cc_payments" }.first { it[3] == "currency" }
-        currency[4] shouldBe java.sql.Types.VARCHAR
-        currency[5] shouldBe "STRING"
+        val columns = conn.metaData.getColumns(null, null, null, null).toList()
+        val currency = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "VendorID" }
+        currency[4] shouldBe java.sql.Types.OTHER
+        currency[5] shouldBe "INT"
 
-        val merchantId = columns.filter { it[2] == "cc_payments" }.first { it[3] == "merchantId" }
-        merchantId[4] shouldBe java.sql.Types.BIGINT
-        merchantId[5] shouldBe "LONG"
+        val merchantId = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "tpep_pickup_datetime" }
+        merchantId[4] shouldBe java.sql.Types.OTHER
+        merchantId[5] shouldBe "STRING"
 
-        val blocked = columns.filter { it[2] == "cc_data" }.first { it[3] == "blocked" }
-        blocked[4] shouldBe java.sql.Types.BOOLEAN
-        blocked[5] shouldBe "BOOLEAN"
+        val blocked = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "trip_distance" }
+        blocked[4] shouldBe java.sql.Types.OTHER
+        blocked[5] shouldBe "DOUBLE"
       }
-      "support listing columns with correct nullability" {
+      "support listing columns using table regex" {
+        val columns = conn.metaData.getColumns(null, null, "nyc_yellow_taxi_trip_data", null).toList()
+        val currency = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "VendorID" }
+        currency[4] shouldBe java.sql.Types.OTHER
+        currency[5] shouldBe "INT"
 
-        val topic = createTopic()
+        val merchantId = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "tpep_pickup_datetime" }
+        merchantId[4] shouldBe java.sql.Types.OTHER
+        merchantId[5] shouldBe "STRING"
 
-        val schema = SchemaBuilder.record("dabble").fields()
-            .optionalDouble("optdouble")
-            .optionalBoolean("optbool")
-            .requiredString("reqstring")
-            .requiredLong("reqlong")
-            .endRecord()
-
-        registerValueSchema(topic, schema)
-
-        val producer = KafkaProducer<String, GenericData.Record>(producerProps())
-        val record = GenericData.Record(schema)
-        record.put("optdouble", 123.4)
-        record.put("optbool", true)
-        record.put("reqstring", "a")
-        record.put("reqlong", 555L)
-
-        producer.send(ProducerRecord<String, GenericData.Record>(topic, "key1", record))
-        producer.close()
-
-        val columns = resultSetList(conn.metaData.getColumns(null, null, topic, null))
-        println(columns)
-        val reqstring = columns.first { it[3] == "reqstring" }
-        reqstring[10] shouldBe DatabaseMetaData.columnNoNulls
-        reqstring[17] shouldBe "NO"
-
-        val reqlong = columns.first { it[3] == "reqlong" }
-        reqlong[10] shouldBe DatabaseMetaData.columnNoNulls
-        reqlong[17] shouldBe "NO"
-
-        val optdouble = columns.first { it[3] == "optdouble" }
-        optdouble[10] shouldBe DatabaseMetaData.columnNullable
-        optdouble[17] shouldBe "YES"
-
-        val optbool = columns.first { it[3] == "optbool" }
-        optbool[10] shouldBe DatabaseMetaData.columnNullable
-        optbool[17] shouldBe "YES"
+        val blocked = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "trip_distance" }
+        blocked[4] shouldBe java.sql.Types.OTHER
+        blocked[5] shouldBe "DOUBLE"
+      }
+      "support listing columns using column regex" {
+        val columns = conn.metaData.getColumns(null, null, null, "VendorID").toList()
+        val currency = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "VendorID" }
+        currency[4] shouldBe java.sql.Types.OTHER
+        currency[5] shouldBe "INT"
+      }
+      "support listing columns using table and column regex" {
+        val columns = conn.metaData.getColumns(null, null, "nyc_yellow_taxi_trip_data", "VendorID").toList()
+        val currency = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "VendorID" }
+        currency[4] shouldBe java.sql.Types.OTHER
+        currency[5] shouldBe "INT"
       }
       "return versioning information" {
         conn.metaData.databaseMajorVersion shouldBe gte(1)

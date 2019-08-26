@@ -28,9 +28,14 @@ open class LStatement(private val conn: Connection,
    *         by the given query; never null
    */
   override fun executeQuery(sql: String): ResultSet = runBlocking {
-    rs = client.execute(sql) { it }
-        .getOrHandle { throw SQLException("Could not execute query: $it") }
+    rs = client.execute(sql)
+        .getOrHandle { throw SQLException("Could not execute query: $it", it.cause) }
     rs
+  }
+
+  override fun executeUpdate(sql: String): Int = runBlocking {
+    executeQuery(sql)
+    0
   }
 
   /**

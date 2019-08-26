@@ -18,7 +18,7 @@ import java.util.*
 abstract class RowResultSet : AbstractResultSet {
 
   // returns the row which the cursor is currently pointing to
-  protected abstract fun currentRow(): Row
+  abstract fun currentRow(): Row
 
   // each time we invoke getXXX, this is the value that was returned last
   private var lastValue: Any? = null

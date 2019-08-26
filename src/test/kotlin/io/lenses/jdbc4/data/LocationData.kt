@@ -1,5 +1,6 @@
-package io.lenses.jdbc4
+package io.lenses.jdbc4.data
 
+import io.lenses.jdbc4.ProducerSetup
 import io.lenses.jdbc4.util.Logging
 import org.apache.avro.Schema
 import org.apache.avro.SchemaBuilder
@@ -26,12 +27,17 @@ interface LocationData : ProducerSetup, Logging {
 
   fun <T> randomElement(list: List<T>): T = list[random.nextInt(list.size)]
 
-  fun randomGeo(): Geo = Geo(random.nextDouble(), random.nextDouble())
+  fun randomGeo(): Geo = Geo(random.nextDouble(),
+      random.nextDouble())
   fun randomZipCode(): Int = random.nextInt(89999) + 10000
   fun randomStreet(): String = randomElement(streets) + " " + randomElement(endings)
 
   fun randomState() = randomElement(states)
-  fun randomAddress(): Address = Address(randomStreet(), random.nextInt(9999), randomZipCode(), randomState())
+  fun randomAddress(): Address = Address(
+      randomStreet(),
+      random.nextInt(9999),
+      randomZipCode(),
+      randomState())
   fun randomLocation() = Location(random.nextLong(), randomAddress(), randomGeo())
 
   fun addressSchema(): Schema = SchemaBuilder.record("address").fields()

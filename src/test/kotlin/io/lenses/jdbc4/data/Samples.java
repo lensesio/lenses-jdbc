@@ -1,4 +1,4 @@
-package io.lenses.jdbc4;
+package io.lenses.jdbc4.data;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;

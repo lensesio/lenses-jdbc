@@ -1,12 +1,13 @@
-package io.lenses.jdbc4
+package io.lenses.jdbc4.queries
 
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.WordSpec
+import io.lenses.jdbc4.LDriver
+import io.lenses.jdbc4.ProducerSetup
 import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
-import java.sql.DriverManager
 import java.util.*
 
 data class Country(val name: String)
@@ -31,35 +32,23 @@ class SingleFieldSchemaQueryTest : WordSpec(), ProducerSetup {
 
   init {
 
-    io.lenses.jdbc4.LDriver()
+    LDriver()
     populateCountries()
-
-    fun conn() = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
 
     "JDBC Driver" should {
       "support wildcard for fixed schemas" {
-        val q = "SELECT * FROM $topic WHERE _ktype=STRING and _vtype=AVRO"
+        val q = "SELECT * FROM $topic"
         val stmt = conn().createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 1
-        rs.metaData.getColumnLabel(1) shouldBe "name"
+        rs.metaData.getColumnLabel(1) shouldBe "unnamed"
       }
       "support projection for fixed schemas" {
-        val q = "SELECT name FROM $topic  WHERE _ktype=STRING and _vtype=AVRO"
+        val q = "SELECT name FROM $topic"
         val stmt = conn().createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 1
         rs.metaData.getColumnLabel(1) shouldBe "name"
-      }
-      "return data for fixed schema" {
-        val q = "SELECT * FROM $topic  WHERE _ktype=STRING and _vtype=AVRO"
-        val stmt = conn().createStatement()
-        stmt.execute(q) shouldBe true
-        val rs = stmt.resultSet
-        rs.next()
-        rs.getString(1) shouldBe "Vanuatu"
-        rs.next()
-        rs.getString(1) shouldBe "Comoros"
       }
     }
   }

@@ -4,15 +4,14 @@ import io.kotlintest.matchers.collections.shouldContain
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.FunSpec
 import io.lenses.jdbc4.LDriver
+import io.lenses.jdbc4.ProducerSetup
 import io.lenses.jdbc4.resultset.toList
-import java.sql.DriverManager
 
-class DescribeTableTest : FunSpec() {
+class DescribeTableTest : FunSpec(), ProducerSetup {
   init {
 
     LDriver()
-
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
+    val conn = conn()
 
     test("DESCRIBE TABLE foo schema") {
       val q = "DESCRIBE TABLE nyc_yellow_taxi_trip_data"

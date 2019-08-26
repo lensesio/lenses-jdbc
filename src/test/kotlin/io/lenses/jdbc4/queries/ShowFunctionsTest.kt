@@ -15,18 +15,16 @@ class ShowFunctionsTest : FunSpec() {
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
 
     test("SHOW FUNCTIONS schema") {
-      val q = "SHOW FUNCTIONS"
       val stmt = conn.createStatement()
-      val rs = stmt.executeQuery(q)
+      val rs = stmt.executeQuery("SHOW FUNCTIONS")
       rs.metaData.columnCount shouldBe 3
       List(3) { rs.metaData.getColumnLabel(it + 1) } shouldBe listOf("name", "description", "return_type")
     }
 
     test("SHOW FUNCTIONS data") {
-      val q = "SHOW FUNCTIONS"
       val stmt = conn.createStatement()
-      val rs = stmt.executeQuery(q).toList()
-      println(rs)
+      val rs = stmt.executeQuery("SHOW FUNCTIONS").toList()
+      rs.shouldContain(listOf("exists", "Returns true if the given field is present in the payload or false otherwise.", "boolean"))
     }
   }
 }

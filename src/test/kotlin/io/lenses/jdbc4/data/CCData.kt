@@ -1,4 +1,4 @@
-package io.lenses.jdbc4
+package io.lenses.jdbc4.data
 
 import java.util.*
 
@@ -30,6 +30,11 @@ interface CCData {
   fun randomSurname() = randomElement(surnames)
   fun randomCardNumber() = IntArray(16, { _ -> Random().nextInt(9) }).joinToString("")
 
-  fun generateCC() = CardData(randomCountry(), randomCurrency(), randomSurname(), randomFirstName(), Random().nextBoolean(), randomCardNumber())
+  fun generateCC() = CardData(randomCountry(),
+      randomCurrency(),
+      randomSurname(),
+      randomFirstName(),
+      Random().nextBoolean(),
+      randomCardNumber())
 
 }

@@ -5,6 +5,7 @@ import io.lenses.jdbc4.client.LensesClient
 import io.lenses.jdbc4.resultset.ListResultSet
 import io.lenses.jdbc4.resultset.emptyResultSet
 import io.lenses.jdbc4.resultset.filter
+import io.lenses.jdbc4.resultset.map
 import io.lenses.jdbc4.row.ListRow
 import io.lenses.jdbc4.util.Logging
 import kotlinx.coroutines.runBlocking
@@ -74,7 +75,8 @@ class LDatabaseMetaData(private val conn: Connection,
       types == null || types.isEmpty() || types.contains(it.getString(4))
     }
 
-    return client.execute("SHOW TABLES", ShowTablesMapper)
+    return client.execute("SHOW TABLES")
+        .map { it.map(Schemas.Tables, ShowTablesMapper) }
         .getOrHandle { throw SQLException("Error retrieving tables: $it") }
         .filter(tableNameFilter)
         .filter(typeFilter)
@@ -110,7 +112,8 @@ class LDatabaseMetaData(private val conn: Connection,
       }
     }
 
-    return client.execute("SELECT * FROM __fields", ShowTablesMapper)
+    return client.execute("SELECT * FROM __fields")
+        .map { it.map(Schemas.Columns, SelectFieldsMapper) }
         .getOrHandle { throw SQLException("Error retrieving columns: $it") }
         .filter(tableNameFilter)
         .filter(columnNameFilter)
@@ -122,7 +125,7 @@ class LDatabaseMetaData(private val conn: Connection,
   override fun getFunctions(catalog: String?,
                             schemaPattern: String?,
                             functionNamePattern: String?): ResultSet {
-    return ListResultSet.emptyOf(io.lenses.jdbc4.Schemas.Functions)
+    return ListResultSet.emptyOf(Schemas.Functions)
   }
 
   override fun getSearchStringEscape(): String = "`"
@@ -164,7 +167,8 @@ class LDatabaseMetaData(private val conn: Connection,
   override fun supportsOpenCursorsAcrossRollback(): Boolean = false
 
   override fun getTableTypes(): ResultSet = runBlocking {
-    client.execute("SHOW TABLE TYPES", ShowTableTypesMapper)
+    client.execute("SHOW TABLE TYPES")
+        .map { it.map(Schemas.TableTypes, ShowTableTypesMapper) }
         .getOrHandle { throw SQLException("Error retrieving table types: $it") }
   }
 

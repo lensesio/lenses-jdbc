@@ -24,10 +24,10 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
-import io.lenses.jdbc4.client.domain.Credentials
 import io.lenses.jdbc4.resultset.RowResultSet
 import io.lenses.jdbc4.resultset.WebSocketResultSet
 import io.lenses.jdbc4.resultset.WebsocketConnection
+import io.lenses.jdbc4.resultset.emptyResultSet
 import io.lenses.jdbc4.row.ListRow
 import io.lenses.jdbc4.row.Row
 import io.lenses.jdbc4.util.Logging
@@ -45,17 +45,17 @@ import java.math.BigDecimal
 import java.net.URI
 import java.net.URLEncoder
 import java.sql.SQLException
-import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
 data class Token(val value: String)
 
 sealed class JdbcError {
+  open val cause: Throwable? = null
   data class AuthenticationFailure(val message: String) : JdbcError()
   data class InitialError(val message: String) : JdbcError()
   object ExecutionError : JdbcError()
   object NoData : JdbcError()
-  data class ParseError(val t: Throwable) : JdbcError()
+  data class ParseError(override val cause: Throwable) : JdbcError()
   data class UnsupportedRowType(val type: String) : JdbcError()
 }
 
@@ -67,22 +67,14 @@ class LensesClient(private val url: String,
     const val LensesTokenHeader = "X-Kafka-Lenses-Token"
   }
 
-  private val frameToSchema: (String) -> Either<JdbcError, Schema> = { msg ->
-
-    fun parseSchema(node: JsonNode): Either<JdbcError, Schema> = Try {
-      val json = when (val valueSchema = node["data"]["valueSchema"]) {
-        is TextNode -> valueSchema.asText()
-        else -> io.lenses.jdbc4.JacksonSupport.mapper.writeValueAsString(valueSchema)
-      }
-      Schema.Parser().parse(json)
-    }.toEither { JdbcError.ParseError(it) }
-
-    val node = io.lenses.jdbc4.JacksonSupport.mapper.readTree(msg)
-    when (node["type"].textValue()) {
-      "SCHEMA" -> parseSchema(node)
-      else -> JdbcError.InitialError(node["data"]?.toString() ?: "unknown error").left()
+  private fun parseSchema(node: JsonNode): Either<JdbcError, Schema> = Try {
+    val json = when (val valueSchema = node["data"]["valueSchema"]) {
+      is TextNode -> valueSchema.asText()
+      null -> Schema.create(Schema.Type.NULL).toString(true)
+      else -> io.lenses.jdbc4.JacksonSupport.mapper.writeValueAsString(valueSchema)
     }
-  }
+    Schema.Parser().parse(json)
+  }.toEither { JdbcError.ParseError(it) }
 
   private val frameToRecord: (String) -> Either<JdbcError.ParseError, Row> = { msg ->
     Try { io.lenses.jdbc4.JacksonSupport.mapper.readTree(msg) }
@@ -158,13 +150,21 @@ class LensesClient(private val url: String,
   }
 
   @ObsoleteCoroutinesApi
-  suspend fun execute(sql: String, f: (Row) -> Row): Either<JdbcError, RowResultSet> {
+  suspend fun execute(sql: String): Either<JdbcError, RowResultSet> {
     val escapedSql = escape(sql)
     val endpoint = "$url/api/ws/v3/jdbc/execute?sql=$escapedSql"
     return withAuthenticatedWebsocket(endpoint).flatMap {
-      // we always need the first row to generate the schema
-      frameToSchema(it.queue.take()).map { schema ->
-        WebSocketResultSet(null, schema, it, frameToRow, f)
+      // we always need the first row to generate the schema unless it is an end then we have an empty resultset
+
+      val msg = it.queue.take()
+      val node = io.lenses.jdbc4.JacksonSupport.mapper.readTree(msg)
+
+      when (node["type"].textValue()) {
+        "END" -> emptyResultSet.right()
+        "SCHEMA" -> parseSchema(node).map { schema ->
+          WebSocketResultSet(null, schema, it, frameToRow)
+        }
+        else -> JdbcError.InitialError(node.toString()).left()
       }
     }
   }

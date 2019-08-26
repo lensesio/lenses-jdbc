@@ -18,18 +18,19 @@ interface WebsocketConnection {
   fun isClosed(): Boolean
 }
 
+abstract class StreamingRowResultSet : RowResultSet(),
+    PullForwardOnlyResultSet,
+    ImmutableResultSet,
+    UnsupportedTypesResultSet,
+    Logging
+
 /**
  * An implementation of [ResultSet] that retrieves records from a websocket via a queue.
  */
 class WebSocketResultSet(private val stmt: Statement?,
                          private val schema: Schema, // the schema for the records that will follow
                          private val conn: WebsocketConnection,
-                         private val converter: (String) -> Either<JdbcError.ParseError, Row?>,
-                         private val mapper: (Row) -> Row) : RowResultSet(),
-    PullForwardOnlyResultSet,
-    ImmutableResultSet,
-    UnsupportedTypesResultSet,
-    Logging {
+                         private val converter: (String) -> Either<JdbcError.ParseError, Row?>) : StreamingRowResultSet() {
 
   private var rowNumber: Int = 0
   private var row: Row? = null
@@ -46,8 +47,7 @@ class WebSocketResultSet(private val stmt: Statement?,
         }
         else -> {
           rowNumber++
-          val next = converter(msg).getOrHandle { throw SQLException(it.t) }
-          row = if (next == null) null else mapper(next)
+          row = converter(msg).getOrHandle { throw SQLException(it.cause) }
           row != null
         }
       }

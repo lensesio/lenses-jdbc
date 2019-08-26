@@ -1,9 +1,8 @@
-package io.lenses.jdbc4
+package io.lenses.jdbc4.resultset
 
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.WordSpec
-import io.lenses.jdbc4.resultset.ListResultSet
 import io.lenses.jdbc4.row.RecordRow
 import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericRecordBuilder
@@ -32,18 +31,6 @@ class ListResultSetTest : WordSpec() {
         rs.getString(1) shouldBe "woo"
         rs.next()
         rs.getString(1) shouldBe "boo"
-      }
-      "use previous to iterate records" {
-        val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
-        val records = listOf(
-            RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()),
-            RecordRow(GenericRecordBuilder(schema).set("foo", "boo").build())
-        )
-        val rs = ListResultSet(null, schema, records)
-        rs.last()
-        rs.getString(1) shouldBe "boo"
-        rs.previous()
-        rs.getString(1) shouldBe "woo"
       }
       "support by label lookup" {
         val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").optionalString("goo").endRecord()
@@ -86,10 +73,8 @@ class ListResultSetTest : WordSpec() {
         rs.getString(1) shouldBe "goo"
         rs.absolute(-3)
         rs.getString(1) shouldBe "woo"
-
-        shouldThrow<IndexOutOfBoundsException> {
-          rs.absolute(-4)
-        }
+        rs.absolute(-10)
+        rs.isBeforeFirst shouldBe true
       }
       "support relative positioning" {
         val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
@@ -185,18 +170,6 @@ class ListResultSetTest : WordSpec() {
         val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()))
         ListResultSet(null, schema, records).fetchSize shouldBe -1
       }
-//      "return the statement used to create the resultset" {
-//        val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
-//        val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()))
-//        val stmt = mock<Statement>()
-//        RowResultSet(stmt, schema, records).statement shouldBe stmt
-//      }
-//      "be a wrapper for RowResultSet" {
-//        val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
-//        val records = listOf(RecordRow(GenericRecordBuilder(schema).set("foo", "woo").build()))
-//        val stmt = mock<Statement>()
-//        RowResultSet(stmt, schema, records).isWrapperFor(RowResultSet::class.java) shouldBe true
-//      }
       "track last value to support wasNull" {
         val schema = SchemaBuilder.record("wibble").fields().optionalString("foo").endRecord()
         val records = listOf(
