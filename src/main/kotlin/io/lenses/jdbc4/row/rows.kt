@@ -8,15 +8,19 @@ import java.sql.SQLException
  * provided at construction time.
  */
 class ListRow(private val array: List<Any?>) : ConvertingRow() {
-    override fun getObject(index: Int): Any? = try {
-        array[index - 1]
-    } catch (ex: IndexOutOfBoundsException) {
-        throw SQLException("Invalid state for the record row.  Row column size is ${array.size} but ${index - 1} was requested.")
+  override fun getObject(index: Int): Any? = try {
+    if (index > array.size) {
+      null
+    } else {
+      array[index - 1]
     }
+  } catch (ex: IndexOutOfBoundsException) {
+    throw SQLException("Invalid state for the record row.  Row column size is ${array.size} but ${index - 1} was requested.")
+  }
 }
 
 class RecordRow(val record: GenericData.Record) : ConvertingRow() {
-    override fun getObject(index: Int): Any? {
-        return record.get(index - 1)
-    }
+  override fun getObject(index: Int): Any? {
+    return record.get(index - 1)
+  }
 }

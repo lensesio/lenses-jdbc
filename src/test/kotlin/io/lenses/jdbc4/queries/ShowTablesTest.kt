@@ -4,15 +4,16 @@ import io.kotlintest.matchers.collections.shouldContain
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.FunSpec
 import io.lenses.jdbc4.LDriver
+import io.lenses.jdbc4.ProducerSetup
 import io.lenses.jdbc4.resultset.toList
 import java.sql.DriverManager
 
-class ShowTablesTest : FunSpec() {
+class ShowTablesTest : FunSpec() , ProducerSetup {
   init {
 
     LDriver()
 
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
+    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin")
 
     test("SHOW TABLES schema") {
       val q = "SHOW TABLES"
@@ -23,11 +24,18 @@ class ShowTablesTest : FunSpec() {
     }
 
     test("SHOW TABLES data") {
+      val topic1 = newTopicName()
+      val topic2 = newTopicName()
+
+      conn.createStatement().executeQuery("""
+        CREATE TABLE $topic1 (_key int, id int, name string, quantity int, price double) FORMAT(INT, Avro) properties(partitions=3);
+        CREATE TABLE $topic2 (_key int, id int, name string, quantity int, price double) FORMAT(INT, Json) properties(partitions=4);
+      """.trimIndent())
       val q = "SHOW TABLES"
       val stmt = conn.createStatement()
       val rs = stmt.executeQuery(q).toList()
-      rs.shouldContain(listOf("sea_vessel_position_reports", "USER", "3", "1"))
-      rs.shouldContain(listOf("telecom_italia_data", "USER", "4", "1"))
+      rs.shouldContain(listOf(topic1, "USER", "3", "1"))
+      rs.shouldContain(listOf(topic2, "USER", "4", "1"))
     }
   }
 }

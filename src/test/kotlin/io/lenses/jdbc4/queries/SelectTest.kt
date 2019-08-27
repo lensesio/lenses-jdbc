@@ -95,7 +95,7 @@ class SelectTest : WordSpec(), ProducerSetup {
         rs.metaData.columnCount shouldBe 2
         assertSoftly {
           rs.metaData.getColumnLabel(1) shouldBe "trip_distance"
-          rs.metaData.getColumnLabel(2) shouldBe "creditCardId"
+          rs.metaData.getColumnLabel(2) shouldBe "payment_type"
         }
       }
       "support projections with backticks" {
@@ -107,18 +107,19 @@ class SelectTest : WordSpec(), ProducerSetup {
         rs.metaData.columnCount shouldBe 2
         assertSoftly {
           rs.metaData.getColumnLabel(1) shouldBe "trip_distance"
-          rs.metaData.getColumnLabel(2) shouldBe "creditCardId"
+          rs.metaData.getColumnLabel(2) shouldBe "payment_type"
         }
       }
       "support queries with white space" {
         val topic = createTopic(conn)
+        createTopicData(conn, topic)
         val q = "SELECT         `trip_distance`, `payment_type`         FROM $topic"
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 2
         assertSoftly {
           rs.metaData.getColumnLabel(1) shouldBe "trip_distance"
-          rs.metaData.getColumnLabel(2) shouldBe "creditCardId"
+          rs.metaData.getColumnLabel(2) shouldBe "payment_type"
         }
       }
       "support queries with new lines" {
@@ -138,19 +139,19 @@ class SelectTest : WordSpec(), ProducerSetup {
       "support limits"  {
         val topic = createTopic(conn)
         createTopicData(conn, topic)
-        val q = "SELECT trip_distance, creditCardId FROM $topic limit 3"
+        val q = "SELECT trip_distance, payment_type FROM $topic limit 3"
         val stmt = conn.createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 2
         assertSoftly {
           rs.metaData.getColumnLabel(1) shouldBe "trip_distance"
-          rs.metaData.getColumnLabel(2) shouldBe "creditCardId"
+          rs.metaData.getColumnLabel(2) shouldBe "payment_type"
         }
         var counter = 0
         while (rs.next()) {
           counter += 1
         }
-        counter shouldBe 43
+        counter shouldBe 3
       }
       "support where" {
         val topic = createTopic(conn)

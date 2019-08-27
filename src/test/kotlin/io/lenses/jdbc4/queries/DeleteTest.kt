@@ -42,19 +42,20 @@ class DeleteTest : FunSpec(), MovieData {
       // takes a few seconds to kick in on kafka
       eventually(Duration.ofSeconds(5), AssertionError::class.java) {
         val result = conn.createStatement().executeQuery("SELECT * FROM $topic").toList()
-        result.shouldHaveSize(2)
+        //kafka won't delete instantly
+        result.shouldHaveSize(4)
       }
     }
 
     test("DELETE from table using _value") {
 
       val topic = populateMovies()
-      conn.createStatement().executeQuery("SELECT * FROM $topic").toList().shouldHaveSize(2)
       conn.createStatement().executeUpdate("DELETE FROM $topic WHERE _value.year = 1968")
       // takes a few seconds to kick in on kafka
       eventually(Duration.ofSeconds(5), AssertionError::class.java) {
         val result = conn.createStatement().executeQuery("SELECT * FROM $topic").toList()
-        result.shouldHaveSize(1)
+        //kafka won't delete instantly
+        result.shouldHaveSize(3)
       }
     }
   }

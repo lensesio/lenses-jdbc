@@ -12,7 +12,7 @@ class ShowVirtualTablesTest : FunSpec() {
 
     LDriver()
 
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
+    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin")
 
     test("SHOW VIRTUAL TABLES schema") {
       val q = "SHOW VIRTUAL TABLES"

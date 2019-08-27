@@ -6,7 +6,7 @@ buildscript {
     ext.avro_version = '1.9.0'
     ext.httpclient_version = '4.5.7'
     ext.jackson_version = '2.9.9'
-    ext.kafka_version = '0.11.0.2'
+    ext.kafka_version = '2.3.0'
     ext.ktorVersion = "1.2.3"
     repositories {
         maven {

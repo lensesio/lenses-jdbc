@@ -2,13 +2,13 @@ package io.lenses.jdbc4
 
 import io.kotlintest.matchers.collections.shouldContain
 import io.kotlintest.matchers.collections.shouldContainAll
+import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.matchers.collections.shouldNotContain
 import io.kotlintest.matchers.gte
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.WordSpec
 import io.lenses.jdbc4.resultset.resultSetList
 import io.lenses.jdbc4.resultset.toList
-import kotlinx.coroutines.delay
 import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -23,6 +23,16 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
     LDriver()
 
     val conn = conn()
+    val topic1 = newTopicName()
+    val topic2 = newTopicName()
+
+    val taxiTopic = createTaxiTopic(conn)
+
+    conn.createStatement().executeQuery("""
+        CREATE TABLE $topic1 (_key int, id int, name string, quantity int, price double) FORMAT(INT, Avro) properties(partitions=3);
+        CREATE TABLE $topic2 (_key int, id int, name string, quantity int, price double) FORMAT(INT, Json) properties(partitions=4);
+      """.trimIndent())
+
 
     "LsqlDatabaseMetaDataTest" should {
       "declare support for multiple result sets" {
@@ -72,14 +82,15 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
       }
       "return all table names" {
         val tableNames = resultSetList(conn.metaData.getTables(null, null, null, null)).map { it[2] }
-        tableNames.shouldContainAll("flights", "nyc_yellow_taxi_trip_data")
+        tableNames.shouldContainAll(topic1, topic2)
       }
       "support table types when listing tables" {
         val tableNames = resultSetList(conn.metaData.getTables(null,
             null,
             null,
             arrayOf("USER"))).map { it[2].toString() }
-        tableNames.shouldContain("nyc_yellow_taxi_trip_data")
+        tableNames.shouldContain(topic1)
+        tableNames.shouldContain(topic2)
         tableNames.shouldNotContain("__consumer_offsets")
 
         val systemTableNames = resultSetList(conn.metaData.getTables(null,
@@ -87,7 +98,8 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
             null,
             arrayOf("SYSTEM"))).map { it[2].toString() }
         systemTableNames.shouldContain("__consumer_offsets")
-        systemTableNames.shouldNotContain("nyc_yellow_taxi_trip_data")
+        systemTableNames.shouldNotContain(topic1)
+        systemTableNames.shouldNotContain(topic2)
       }
       "support table regex when listing tables" {
         // lets add some of our own tables and make sure they appear in the list of all
@@ -110,41 +122,41 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
       }
       "support listing columns with correct types" {
         val columns = conn.metaData.getColumns(null, null, null, null).toList()
-        val currency = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "VendorID" }
+        val currency = columns.filter { it[2] == taxiTopic }.first { it[3] == "VendorID" }
         currency[4] shouldBe java.sql.Types.OTHER
         currency[5] shouldBe "INT"
 
-        val merchantId = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "tpep_pickup_datetime" }
+        val merchantId = columns.filter { it[2] == taxiTopic }.first { it[3] == "tpep_pickup_datetime" }
         merchantId[4] shouldBe java.sql.Types.OTHER
         merchantId[5] shouldBe "STRING"
 
-        val blocked = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "trip_distance" }
+        val blocked = columns.filter { it[2] == taxiTopic }.first { it[3] == "trip_distance" }
         blocked[4] shouldBe java.sql.Types.OTHER
         blocked[5] shouldBe "DOUBLE"
       }
       "support listing columns using table regex" {
-        val columns = conn.metaData.getColumns(null, null, "nyc_yellow_taxi_trip_data", null).toList()
-        val currency = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "VendorID" }
+        val columns = conn.metaData.getColumns(null, null, taxiTopic, null).toList()
+        val currency = columns.filter { it[2] == taxiTopic }.first { it[3] == "VendorID" }
         currency[4] shouldBe java.sql.Types.OTHER
         currency[5] shouldBe "INT"
 
-        val merchantId = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "tpep_pickup_datetime" }
+        val merchantId = columns.filter { it[2] == taxiTopic }.first { it[3] == "tpep_pickup_datetime" }
         merchantId[4] shouldBe java.sql.Types.OTHER
         merchantId[5] shouldBe "STRING"
 
-        val blocked = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "trip_distance" }
+        val blocked = columns.filter { it[2] == taxiTopic }.first { it[3] == "trip_distance" }
         blocked[4] shouldBe java.sql.Types.OTHER
         blocked[5] shouldBe "DOUBLE"
       }
       "support listing columns using column regex" {
         val columns = conn.metaData.getColumns(null, null, null, "VendorID").toList()
-        val currency = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "VendorID" }
+        val currency = columns.filter { it[2] == taxiTopic }.first { it[3] == "VendorID" }
         currency[4] shouldBe java.sql.Types.OTHER
         currency[5] shouldBe "INT"
       }
       "support listing columns using table and column regex" {
-        val columns = conn.metaData.getColumns(null, null, "nyc_yellow_taxi_trip_data", "VendorID").toList()
-        val currency = columns.filter { it[2] == "nyc_yellow_taxi_trip_data" }.first { it[3] == "VendorID" }
+        val columns = conn.metaData.getColumns(null, null, taxiTopic, "VendorID").toList()
+        val currency = columns.filter { it[2] == taxiTopic }.first { it[3] == "VendorID" }
         currency[4] shouldBe java.sql.Types.OTHER
         currency[5] shouldBe "INT"
       }
@@ -164,5 +176,34 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
         conn.metaData.isReadOnly shouldBe true
       }
     }
+  }
+
+  fun createTaxiTopic(conn: Connection): String {
+    val topic = newTopicName()
+    conn.createStatement().executeQuery("""
+            create table $topic(
+              _key string,
+              VendorID int,
+              tpep_pickup_datetime string,
+              tpep_dropoff_datetime string,
+              passenger_count int,
+              trip_distance double, 
+              pickup_longitude double,
+              pickup_latitude double,
+              RateCodeID int,
+              store_and_fwd_flag string, 
+              dropoff_longitude double,
+              dropoff_latitude double,
+              payment_type int,
+              fare_amount double,
+              extra double,
+              mta_tax double,
+              improvement_surcharge double,
+              tip_amount double,
+              tolls_amount double,
+              total_amount double)
+              format(string, avro)
+        """.trimIndent()).toList().shouldHaveSize(1)
+    return topic
   }
 }
