@@ -5,7 +5,7 @@ import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.FunSpec
-import io.lenses.jdbc4.LDriver
+import io.lenses.jdbc4.LensesDriver
 import io.lenses.jdbc4.ProducerSetup
 import io.lenses.jdbc4.resultset.toList
 import java.sql.Connection
@@ -14,7 +14,7 @@ import java.sql.SQLException
 class ViewTest : FunSpec(), ProducerSetup {
   init {
 
-    LDriver()
+    LensesDriver()
     val conn = conn()
 
     test("VIEW test") {

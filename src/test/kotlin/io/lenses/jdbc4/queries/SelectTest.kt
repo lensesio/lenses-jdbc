@@ -5,7 +5,7 @@ import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.WordSpec
-import io.lenses.jdbc4.LDriver
+import io.lenses.jdbc4.LensesDriver
 import io.lenses.jdbc4.ProducerSetup
 import io.lenses.jdbc4.resultset.toList
 import java.sql.Connection
@@ -16,7 +16,7 @@ class SelectTest : WordSpec(), ProducerSetup {
 
   init {
 
-    LDriver()
+    LensesDriver()
 
     val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin")
 

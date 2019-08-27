@@ -20,7 +20,7 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
 
   init {
 
-    LDriver()
+    LensesDriver()
 
     val conn = conn()
     val topic1 = newTopicName()

@@ -3,7 +3,7 @@ package io.lenses.jdbc4.queries
 import io.kotlintest.eventually
 import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.specs.FunSpec
-import io.lenses.jdbc4.LDriver
+import io.lenses.jdbc4.LensesDriver
 import io.lenses.jdbc4.data.MovieData
 import io.lenses.jdbc4.resultset.toList
 import java.time.Duration
@@ -11,7 +11,7 @@ import java.time.Duration
 class DeleteTest : FunSpec(), MovieData {
   init {
 
-    LDriver()
+    LensesDriver()
     val conn = conn()
 
     test("DELETE from table test") {

@@ -2,7 +2,7 @@ package io.lenses.jdbc4.queries
 
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.WordSpec
-import io.lenses.jdbc4.LDriver
+import io.lenses.jdbc4.LensesDriver
 import io.lenses.jdbc4.ProducerSetup
 import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData
@@ -32,7 +32,7 @@ class SingleFieldSchemaQueryTest : WordSpec(), ProducerSetup {
 
   init {
 
-    LDriver()
+    LensesDriver()
     populateCountries()
 
     "JDBC Driver" should {

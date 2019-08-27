@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 interface ProducerSetup : Logging {
 
   fun conn(): Connection {
-    LDriver()
+    LensesDriver()
     return DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin")
   }
 
