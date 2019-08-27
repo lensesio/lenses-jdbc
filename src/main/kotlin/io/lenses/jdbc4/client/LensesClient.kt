@@ -74,8 +74,8 @@ class LensesClient(private val url: String,
         .map { node ->
           val data = node["data"]
           val value = data["value"]
-          val key = data["key"]
-//          val keys = if (key == null) emptyList() else flattenJson(key)
+          //val key = data["key"]
+          //val keys = if (key == null) emptyList() else flattenJson(key)
           val values = if (value == null) emptyList() else flattenJson(value)
           ListRow(values)
         }
