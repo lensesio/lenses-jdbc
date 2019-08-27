@@ -12,7 +12,7 @@ class ShowFunctionsTest : FunSpec() {
 
     LensesDriver()
 
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin")
+    val conn = DriverManager.getConnection("jdbc:lenses:kafka:http://localhost:24015", "admin", "admin")
 
     test("SHOW FUNCTIONS schema") {
       val stmt = conn.createStatement()

@@ -23,14 +23,14 @@ class LensesDriverTest : WordSpec() {
         props.first { it.name == "weakssl" }.required shouldBe false
       }
       "accept valid single host url" {
-        LensesDriver().acceptsURL("jdbc:lsql:kafka:http://localhost:3030") shouldBe true
+        LensesDriver().acceptsURL("jdbc:lenses:kafka:http://localhost:3030") shouldBe true
       }
       "accept valid multiple host url" {
-        LensesDriver().acceptsURL("jdbc:lsql:kafka:http://localhost:3030,http://localhost:3031") shouldBe true
+        LensesDriver().acceptsURL("jdbc:lenses:kafka:http://localhost:3030,http://localhost:3031") shouldBe true
       }
       "parse parameters from url" {
-        val (url, props) = LensesDriver().parseUrl("jdbc:lsql:kafka:http://localhost:3030,http://localhost:3031?user=admin&wibble=wobble")
-        url shouldBe "jdbc:lsql:kafka:http://localhost:3030,http://localhost:3031"
+        val (url, props) = LensesDriver().parseUrl("jdbc:lenses:kafka:http://localhost:3030,http://localhost:3031?user=admin&wibble=wobble")
+        url shouldBe "jdbc:lenses:kafka:http://localhost:3030,http://localhost:3031"
         props["user"] shouldBe "admin"
         props["wibble"] shouldBe "wobble"
       }
@@ -47,7 +47,7 @@ class LensesDriverTest : WordSpec() {
       }
       "require each url to be http or https" {
         shouldThrow<SQLException> {
-          LensesDriver().connect("jdbc:lsql:kafka:httpq://localhost:3030", Properties())
+          LensesDriver().connect("jdbc:lenses:kafka:httpq://localhost:3030", Properties())
         }
       }
     }

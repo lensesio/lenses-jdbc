@@ -163,8 +163,8 @@ class LDatabaseMetaDataTest : WordSpec(), ProducerSetup {
       "return versioning information" {
         conn.metaData.databaseMajorVersion shouldBe gte(1)
         conn.metaData.databaseMinorVersion shouldBe gte(1)
-        conn.metaData.driverMajorVersion shouldBe 0
-        conn.metaData.driverMinorVersion shouldBe gte(1)
+        conn.metaData.driverMajorVersion shouldBe 3
+        conn.metaData.driverMinorVersion shouldBe 0
         conn.metaData.databaseProductName shouldBe Constants.ProductName
         conn.metaData.jdbcMajorVersion shouldBe 4
         conn.metaData.jdbcMinorVersion shouldBe 0

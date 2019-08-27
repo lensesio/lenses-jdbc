@@ -15,7 +15,7 @@ class PollTopicViaJdbcTest : WordSpec(), ProducerSetup {
 
     LensesDriver()
 
-    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin")
+    val conn = DriverManager.getConnection("jdbc:lenses:kafka:http://localhost:24015", "admin", "admin")
 
 
     "JDBC Driver" should {

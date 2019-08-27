@@ -12,7 +12,7 @@
 //  init {
 //    io.lenses.jdbc4.LDriver()
 //
-//    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
+//    val conn = DriverManager.getConnection("jdbc:lenses:kafka:http://localhost:3030", "admin", "admin")
 //
 //    "JDBC Driver" should {
 //      "support batched prepared statements" {

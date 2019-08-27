@@ -18,7 +18,7 @@
 //    }
 //
 //    val q = "SELECT * FROM $topic"
-//    val conn = DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:3030", "admin", "admin")
+//    val conn = DriverManager.getConnection("jdbc:lenses:kafka:http://localhost:3030", "admin", "admin")
 //    val stmt = conn.createStatement()
 //
 //    "JDBC Driver" should {
