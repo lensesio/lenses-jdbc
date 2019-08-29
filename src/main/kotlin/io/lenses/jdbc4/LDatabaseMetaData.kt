@@ -2,6 +2,9 @@ package io.lenses.jdbc4
 
 import arrow.core.getOrHandle
 import io.lenses.jdbc4.client.LensesClient
+import io.lenses.jdbc4.mappers.SelectFieldsMapper
+import io.lenses.jdbc4.mappers.ShowTableTypesMapper
+import io.lenses.jdbc4.mappers.ShowTablesMapper
 import io.lenses.jdbc4.resultset.ListResultSet
 import io.lenses.jdbc4.resultset.emptyResultSet
 import io.lenses.jdbc4.resultset.filter

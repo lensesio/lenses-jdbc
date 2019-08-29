@@ -9,6 +9,7 @@ import java.time.ZoneId
 
 class ConvertingRowTest : WordSpec() {
   init {
+
     "ConvertingRow" should {
       "convert char to String" {
         ListRow(listOf('a')).getString(1) shouldBe "a"

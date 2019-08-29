@@ -1,6 +1,11 @@
 package io.lenses.jdbc4.client
 
-import arrow.core.*
+import arrow.core.Either
+import arrow.core.Right
+import arrow.core.Try
+import arrow.core.flatMap
+import arrow.core.left
+import arrow.core.right
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.TextNode
 import io.ktor.client.HttpClient
@@ -20,22 +25,26 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
 import io.lenses.jdbc4.JacksonSupport
+import io.lenses.jdbc4.normalizeRecord
 import io.lenses.jdbc4.resultset.RowResultSet
 import io.lenses.jdbc4.resultset.WebSocketResultSet
 import io.lenses.jdbc4.resultset.WebsocketConnection
 import io.lenses.jdbc4.resultset.emptyResultSet
-import io.lenses.jdbc4.row.ListRow
+import io.lenses.jdbc4.row.PairRow
 import io.lenses.jdbc4.row.Row
 import io.lenses.jdbc4.util.Logging
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.apache.avro.Schema
 import org.glassfish.tyrus.client.ClientManager
 import org.glassfish.tyrus.client.ClientProperties
-import org.springframework.web.socket.*
+import org.springframework.web.socket.CloseStatus
+import org.springframework.web.socket.TextMessage
+import org.springframework.web.socket.WebSocketHandler
+import org.springframework.web.socket.WebSocketHttpHeaders
+import org.springframework.web.socket.WebSocketMessage
+import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.client.standard.StandardWebSocketClient
-import java.math.BigDecimal
 import java.net.URI
-import java.sql.SQLException
 import java.util.concurrent.LinkedBlockingQueue
 
 data class Token(val value: String)
@@ -51,6 +60,17 @@ sealed class JdbcError {
   data class UnsupportedRowType(val type: String) : JdbcError()
 }
 
+val frameToRecord: (String, Schema) -> Either<JdbcError.ParseError, Row> = { msg, schema ->
+  Try { JacksonSupport.mapper.readTree(msg) }
+      .toEither { JdbcError.ParseError(it) }
+      .map { node ->
+        val data = node["data"]
+        val value = data["value"]
+        val values = if (value == null) emptyList() else normalizeRecord(schema, value)
+        PairRow(values)
+      }
+}
+
 class LensesClient(private val url: String,
                    private val credentials: Credentials,
                    private val weakSSL: Boolean) : AutoCloseable, Logging {
@@ -63,30 +83,17 @@ class LensesClient(private val url: String,
     val json = when (val valueSchema = node["data"]["valueSchema"]) {
       is TextNode -> valueSchema.asText()
       null -> Schema.create(Schema.Type.NULL).toString(true)
-      else -> io.lenses.jdbc4.JacksonSupport.mapper.writeValueAsString(valueSchema)
+      else -> JacksonSupport.mapper.writeValueAsString(valueSchema)
     }
     Schema.Parser().parse(json)
   }.toEither { JdbcError.ParseError(it) }
 
-  private val frameToRecord: (String) -> Either<JdbcError.ParseError, Row> = { msg ->
-    Try { io.lenses.jdbc4.JacksonSupport.mapper.readTree(msg) }
-        .toEither { JdbcError.ParseError(it) }
-        .map { node ->
-          val data = node["data"]
-          val value = data["value"]
-          //val key = data["key"]
-          //val keys = if (key == null) emptyList() else flattenJson(key)
-          val values = if (value == null) emptyList() else flattenJson(value)
-          ListRow(values)
-        }
-  }
-
-  private val frameToRow: (String) -> Either<JdbcError.ParseError, Row?> = { msg ->
-    Try { io.lenses.jdbc4.JacksonSupport.mapper.readTree(msg) }
+  private val frameToRow: (String, Schema) -> Either<JdbcError.ParseError, Row?> = { msg, schema ->
+    Try { JacksonSupport.mapper.readTree(msg) }
         .toEither { JdbcError.ParseError(it) }
         .flatMap { node ->
           when (val type = node["type"].textValue()) {
-            "RECORD" -> frameToRecord(msg)
+            "RECORD" -> frameToRecord(msg, schema)
             "END" -> Right(null)
             else -> throw UnsupportedOperationException("Unsupported row type $type")
           }
@@ -144,7 +151,7 @@ class LensesClient(private val url: String,
       // we always need the first row to generate the schema unless it is an end then we have an empty resultset
 
       val msg = it.queue.take()
-      val node = io.lenses.jdbc4.JacksonSupport.mapper.readTree(msg)
+      val node = JacksonSupport.mapper.readTree(msg)
 
       when (node["type"].textValue()) {
         "END" -> emptyResultSet.right()
@@ -165,17 +172,17 @@ class LensesClient(private val url: String,
       val queue = LinkedBlockingQueue<String>(200)
       val jdbcRequest = JdbcRequestMessage(sql, token.value)
       val handler = object : WebSocketHandler {
-        override fun handleTransportError(session: org.springframework.web.socket.WebSocketSession,
+        override fun handleTransportError(session: WebSocketSession,
                                           exception: Throwable) {
           logger.error("Websocket error", exception)
         }
 
-        override fun afterConnectionClosed(session: org.springframework.web.socket.WebSocketSession,
+        override fun afterConnectionClosed(session: WebSocketSession,
                                            closeStatus: CloseStatus) {
           logger.debug("Connection closed $closeStatus")
         }
 
-        override fun handleMessage(session: org.springframework.web.socket.WebSocketSession,
+        override fun handleMessage(session: WebSocketSession,
                                    message: WebSocketMessage<*>) {
           logger.debug("Handling message in thread ${Thread.currentThread().id}")
           when (message) {
@@ -187,7 +194,7 @@ class LensesClient(private val url: String,
           }
         }
 
-        override fun afterConnectionEstablished(session: org.springframework.web.socket.WebSocketSession) {
+        override fun afterConnectionEstablished(session: WebSocketSession) {
           logger.debug("Connection established. Sending the SQL to the server...")
           //send the SQL and the token
           val json = JacksonSupport.toJson(jdbcRequest)
@@ -218,20 +225,3 @@ class LensesClient(private val url: String,
     }
   }
 }
-
-fun flattenJson(n: JsonNode): List<Any> = when {
-  n.isBigDecimal -> listOf(BigDecimal(n.bigIntegerValue()))
-  n.isBigInteger -> listOf(n.bigIntegerValue())
-  n.isBinary -> listOf(n.binaryValue())
-  n.isBoolean -> listOf(n.asBoolean())
-  n.isDouble -> listOf(n.doubleValue())
-  n.isFloat -> listOf(n.floatValue())
-  n.isInt -> listOf(n.intValue())
-  n.isLong -> listOf(n.longValue())
-  n.isShort -> listOf(n.shortValue())
-  n.isTextual -> listOf(n.asText())
-  n.isObject -> n.fields().asSequence().toList().flatMap { flattenJson(it.value) }
-  n.isArray -> n.elements().asSequence().toList().flatMap { flattenJson(it) }
-  else -> throw SQLException("Unsupported node type ${n.javaClass}:$n")
-}
-

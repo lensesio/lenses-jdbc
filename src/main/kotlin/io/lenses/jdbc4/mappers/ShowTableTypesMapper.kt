@@ -1,4 +1,4 @@
-package io.lenses.jdbc4
+package io.lenses.jdbc4.mappers
 
 import io.lenses.jdbc4.row.ListRow
 import io.lenses.jdbc4.row.Row

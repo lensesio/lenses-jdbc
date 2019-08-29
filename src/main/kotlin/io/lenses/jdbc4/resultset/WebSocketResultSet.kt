@@ -30,7 +30,8 @@ abstract class StreamingRowResultSet : RowResultSet(),
 class WebSocketResultSet(private val stmt: Statement?,
                          private val schema: Schema, // the schema for the records that will follow
                          private val conn: WebsocketConnection,
-                         private val converter: (String) -> Either<JdbcError.ParseError, Row?>) : StreamingRowResultSet() {
+                         private val converter: (String, Schema) -> Either<JdbcError.ParseError, Row?>)
+  : StreamingRowResultSet() {
 
   private var rowNumber: Int = 0
   private var row: Row? = null
@@ -47,7 +48,7 @@ class WebSocketResultSet(private val stmt: Statement?,
         }
         else -> {
           rowNumber++
-          row = converter(msg).getOrHandle { throw SQLException(it.cause) }
+          row = converter(msg, schema).getOrHandle { throw SQLException(it.cause) }
           row != null
         }
       }
