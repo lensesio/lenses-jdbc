@@ -1,11 +1,6 @@
 package io.lenses.jdbc4.client
 
-import arrow.core.Either
-import arrow.core.Right
-import arrow.core.Try
-import arrow.core.flatMap
-import arrow.core.left
-import arrow.core.right
+import arrow.core.*
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.TextNode
 import io.ktor.client.HttpClient
@@ -24,6 +19,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.util.KtorExperimentalAPI
+import io.lenses.jdbc4.JacksonSupport
 import io.lenses.jdbc4.resultset.RowResultSet
 import io.lenses.jdbc4.resultset.WebSocketResultSet
 import io.lenses.jdbc4.resultset.WebsocketConnection
@@ -35,15 +31,10 @@ import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.apache.avro.Schema
 import org.glassfish.tyrus.client.ClientManager
 import org.glassfish.tyrus.client.ClientProperties
-import org.springframework.web.socket.CloseStatus
-import org.springframework.web.socket.TextMessage
-import org.springframework.web.socket.WebSocketHandler
-import org.springframework.web.socket.WebSocketHttpHeaders
-import org.springframework.web.socket.WebSocketMessage
+import org.springframework.web.socket.*
 import org.springframework.web.socket.client.standard.StandardWebSocketClient
 import java.math.BigDecimal
 import java.net.URI
-import java.net.URLEncoder
 import java.sql.SQLException
 import java.util.concurrent.LinkedBlockingQueue
 
@@ -51,6 +42,7 @@ data class Token(val value: String)
 
 sealed class JdbcError {
   open val cause: Throwable? = null
+
   data class AuthenticationFailure(val message: String) : JdbcError()
   data class InitialError(val message: String) : JdbcError()
   object ExecutionError : JdbcError()
@@ -81,11 +73,11 @@ class LensesClient(private val url: String,
         .toEither { JdbcError.ParseError(it) }
         .map { node ->
           val data = node["data"]
-          val key = data["value"]
           val value = data["value"]
-          val keys = if (key == null) emptyList() else flattenJson(key)
+          //val key = data["key"]
+          //val keys = if (key == null) emptyList() else flattenJson(key)
           val values = if (value == null) emptyList() else flattenJson(value)
-          ListRow(keys + values)
+          ListRow(values)
         }
   }
 
@@ -145,15 +137,10 @@ class LensesClient(private val url: String,
       JdbcError.AuthenticationFailure(resp.readText()).left()
   }
 
-  private fun escape(url: String): String {
-    return URLEncoder.encode(url.trim().replace(System.lineSeparator(), " "), "UTF-8").replace("%20", "+")
-  }
-
   @ObsoleteCoroutinesApi
   suspend fun execute(sql: String): Either<JdbcError, RowResultSet> {
-    val escapedSql = escape(sql)
-    val endpoint = "$url/api/ws/v3/jdbc/execute?sql=$escapedSql"
-    return withAuthenticatedWebsocket(endpoint).flatMap {
+    val endpoint = "$url/api/ws/v3/jdbc/execute"
+    return withAuthenticatedWebsocket(endpoint, sql).flatMap {
       // we always need the first row to generate the schema unless it is an end then we have an empty resultset
 
       val msg = it.queue.take()
@@ -169,13 +156,14 @@ class LensesClient(private val url: String,
     }
   }
 
-  private suspend fun withAuthenticatedWebsocket(url: String): Either<JdbcError, WebsocketConnection> {
+  private suspend fun withAuthenticatedWebsocket(url: String, sql: String): Either<JdbcError, WebsocketConnection> {
     return authenticate().flatMap { token ->
       val uri = URI.create(url.replace("https://", "ws://").replace("http://", "ws://"))
       val headers = WebSocketHttpHeaders()
       headers.add(LensesTokenHeader, token.value)
       val wsclient = StandardWebSocketClient()
       val queue = LinkedBlockingQueue<String>(200)
+      val jdbcRequest = JdbcRequestMessage(sql, token.value)
       val handler = object : WebSocketHandler {
         override fun handleTransportError(session: org.springframework.web.socket.WebSocketSession,
                                           exception: Throwable) {
@@ -200,7 +188,12 @@ class LensesClient(private val url: String,
         }
 
         override fun afterConnectionEstablished(session: org.springframework.web.socket.WebSocketSession) {
-          logger.debug("Connection established")
+          logger.debug("Connection established. Sending the SQL to the server...")
+          //send the SQL and the token
+          val json = JacksonSupport.toJson(jdbcRequest)
+          val message = TextMessage(json.toByteArray())
+          session.sendMessage(message)
+
         }
 
         override fun supportsPartialMessages(): Boolean = false

@@ -10,12 +10,12 @@ import java.sql.SQLFeatureNotSupportedException
 import java.util.*
 import java.util.logging.Logger
 
-class LDriver : Driver, Logging, IWrapper {
+class LensesDriver : Driver, Logging, IWrapper {
 
   companion object : Logging {
     init {
       logger.debug("Registering LSQL JDBC Driver with DriverManager")
-      DriverManager.registerDriver(LDriver())
+      DriverManager.registerDriver(LensesDriver())
     }
   }
 

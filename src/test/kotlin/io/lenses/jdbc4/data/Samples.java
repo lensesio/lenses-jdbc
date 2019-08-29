@@ -16,13 +16,13 @@ import java.util.Properties;
 
 public class Samples {
 
-    Connection conn = DriverManager.getConnection("jdbc:lsql:kafka:https://localhost:3030", "user", "pass");
+    Connection conn = DriverManager.getConnection("jdbc:lenses:kafka:https://localhost:3030", "user", "pass");
 
     public Samples() throws SQLException {
     }
 
     public void preparedInsert() throws SQLException {
-        Connection conn = DriverManager.getConnection("jdbc:lsql:kafka:https://localhost:3030", "user", "pass");
+        Connection conn = DriverManager.getConnection("jdbc:lenses:kafka:https://localhost:3030", "user", "pass");
         PreparedStatement stmt = conn.prepareStatement("INSERT INTO mytopic (name, city, lat, long) VALUES (?, ?, ?, ?)");
         stmt.setString(1, "Tyrian Lannister");
         stmt.setString(2, "Kings Landing");
@@ -35,7 +35,7 @@ public class Samples {
 
         List<String> characters = Arrays.asList("Tyrian Lannister", "Cersei Lannister", "Tywin Lannister");
 
-        Connection conn = DriverManager.getConnection("jdbc:lsql:kafka:https://localhost:3030", "user", "pass");
+        Connection conn = DriverManager.getConnection("jdbc:lenses:kafka:https://localhost:3030", "user", "pass");
         PreparedStatement stmt = conn.prepareStatement("INSERT INTO mytopic (name, city, lat, long) VALUES (?, ?, ?, ?)");
         stmt.setString(2, "Kings Landing");
         stmt.setDouble(3, 67.5);
@@ -53,7 +53,7 @@ public class Samples {
 
         List<String> characters = Arrays.asList("Tyrian Lannister", "Cersei Lannister", "Tywin Lannister");
 
-        Connection conn = DriverManager.getConnection("jdbc:lsql:kafka:https://localhost:3030", "user", "pass");
+        Connection conn = DriverManager.getConnection("jdbc:lenses:kafka:https://localhost:3030", "user", "pass");
         PreparedStatement stmt = conn.prepareStatement("INSERT INTO mytopic (name, city, lat, long) VALUES (?, ?, ?, ?)");
         stmt.setString(2, "Kings Landing");
         stmt.setDouble(3, 67.5);
@@ -69,7 +69,7 @@ public class Samples {
     }
 
     public void metadata() throws SQLException {
-        Connection conn = DriverManager.getConnection("jdbc:lsql:kafka:https://localhost:3030", "user", "pass");
+        Connection conn = DriverManager.getConnection("jdbc:lenses:kafka:https://localhost:3030", "user", "pass");
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * FROM mytopic");
         ResultSetMetaData meta = rs.getMetaData();
@@ -86,7 +86,7 @@ public class Samples {
     public void resultSetWhile() throws SQLException {
 
         Connection conn = DriverManager.getConnection(
-                "jdbc:lsql:kafka:http://localhost:3030",
+                "jdbc:lenses:kafka:http://localhost:3030",
                 "username",
                 "pasword");
 
@@ -103,7 +103,7 @@ public class Samples {
 
     public void resultSetOffset() throws SQLException {
         Connection conn = DriverManager.getConnection(
-                "jdbc:lsql:kafka:http://localhost:3030",
+                "jdbc:lenses:kafka:http://localhost:3030",
                 "username",
                 "pasword");
 
@@ -148,13 +148,13 @@ public class Samples {
         props.setProperty("password", "mypass");
         props.setProperty("weakssl", "true");
         Connection conn = DriverManager.getConnection(
-                "jdbc:lsql:kafka:http://localhost:3030",
+                "jdbc:lenses:kafka:http://localhost:3030",
                 props);
     }
 
     public void nestedExample() throws SQLException {
         Connection conn = DriverManager.getConnection(
-                "jdbc:lsql:kafka:http://localhost:3030",
+                "jdbc:lenses:kafka:http://localhost:3030",
                 "username",
                 "pasword");
 
@@ -181,7 +181,7 @@ public class Samples {
         values.put("lat", 51.0);
         values.put("long", 12.3);
 
-        Connection conn = DriverManager.getConnection("jdbc:lsql:kafka:https://localhost:3030", "user", "pass");
+        Connection conn = DriverManager.getConnection("jdbc:lenses:kafka:https://localhost:3030", "user", "pass");
         PreparedStatement stmt = conn.prepareStatement("INSERT INTO mytopic (name, city, lat, long) VALUES (?, ?, ?, ?)");
         ResultSetMetaData meta = stmt.getMetaData();
         for (int k = 1; k <= meta.getColumnCount(); k++) {

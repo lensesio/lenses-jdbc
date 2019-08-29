@@ -22,8 +22,8 @@ import java.util.concurrent.TimeUnit
 interface ProducerSetup : Logging {
 
   fun conn(): Connection {
-    LDriver()
-    return DriverManager.getConnection("jdbc:lsql:kafka:http://localhost:24015", "admin", "admin999")
+    LensesDriver()
+    return DriverManager.getConnection("jdbc:lenses:kafka:http://localhost:24015", "admin", "admin")
   }
 
   fun schemaClient() = CachedSchemaRegistryClient("http://127.0.0.1:8081", 1000)
