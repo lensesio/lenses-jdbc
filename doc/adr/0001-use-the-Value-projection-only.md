@@ -1,4 +1,4 @@
-# 2. Use ZIO to manage effects
+# 1. Use only the Value projection
 
 Date: 2019-08-27
 
