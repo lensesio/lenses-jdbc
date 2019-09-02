@@ -30,30 +30,30 @@ Download from [Maven Central](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%2
 
 ## Requirements
 
-1. java 1.8+
-2. gradle 3.5+
+1. Java 1.8+
+2. Gradle 4.6+
 
 # Building
 
-Requires grade 3.5+
+Requires Gradle 4.6+
 
 To build:
 
 ```bash
-gradle compileKotlin
+./gradlew compileKotlin
 ```
 
 For a fatJar:
 
 ```bash
-gradle shadowJar
+./gradlew shadowJar
 ```
 
 # Testing
 For testing it requires the Lenses Box to be running locally on http://localhost:3030
 
 ```bash
-gradle clean test
+./gradlew clean test
 ```
 
 # License
