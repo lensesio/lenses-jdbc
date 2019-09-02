@@ -86,5 +86,23 @@ class NormalizeRecordTest : FunSpec() {
       val node = JacksonSupport.mapper.readTree("""{"a": "hello", "b": { "x": "world" }}""")
       normalizeRecord(schema, node) shouldBe listOf("a" to "hello", "b.x" to "world", "b.y" to null, "c" to null)
     }
+
+    test("normalizing nested schema with missing parents") {
+
+      val b = SchemaBuilder.builder().record("b")
+          .fields()
+          .optionalString("x")
+          .requiredLong("y")
+          .endRecord()
+
+      val schema = SchemaBuilder.builder().record("foo")
+          .fields()
+          .optionalString("a")
+          .name("b").type(b).noDefault()
+          .optionalInt("c")
+          .endRecord()
+      val node = JacksonSupport.mapper.readTree("""{"a": "hello"}""")
+      normalizeRecord(schema, node) shouldBe listOf("a" to "hello", "b.x" to null, "b.y" to null, "c" to null)
+    }
   }
 }

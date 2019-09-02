@@ -5,7 +5,7 @@ import java.sql.ResultSet
 import java.sql.SQLFeatureNotSupportedException
 import java.sql.SQLWarning
 
-interface AbstractResultSet : ResultSet, io.lenses.jdbc4.IWrapper {
+interface AbstractResultSet : ResultSet, IWrapper {
 
   override fun getCursorName(): String = throw SQLFeatureNotSupportedException()
 

@@ -7,6 +7,7 @@ import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import io.ktor.client.HttpClient
 import io.ktor.client.features.compression.ContentEncoding
@@ -66,7 +67,16 @@ val frameToRecord: (String, Schema) -> Either<JdbcError.ParseError, Row> = { msg
       .map { node ->
         val data = node["data"]
         val value = data["value"]
-        val values = if (value == null) emptyList() else normalizeRecord(schema, value)
+        val values = when (schema.type) {
+          Schema.Type.RECORD -> when (value) {
+            null -> normalizeRecord(schema, NullNode.instance)
+            else -> normalizeRecord(schema, value)
+          }
+          else -> when (value) {
+            null -> emptyList()
+            else -> listOf("value" to value.toString())
+          }
+        }
         PairRow(values)
       }
 }

@@ -2,7 +2,6 @@ package io.lenses.jdbc4
 
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.ShouldSpec
-import java.sql.DriverManager
 import java.sql.SQLFeatureNotSupportedException
 import java.sql.Statement
 

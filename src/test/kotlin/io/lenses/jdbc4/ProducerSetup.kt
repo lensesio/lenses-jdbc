@@ -1,8 +1,6 @@
 package io.lenses.jdbc4
 
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
-import io.lenses.jdbc4.client.LensesClient
-import io.lenses.jdbc4.client.Credentials
 import io.lenses.jdbc4.resultset.toList
 import io.lenses.jdbc4.util.Logging
 import org.apache.avro.Schema
@@ -23,12 +21,10 @@ interface ProducerSetup : Logging {
 
   fun conn(): Connection {
     LensesDriver()
-    return DriverManager.getConnection("jdbc:lenses:kafka:http://localhost:24015", "admin", "admin")
+    return DriverManager.getConnection("jdbc:lenses:kafka:http://localhost:24015", "admin", "admin999")
   }
 
   fun schemaClient() = CachedSchemaRegistryClient("http://127.0.0.1:8081", 1000)
-  fun lensesClient() = LensesClient("http://localhost:24015",
-      Credentials("admin", "admin999"), false)
 
   fun registerValueSchema(topic: String, schema: Schema) {
     val client = schemaClient()

@@ -42,7 +42,7 @@ class DeleteTest : FunSpec(), MovieData {
       // takes a few seconds to kick in on kafka
       eventually(Duration.ofSeconds(5), AssertionError::class.java) {
         val result = conn.createStatement().executeQuery("SELECT * FROM $topic").toList()
-        //kafka won't delete instantly
+        // kafka will insert a new record with the key and value == null
         result.shouldHaveSize(4)
       }
     }
@@ -54,8 +54,8 @@ class DeleteTest : FunSpec(), MovieData {
       // takes a few seconds to kick in on kafka
       eventually(Duration.ofSeconds(5), AssertionError::class.java) {
         val result = conn.createStatement().executeQuery("SELECT * FROM $topic").toList()
-        //kafka won't delete instantly
-        result.shouldHaveSize(3)
+        // kafka will insert a new record with the key and value == null
+        result.shouldHaveSize(4)
       }
     }
   }
