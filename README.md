@@ -26,7 +26,7 @@ Documentation can be found [here](http://lenses.stream/dev/jdbc/index.html).
 
 ## Download
 
-Download from [Maven Central](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.landoop%22%20AND%20a%3A%22lenses-jdbc%22).
+Download from [Maven Central](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22io.lenses%22%20AND%20a%3A%22lenses-jdbc%22).
 
 ## Requirements
 
