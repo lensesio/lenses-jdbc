@@ -31,11 +31,11 @@ Download from [Maven Central](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%2
 ## Requirements
 
 1. Java 1.8+
-2. Gradle 4.6+
+2. Gradle 4.9+
 
 # Building
 
-Requires Gradle 4.6+
+Requires Gradle 4.9+
 
 To build:
 
