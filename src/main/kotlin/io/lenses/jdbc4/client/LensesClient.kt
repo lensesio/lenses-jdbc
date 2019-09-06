@@ -92,6 +92,7 @@ class LensesClient(private val url: String,
   private fun parseSchema(node: JsonNode): Either<JdbcError, Schema> = Try {
     val json = when (val valueSchema = node["data"]["valueSchema"]) {
       is TextNode -> valueSchema.asText()
+      is NullNode -> Schema.create(Schema.Type.NULL).toString(true)
       null -> Schema.create(Schema.Type.NULL).toString(true)
       else -> JacksonSupport.mapper.writeValueAsString(valueSchema)
     }

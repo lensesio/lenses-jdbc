@@ -8,6 +8,7 @@ import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericData
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import java.sql.Connection
 import java.util.*
 
 data class Country(val name: String)
@@ -30,22 +31,36 @@ class SingleFieldSchemaQueryTest : WordSpec(), ProducerSetup {
     }
   }
 
+  fun createData(connection: Connection, topic: String) {
+    val sqlCreate = """
+    CREATE TABLE $topic(_key string, name string) format(string, avro);
+  """.trimIndent()
+    connection.createStatement().executeQuery(sqlCreate)
+
+    val sqlData = """
+    INSERT INTO $topic(_key, name) VALUES('Vanuatu','Vanuatu'), ('Comoros','Comoros');
+  """.trimIndent()
+    connection.createStatement().executeQuery(sqlData)
+  }
+
+
   init {
 
     LensesDriver()
-    populateCountries()
+    val connection = conn()
+    createData(connection, topic)
 
     "JDBC Driver" should {
       "support wildcard for fixed schemas" {
         val q = "SELECT * FROM $topic"
-        val stmt = conn().createStatement()
+        val stmt = connection.createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 1
-        rs.metaData.getColumnLabel(1) shouldBe "unnamed"
+        rs.metaData.getColumnLabel(1) shouldBe "name"
       }
       "support projection for fixed schemas" {
         val q = "SELECT name FROM $topic"
-        val stmt = conn().createStatement()
+        val stmt = connection.createStatement()
         val rs = stmt.executeQuery(q)
         rs.metaData.columnCount shouldBe 1
         rs.metaData.getColumnLabel(1) shouldBe "name"
