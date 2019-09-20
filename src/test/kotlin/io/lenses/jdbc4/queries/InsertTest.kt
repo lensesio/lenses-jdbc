@@ -4,15 +4,15 @@ import io.kotlintest.matchers.collections.shouldHaveSize
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.FunSpec
 import io.lenses.jdbc4.LensesDriver
+import io.lenses.jdbc4.ProducerSetup
 import io.lenses.jdbc4.resultset.toList
-import java.sql.DriverManager
 
-class InsertTest : FunSpec() {
+class InsertTest : FunSpec(), ProducerSetup {
   init {
 
     LensesDriver()
 
-    val conn = DriverManager.getConnection("jdbc:lenses:kafka:http://localhost:24015", "admin", "admin")
+    val conn = conn()
 
     test("INSERT into table test") {
 
