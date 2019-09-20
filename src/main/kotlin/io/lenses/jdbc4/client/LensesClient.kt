@@ -1,11 +1,6 @@
 package io.lenses.jdbc4.client
 
-import arrow.core.Either
-import arrow.core.Right
-import arrow.core.Try
-import arrow.core.flatMap
-import arrow.core.left
-import arrow.core.right
+import arrow.core.*
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
@@ -38,12 +33,8 @@ import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.apache.avro.Schema
 import org.glassfish.tyrus.client.ClientManager
 import org.glassfish.tyrus.client.ClientProperties
-import org.springframework.web.socket.CloseStatus
-import org.springframework.web.socket.TextMessage
-import org.springframework.web.socket.WebSocketHandler
-import org.springframework.web.socket.WebSocketHttpHeaders
-import org.springframework.web.socket.WebSocketMessage
-import org.springframework.web.socket.WebSocketSession
+import org.springframework.web.socket.*
+import org.springframework.web.socket.client.WebSocketClient
 import org.springframework.web.socket.client.standard.StandardWebSocketClient
 import java.net.URI
 import java.util.concurrent.LinkedBlockingQueue
@@ -179,7 +170,22 @@ class LensesClient(private val url: String,
       val uri = URI.create(url.replace("https://", "ws://").replace("http://", "ws://"))
       val headers = WebSocketHttpHeaders()
       headers.add(LensesTokenHeader, token.value)
-      val wsclient = StandardWebSocketClient()
+      //Expected to read from env variables
+      //val  sslContextConfigurator =  SslContextConfigurator()
+      /*      sslContextConfigurator.setTrustStoreFile("...");
+      *      sslContextConfigurator.setTrustStorePassword("...");
+      *      sslContextConfigurator.setTrustStoreType("...");
+      *      sslContextConfigurator.setKeyStoreFile("...");
+      *      sslContextConfigurator.setKeyStorePassword("...");
+      *      sslContextConfigurator.setKeyStoreType("...");
+      */
+      //val sslEngineConfigurator = SslEngineConfigurator(sslContextConfigurator, true,false, false)
+
+      val clientManager:ClientManager = ClientManager.createClient()
+      clientManager.properties[ClientProperties.REDIRECT_ENABLED] = true
+      //clientManager.properties[ClientProperties.SSL_ENGINE_CONFIGURATOR] = sslEngineConfigurator
+      val wsclient: WebSocketClient = StandardWebSocketClient(clientManager)
+
       val queue = LinkedBlockingQueue<String>(200)
       val jdbcRequest = JdbcRequestMessage(sql, token.value)
       val handler = object : WebSocketHandler {
@@ -216,12 +222,21 @@ class LensesClient(private val url: String,
 
         override fun supportsPartialMessages(): Boolean = false
       }
+
       logger.debug("Connecting to websocket at $uri")
       val sess = wsclient.doHandshake(handler, headers, uri).get()
 
       val conn = object : WebsocketConnection {
         override val queue = queue
-        override fun close() = sess.close()
+        override fun close() {
+          if(sess.isOpen) {
+            try {
+              sess.close()
+            } catch (t: Throwable) {
+
+            }
+          }
+        }
         override fun isClosed(): Boolean = !sess.isOpen
       }
       conn.right()

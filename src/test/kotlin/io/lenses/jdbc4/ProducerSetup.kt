@@ -21,7 +21,7 @@ interface ProducerSetup : Logging {
 
   fun conn(): Connection {
     LensesDriver()
-    return DriverManager.getConnection("jdbc:lenses:kafka:http://localhost:3030", "admin", "admin")
+    return DriverManager.getConnection("jdbc:lenses:kafka:https://localhost:3030", "admin", "admin")
   }
 
   fun schemaClient() = CachedSchemaRegistryClient("http://127.0.0.1:8081", 1000)

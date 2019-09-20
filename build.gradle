@@ -59,15 +59,16 @@ dependencies {
     compile 'org.glassfish.tyrus:tyrus-client:1.15'
     compile 'org.glassfish.tyrus:tyrus-core:1.15'
     compile 'org.glassfish.tyrus:tyrus-container-grizzly-client:1.15'
-    implementation "io.ktor:ktor-client-core:$ktorVersion"
-    implementation "io.ktor:ktor-client-cio:$ktorVersion"
-    implementation "io.ktor:ktor-client-jackson:$ktorVersion"
-    implementation "io.ktor:ktor-client-websockets:$ktorVersion"
-    implementation "io.ktor:ktor-client-encoding:$ktorVersion"
-    implementation "io.ktor:ktor-client-encoding-jvm:$ktorVersion"
-    implementation 'org.springframework:spring-websocket:5.1.9.RELEASE'
+    compile "io.ktor:ktor-client-core:$ktorVersion"
+    compile "io.ktor:ktor-client-cio:$ktorVersion"
+    compile "io.ktor:ktor-client-jackson:$ktorVersion"
+    compile "io.ktor:ktor-client-websockets:$ktorVersion"
+    compile "io.ktor:ktor-client-encoding:$ktorVersion"
+    compile "io.ktor:ktor-client-encoding-jvm:$ktorVersion"
+    compile 'org.springframework:spring-websocket:5.1.9.RELEASE'
 
     implementation 'io.arrow-kt:arrow-core-data:0.9.0'
+    //compile 'jakarta.websocket:jakarta.websocket-api:1.1.1'
 
     testCompile "org.apache.logging.log4j:log4j-slf4j-impl:$log4j_version"
     testCompile "io.kotlintest:kotlintest-runner-junit5:$kotlin_test"
@@ -110,6 +111,7 @@ shadowJar {
     manifest {
         attributes "Main-Class": "io.lenses.jdbc4.LensesDriver"
         relocate 'com.fasterxml', 'shadow.com.fasterxml'
+        relocate 'org.springframework', 'shadow.org.springframework'
     }
 }
 
