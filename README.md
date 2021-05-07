@@ -9,7 +9,7 @@
 [logo]: https://github.com/Landoop/lenses-jdbc/blob/master/LSQL_JDBC.jpg "LENSES JDBC for Apache Kafka"
 
 
-A JDBC 4.0 compliant driver for [Lenses](https://www.landoop.com/kafka-lenses/), suitable for any application that uses the JDBC interface, to communicate with Apache Kafka via the Lenses platform.
+A JDBC 4.0 compliant driver for [Lenses](https://www.lenses.io/), suitable for any application that uses the JDBC interface, to communicate with Apache Kafka via the Lenses platform.
 
 Users of this library can:
 
@@ -22,7 +22,7 @@ Users of this library can:
 
 ## Documentation
 
-Documentation can be found [here](http://lenses.stream/dev/jdbc/index.html).
+Documentation can be found [here](https://docs.lenses.io/3.2/dev/jdbc/index.html).
 
 ## Download
 
